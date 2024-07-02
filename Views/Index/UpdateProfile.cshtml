@@ -25,10 +25,13 @@
                         <label asp-for="FamilySize">Number of Family Members</label>
                         <div class="row g-0 input-group pe-0 me-0">
                             <div class="col-3 pe-0">
-                                <input asp-for="FamilySize" type="number" id="FamilySize" style="border-radius: 0;" class="form-control text-center rounded-start ps-4" min="1" max="10" readonly required />
+                                <input asp-for="FamilySize" type="number" id="FamilySize" style="border-radius: 0;"
+                                    class="form-control text-center rounded-start ps-4" min="1" max="10" readonly
+                                    required />
                             </div>
                             <div class="col-9">
-                                <button onclick="increaseFamilySize()" id="addMemberButton" type="button" style="border-radius: 0;" class="btn btn-primary w-100 rounded-end">
+                                <button onclick="increaseFamilySize()" id="addMemberButton" type="button"
+                                    style="border-radius: 0;" class="btn btn-primary w-100 rounded-end">
                                     Add Member
                                 </button>
                             </div>
@@ -125,20 +128,32 @@
             else {
                 familySizeCounter.value = parseInt(familySizeCounter.value) + 1
             }
-    
+
             inputs.forEach(element => {
                 // don't modify the 'Delete Member' checkbox
-                if (element.id != `shouldDelete${memberNumber-1}`) {
+                if (element.id != `shouldDelete${memberNumber - 1}`) {
                     element.readOnly = !element.readOnly;
+                    if (element.hasAttribute("data-should-allow-check")) {
+                        let shouldAllowCheck = element.getAttribute('data-should-allow-check')
+                        if (shouldAllowCheck == "true") {
+                            element.setAttribute('data-should-allow-check', false)
+                            element.setAttribute('onclick', 'return false;')
+                            element.classList.add('bg-light')
+                        } else {
+                            element.setAttribute('data-should-allow-check', true)
+                            element.setAttribute('onclick', 'return true;')
+                            element.classList.remove('bg-light')
+                        }
+                    }
                 }
             });
         }
 
-        document.getElementById('updateform').addEventListener('submit', function(event) {
+        document.getElementById('updateform').addEventListener('submit', function (event) {
             event.preventDefault();
 
             const familySizeCounter = document.getElementById('FamilySize')
-            
+
             if (parseInt(familySizeCounter.value) == 0) {
                 const feedbackElement = document.getElementById('familyMembersFeedback');
                 feedbackElement.classList.remove('d-none');
@@ -380,6 +395,8 @@
                 checkbox.id = "memberBox" + considerationType.toLowerCase() + index + consideration;
                 checkbox.type = "checkbox"
                 checkbox.value = true
+                // Custom attributes must start with data
+                checkbox.setAttribute('data-should-allow-check', true)
                 checkbox.className = "form-check-input"
                 checkbox.name = `Members[${index}].${considerationType}[${consideration}].Selected`
 

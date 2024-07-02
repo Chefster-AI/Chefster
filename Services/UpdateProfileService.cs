@@ -56,7 +56,7 @@ public class UpdateProfileService(
             MemberModel? contextMember = null;
 
             // if member exists and we aren't suppose to delete it, update it
-            if (!Member.ShouldDelete && Member.MemberId != null)
+            if (Member.MemberId != null && !Member.ShouldDelete)
             {
                 var UpdatedMember = new MemberUpdateDto
                 {
