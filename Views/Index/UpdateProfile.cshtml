@@ -39,6 +39,9 @@
                     Family members
                 </div>
                 <hr class="border border-primary border-1 opacity-100">
+                <div id="familyMembersFeedback" class="text-danger fw-bold fs-4 d-none">
+                    Must have at least 1 family member!
+                </div>
                 <div id="familyMembersContainer" class="mt-0">
                 </div>
                 <div class="fs-3 pt-5">
@@ -89,7 +92,7 @@
                 </div>
                 <input type="hidden" id="TimeZone" asp-for="TimeZone" value="" required />
                 <div class="form-group pt-5 pb-3">
-                    <button type="submit" class="btn btn-primary w-100">Update Profile</button>
+                    <button id="updateButton" type="submit" class="btn btn-primary w-100">Update Profile</button>
                 </div>
             </form>
         </div>
@@ -111,9 +114,10 @@
         function toggleDisable(memberNumber) {
             let memberForm = document.getElementById("member" + memberNumber)
             memberForm.classList.toggle('bg-light')
-            const inputs = memberForm.querySelectorAll('input, textarea, select, button');
 
             const familySizeCounter = document.getElementById('FamilySize')
+            const inputs = memberForm.querySelectorAll('input, textarea, select, button');
+
             // inputs[0] is the checkbox, if its checked, decrement family size
             if (inputs[0].checked) {
                 familySizeCounter.value = parseInt(familySizeCounter.value) - 1
@@ -129,6 +133,24 @@
                 }
             });
         }
+
+        document.getElementById('updateform').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const familySizeCounter = document.getElementById('FamilySize')
+            
+            if (parseInt(familySizeCounter.value) == 0) {
+                const feedbackElement = document.getElementById('familyMembersFeedback');
+                feedbackElement.classList.remove('d-none');
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            }
+            else {
+                this.submit();
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', async function () {
             // set the time zone
