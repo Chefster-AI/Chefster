@@ -127,9 +127,9 @@
             }
     
             inputs.forEach(element => {
-                // don't disable the 'Delete Member' checkbox
+                // don't modify the 'Delete Member' checkbox
                 if (element.id != `shouldDelete${memberNumber-1}`) {
-                    element.disabled = !element.disabled;
+                    element.readOnly = !element.readOnly;
                 }
             });
         }
