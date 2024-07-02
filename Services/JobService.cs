@@ -94,7 +94,7 @@ public class JobService(
         string mealCounts = GetMealCountsText(family.NumberOfBreakfastMeals, family.NumberOfLunchMeals, family.NumberOfDinnerMeals);
         string dietaryConsiderations = GetDietaryConsiderationsText(family.Id);
         string previousRecipes = GetPreviousRecipesText(family.Id);
-        string gordonPrompt = $"Create {mealCounts} recipes, each being {family.FamilySize} servings. Here is a list of the dietary considerations:\n{dietaryConsiderations}\n{previousRecipes}";
+        string gordonPrompt = $"Create {mealCounts} recipes, each being {family.FamilySize} servings. Here is a list of the dietary considerations:\n{dietaryConsiderations}{previousRecipes}";
         Console.WriteLine("Gordon's Prompt:\n" + gordonPrompt);
         return gordonPrompt.ToString();
     }
@@ -177,7 +177,7 @@ public class JobService(
                 {
                     throw new NotImplementedException();
                 }
-                var memberConsiderationsText = $"Name: {member.Name}\nNotes: {member.Notes}\nRestrictions: {string.Join(", ", restrictions)}\nGoals: {string.Join(", ", goals)}\nFavorite Cuisines: {string.Join(", ", cuisines)}\n\n";
+                var memberConsiderationsText = $"Name: {member.Name}\nNotes: {member.Notes}\nRestrictions: {string.Join(", ", restrictions)}\nGoals: {string.Join(", ", goals)}\nFavorite Cuisines: {string.Join(", ", cuisines)}\n";
                 considerationsText.Append(memberConsiderationsText);
             }
             
@@ -192,40 +192,40 @@ public class JobService(
     private string GetPreviousRecipesText(string familyId)
     {
         var previousRecipes = _previousRecipeService.GetPreviousRecipes(familyId).Data!;
-        var enjoyedBreakfast = new List<PreviousRecipeModel>();
-        var enjoyedLunch = new List<PreviousRecipeModel>();
-        var enjoyedDinner = new List<PreviousRecipeModel>();
-        var notEnjoyedBreakfast = new List<PreviousRecipeModel>();
-        var notEnjoyedLunch = new List<PreviousRecipeModel>();
-        var notEnjoyedDinner = new List<PreviousRecipeModel>();
+        var enjoyedBreakfast = new List<string>();
+        var enjoyedLunch = new List<string>();
+        var enjoyedDinner = new List<string>();
+        var notEnjoyedBreakfast = new List<string>();
+        var notEnjoyedLunch = new List<string>();
+        var notEnjoyedDinner = new List<string>();
 
         foreach (var recipe in previousRecipes)
         {
             switch (recipe.MealType)
             {
                 case "Breakfast":
-                    (recipe.Enjoyed ? enjoyedBreakfast : notEnjoyedBreakfast).Add(recipe);
+                    (recipe.Enjoyed ? enjoyedBreakfast : notEnjoyedBreakfast).Add(recipe.DishName);
                     break;
                 case "Lunch":
-                    (recipe.Enjoyed ? enjoyedLunch : notEnjoyedLunch).Add(recipe);
+                    (recipe.Enjoyed ? enjoyedLunch : notEnjoyedLunch).Add(recipe .DishName);
                     break;
                 case "Dinner":
-                    (recipe.Enjoyed ? enjoyedDinner : notEnjoyedDinner).Add(recipe);
+                    (recipe.Enjoyed ? enjoyedDinner : notEnjoyedDinner).Add(recipe.DishName);
                     break;
             }
         }
 
         // this may need reworded
         return $@"
-        Generate recipes that are similar to the ones listed here, but be certain that you generate different recipes:
-        Breakfast: {string.Join(", ", enjoyedBreakfast)}
-        Lunch: {string.Join(", ", enjoyedLunch)}
-        Dinner: {string.Join(", ", enjoyedDinner)}
+Generate recipes that are similar to the ones listed here, but be certain that you generate different recipes:
+Breakfast: {string.Join(", ", enjoyedBreakfast)}
+Lunch: {string.Join(", ", enjoyedLunch)}
+Dinner: {string.Join(", ", enjoyedDinner)}
 
-        Do not generate recipes these recipes, or recipes that are similar to the ones listed here:
-        Breakfast: {string.Join(", ", notEnjoyedBreakfast)}
-        Lunch: {string.Join(", ", notEnjoyedLunch)}
-        Dinner: {string.Join(", ", notEnjoyedDinner)}
+Do not generate recipes these recipes, or recipes that are similar to the ones listed here:
+Breakfast: {string.Join(", ", notEnjoyedBreakfast)}
+Lunch: {string.Join(", ", notEnjoyedLunch)}
+Dinner: {string.Join(", ", notEnjoyedDinner)}
         ";
     }
 
