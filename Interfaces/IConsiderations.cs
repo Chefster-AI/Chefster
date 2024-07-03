@@ -9,5 +9,5 @@ public interface IConsiderations
     ServiceResult<List<ConsiderationsModel>> GetWeeklyConsiderations(string familyId);
     ServiceResult<ConsiderationsModel> CreateConsideration(ConsiderationsCreateDto consideration);
     ServiceResult<ConsiderationsModel> DeleteConsideration(string considerationId);
-    ServiceResult<ConsiderationsModel> UpdateConsideration(ConsiderationsUpdateDto consideration);
+    ServiceResult<ConsiderationsModel> UpdateConsideration(string considerationId, ConsiderationsUpdateDto consideration);
 }

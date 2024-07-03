@@ -194,7 +194,7 @@ public class GordonService(IHttpClientFactory httpClientFactory)
             }
 
             // wait a few seconds before trying again
-            await Task.Delay(3000);
+            await Task.Delay(5000);
         } while (attempts != MAX_ATTEMPTS);
 
         // try to grab the response
