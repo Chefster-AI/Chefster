@@ -78,7 +78,7 @@ public class IndexController(
     [Authorize]
     [HttpGet]
     [Route("/profile")]
-    public IActionResult UpdateProfile()
+    public IActionResult Profile()
     {
         var id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         var family = _familyService.GetById(id!).Data;
