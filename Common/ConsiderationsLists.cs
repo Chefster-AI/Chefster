@@ -9,6 +9,7 @@ public static class ConsiderationsLists
         {
             new SelectListItem { Text = "Carnivore", Selected = false },
             new SelectListItem { Text = "Gluten-Free", Selected = false },
+            new SelectListItem { Text = "Lactose Intolerant", Selected = false },
             new SelectListItem { Text = "Nut-Free", Selected = false },
             new SelectListItem { Text = "Shellfish-Free", Selected = false },
             new SelectListItem { Text = "Vegan", Selected = false },
