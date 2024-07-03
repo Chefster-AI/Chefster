@@ -51,6 +51,7 @@ public class UpdateProfileService(
         FamilyUpdateViewModel Family
     )
     {
+        var memberTotal = 0;
         foreach (MemberUpdateViewModel Member in Family.Members)
         {
             MemberModel? contextMember = null;
@@ -174,6 +175,8 @@ public class UpdateProfileService(
                 if (Member.ShouldDelete)
                 {
                     _memberService.DeleteMember(Member.MemberId);
+                    memberTotal += 1;
+                    _familyService.UpdateFamilySize(familyId, Family.Members.Count - memberTotal);
                 }
             }
         }

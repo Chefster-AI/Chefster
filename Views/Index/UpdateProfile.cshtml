@@ -30,8 +30,8 @@
                                     required />
                             </div>
                             <div class="col-9">
-                                <button onclick="increaseFamilySize()" id="addMemberButton" type="button"
-                                    style="border-radius: 0;" class="btn btn-primary w-100 rounded-end">
+                                <button id="addMemberButton" type="button" style="border-radius: 0;"
+                                    class="btn btn-primary w-100 rounded-end">
                                     Add Member
                                 </button>
                             </div>
@@ -55,8 +55,8 @@
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfBreakfastMeals">Breakfast</label>
-                            <input asp-for="NumberOfBreakfastMeals" type="number" id="familySizeCounter"
-                                class="form-control" min="0" max="7" required />
+                            <input asp-for="NumberOfBreakfastMeals" type="number" class="form-control" min="0" max="7"
+                                required />
                         </div>
                     </div>
                     <div class="col">
@@ -105,28 +105,49 @@
 @section Scripts {
     <script>
         function increaseFamilySize() {
-            const familySizeCounter = document.getElementById('FamilySize')
-            familySizeCounter.value = parseInt(familySizeCounter.value) + 1
+            // get all the member tiles
+            const visibleMembers = document.querySelectorAll('[id*="memberDiv"]');
+            const familySize = document.getElementById('FamilySize')
+
+            familySize.value = visibleMembers.length + 1
 
             const addMemberButton = document.getElementById('addMemberButton')
-            if (familySizeCounter.value >= 10) {
+            if (familySize.value >= 10) {
                 addMemberButton.disabled = true
             }
         }
 
+        async function removeUnusedMember(divToDelete) {
+            const visibleMembers = document.querySelectorAll('[id*="memberDiv"]');
+            const familyMembersContainer = document.getElementById('familyMembersContainer');
+            familyMembersContainer.removeChild(divToDelete)
+            let familySize = document.getElementById('FamilySize');
+
+            familySize.value = visibleMembers.length - 1;
+
+            const addMemberButton = document.getElementById('addMemberButton')
+            if (familySize.value < 10) {
+                addMemberButton.disabled = false
+            }
+            await renderMemberTiles();
+        }
+
+        async function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
         function toggleDisable(memberNumber) {
-            let memberForm = document.getElementById("member" + memberNumber)
+            let memberForm = document.getElementById("memberDiv" + memberNumber)
             memberForm.classList.toggle('bg-light')
 
-            const familySizeCounter = document.getElementById('FamilySize')
+            const familySize = document.getElementById('FamilySize')
             const inputs = memberForm.querySelectorAll('input, textarea, select, button');
 
             // inputs[0] is the checkbox, if its checked, decrement family size
             if (inputs[0].checked) {
-                familySizeCounter.value = parseInt(familySizeCounter.value) - 1
-            }
-            else {
-                familySizeCounter.value = parseInt(familySizeCounter.value) + 1
+                familySize.value = parseInt(familySize.value) - 1
+            } else {
+                familySize.value = parseInt(familySize.value) + 1
             }
 
             inputs.forEach(element => {
@@ -152,9 +173,9 @@
         document.getElementById('updateform').addEventListener('submit', function (event) {
             event.preventDefault();
 
-            const familySizeCounter = document.getElementById('FamilySize')
+            const familySize = document.getElementById('FamilySize')
 
-            if (parseInt(familySizeCounter.value) == 0) {
+            if (parseInt(familySize.value) <= 0) {
                 const feedbackElement = document.getElementById('familyMembersFeedback');
                 feedbackElement.classList.remove('d-none');
                 window.scrollTo({
@@ -172,16 +193,13 @@
             const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             document.getElementById('TimeZone').value = timeZone;
 
-            const familySizeInput = document.getElementById('FamilySize');
-            await renderMemberTiles(false)
+            await renderMemberTiles()
 
-            familySizeInput.addEventListener('input', async function () {
-                await renderMemberTiles(false)
-            });
-
+            // When we add a member, increase size and rerender
             var addMemberButton = document.getElementById('addMemberButton')
             addMemberButton.addEventListener('click', async function () {
-                await renderMemberTiles(false)
+                increaseFamilySize()
+                await renderMemberTiles()
             });
         });
 
@@ -191,25 +209,17 @@
             CUISINES: "Cuisines"
         };
 
-        async function renderMemberTiles(onlyNew) {
+        async function renderMemberTiles() {
             const familyMembersContainer = document.getElementById('familyMembersContainer');
 
-            let start = 0
+            // clear the member container on rerender
+            familyMembersContainer.innerHTML = '';
 
-            if (onlyNew) {
-                start = fSize - 1
-            } else {
-                // rerender everything so that it looks correct
-                familyMembersContainer.innerHTML = '';
-            }
-
-            const familySizeInput = document.getElementById('FamilySize');
-            const familySizeSelected = parseInt(familySizeInput.value);
-
+            const familySize = document.getElementById('FamilySize').value;
             const members = @Html.Raw(Json.Serialize(Model.Members));
             const fSize = @Model.FamilySize;
 
-            for (let member = start; member < familySizeSelected; member++) {
+            for (let member = 0; member < familySize; member++) {
 
                 const name = members[member] ? members[member]["name"] : "";
                 const note = members[member] ? members[member]["notes"] : "";
@@ -224,7 +234,7 @@
 
                 // Create main container div
                 const memberDiv = document.createElement('div');
-                memberDiv.id = "member" + (member + 1);
+                memberDiv.id = "memberDiv" + (member + 1);
                 memberDiv.className = 'p-3 mt-4 rounded border border-primary border-2 opacity-100';
 
                 // wrapper for top row of member tile
@@ -345,25 +355,6 @@
                 familyMembersContainer.appendChild(memberDiv);
                 populateSelectedConsiderations(member, members);
             }
-        }
-
-        async function removeUnusedMember(divToDelete) {
-            const familyMembersContainer = document.getElementById('familyMembersContainer');
-            console.log("remove ", divToDelete)
-            familyMembersContainer.removeChild(divToDelete)
-            let familySizeValue = document.getElementById('FamilySize');
-            familySizeValue.value = parseInt(familySizeValue.value) - 1;
-
-            const addMemberButton = document.getElementById('addMemberButton')
-            if (familySizeValue.value < 10) {
-                addMemberButton.disabled = false
-            }
-
-            await renderMemberTiles();
-        }
-
-        async function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
         }
 
         async function renderConsiderationsColumn(index, considerationType, considerationRow) {
