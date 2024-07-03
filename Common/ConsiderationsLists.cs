@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Chefster.Common;
 
+/*
+When adding items to these lists, you must also update the hard coded string member form in CreateProfile.cshtml
+*/
 public static class ConsiderationsLists
 {
     public static List<SelectListItem> RestrictionsList { get; } =

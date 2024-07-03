@@ -7,6 +7,7 @@ using Chefster.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using MongoDB.Bson;
 
 namespace Chefster.Controllers;
 
@@ -66,6 +67,8 @@ public class IndexController(
                     }
                 }
             };
+
+            Console.WriteLine(model.ToJson());
 
             return View(model);
         }
