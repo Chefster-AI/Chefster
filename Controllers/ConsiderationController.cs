@@ -66,9 +66,9 @@ public class ConsiderationController(ConsiderationsService considerationsService
     }
 
     [HttpPut("{ConsiderationId}")]
-    public ActionResult<ConsiderationsModel> UpdateNote(ConsiderationsUpdateDto consideration)
+    public ActionResult<ConsiderationsModel> UpdateNote(string ConsiderationId, ConsiderationsUpdateDto consideration)
     {
-        var updated = _considerationsService.UpdateConsideration(consideration);
+        var updated = _considerationsService.UpdateConsideration(ConsiderationId, consideration);
 
         if (!updated.Success)
         {

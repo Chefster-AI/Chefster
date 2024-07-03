@@ -117,12 +117,13 @@ public class ConsiderationsService(ChefsterDbContext context) : IConsiderations
     }
 
     public ServiceResult<ConsiderationsModel> UpdateConsideration(
+        string considerationId,
         ConsiderationsUpdateDto consideration
     )
     {
         try
         {
-            var existingConsideration = _context.Considerations.Find(consideration.Id);
+            var existingConsideration = _context.Considerations.Find(considerationId);
             if (existingConsideration == null)
             {
                 return ServiceResult<ConsiderationsModel>.ErrorResult(
@@ -138,7 +139,7 @@ public class ConsiderationsService(ChefsterDbContext context) : IConsiderations
         catch (SqlException e)
         {
             return ServiceResult<ConsiderationsModel>.ErrorResult(
-                $"Failed to update consideration with Id {consideration.Id}. Error: {e}"
+                $"Failed to update consideration with Id {considerationId}. Error: {e}"
             );
         }
     }

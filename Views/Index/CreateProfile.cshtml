@@ -7,7 +7,7 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-12 col-lg-8">
-            <form class="row g-3" action="/api/family" method="post">
+            <form id="createform" class="row g-3" action="/api/family" method="post">
                 <div class="fs-3">
                     Tell us a bit about yourself...
                 </div>
@@ -97,6 +97,13 @@
 
             familySizeInput.addEventListener('input', function () {
                 const familySizeSelected = parseInt(familySizeInput.value);
+                const form = document.getElementById("createform");
+                const json = {};
+                const formData = new FormData(form)
+                formData.forEach((value, key) => {
+                    json[key] = value;
+                });
+                console.log(json);
 
                 if (familySizeSelected > i) {
                     // add a new member with index as number of members
@@ -115,8 +122,8 @@
                                     <textarea name="Members[${i}].Notes" type="text" class="form-control mt-3"></textarea>
                                 </div>
                             </div>
-                            <div class="row my-3 ms-5">
-                                <div class="col-md-4">
+                            <div id="considerationRow" class="row my-3 ms-5">
+                                <div id="ConsiderationCol" class="col-md-4">
                                     <label class="form-label">Dietary Restrictions</label>
                                         <div class="form-check">
                                             <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[0].Selected" value="true">

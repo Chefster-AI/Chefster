@@ -39,6 +39,10 @@ var connString = Environment.GetEnvironmentVariable("SQL_CONN_STR");
 builder.Services.AddDbContext<ChefsterDbContext>(options =>
 {
     options.UseSqlServer(connString);
+    options.UseLoggerFactory(
+        LoggerFactory.Create(builder => builder.AddFilter((category, level) => false))
+    );
+    // options.UseInMemoryDatabase("TestDB");
 });
 
 //GlobalConfiguration.Configuration.UseSqlServerStorage("connection String");
@@ -51,6 +55,7 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<GordonService>();
 builder.Services.AddScoped<ViewToStringService>();
 builder.Services.AddScoped<PreviousRecipesService>();
+builder.Services.AddScoped<UpdateProfileService>();
 builder.Services.AddControllers();
 
 builder.Services.AddControllersWithViews();
@@ -69,15 +74,19 @@ builder.Services.AddHangfire(
     (sp, configuration) =>
     {
         configuration
-        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-        .UseSimpleAssemblyNameTypeSerializer()
-        .UseRecommendedSerializerSettings()
-        // .UseSqlServerStorage(connString);
-        .UseMongoStorage(
-            mongoClient,
-            "chefster-hangfire",
-            new MongoStorageOptions { MigrationOptions = migrationOptions, CheckConnection = false }
-        );
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            // .UseSqlServerStorage(connString);
+            .UseMongoStorage(
+                mongoClient,
+                "chefster-hangfire",
+                new MongoStorageOptions
+                {
+                    MigrationOptions = migrationOptions,
+                    CheckConnection = false
+                }
+            );
     }
 );
 

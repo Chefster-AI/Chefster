@@ -169,7 +169,11 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
             FamilySize = 10,
             GenerationDay = DayOfWeek.Tuesday,
             GenerationTime = new TimeSpan(100000),
-            PhoneNumber = "7778889999"
+            PhoneNumber = "7778889999",
+            NumberOfBreakfastMeals = 2,
+            NumberOfLunchMeals = 2,
+            NumberOfDinnerMeals = 4,
+            TimeZone = "merica"
         };
 
         _familyService.UpdateFamily("3", updated);
@@ -182,9 +186,14 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
         Assert.NotNull(family.Data);
         Assert.Equal("test3@email.com", family.Data.Email);
         Assert.Equal(10, family.Data.FamilySize);
+        Assert.Equal(2, family.Data.NumberOfBreakfastMeals);
+        Assert.Equal(2, family.Data.NumberOfLunchMeals);
+        Assert.Equal(4, family.Data.NumberOfDinnerMeals);
         Assert.Equal(DayOfWeek.Tuesday, family.Data.GenerationDay);
         Assert.Equal(new TimeSpan(100000), family.Data.GenerationTime);
         Assert.Equal("7778889999", family.Data.PhoneNumber);
+        Assert.Equal("merica", family.Data.TimeZone);
+
     }
 
     [Fact]

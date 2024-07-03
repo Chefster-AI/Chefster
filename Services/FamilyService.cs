@@ -114,10 +114,36 @@ public class FamilyService(ChefsterDbContext context) : IFamily
             existingFam.FamilySize = family.FamilySize;
             existingFam.GenerationDay = family.GenerationDay;
             existingFam.GenerationTime = family.GenerationTime;
+            existingFam.NumberOfBreakfastMeals = family.NumberOfBreakfastMeals;
+            existingFam.NumberOfLunchMeals = family.NumberOfLunchMeals;
+            existingFam.NumberOfDinnerMeals = family.NumberOfDinnerMeals;
+            existingFam.TimeZone = family.TimeZone;
 
             // we've edited the item in context, now just save it
             _context.SaveChanges();
             // return existing family since it should be the same as the new one "family"
+            return ServiceResult<FamilyModel>.SuccessResult(existingFam);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<FamilyModel>.ErrorResult($"Failed to update Family. Error: {e}");
+        }
+    }
+
+    public ServiceResult<FamilyModel> UpdateFamilySize(string id, int size)
+    {
+        try
+        {
+            // find the family
+            var existingFam = _context.Families.Find(id);
+            if (existingFam == null)
+            {
+                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
+            }
+
+            existingFam.FamilySize = size;
+            _context.SaveChanges();
+
             return ServiceResult<FamilyModel>.SuccessResult(existingFam);
         }
         catch (Exception e)
