@@ -42,10 +42,7 @@
                                 var profilePicture = User.Claims.FirstOrDefault(claim => claim.Type == "picture")?.Value;
 
                                 <img src="@profilePicture" class="rounded-circle my-1" style="width: 30px; height: 30px;">
-                                <div>
-                                    <div class="vr d-none d-lg-flex h-100 mx-lg-2 text-black"></div>
-                                    <hr class="d-lg-none my-2 text-black-50">
-                                </div>
+                                <div class="vr"></div>
                                 <form asp-controller="Account" asp-action="LogOut">
                                     <button class="btn btn-outline-secondary fs-5" type="submit">Log Out</button>
                                 </form>
@@ -55,8 +52,7 @@
                                 <form asp-controller="Account" asp-action="SignUp">
                                     <button class="btn btn-outline-primary fs-5" type="submit">Sign Up</button>
                                 </form>
-                                <div class="vr">
-                                </div>
+                                <div class="vr"></div>
                                 <form class="me-2" asp-controller="Account" asp-action="LogIn">
                                     <button class="btn btn-outline-secondary fs-5" type="submit">Log In</button>
                                 </form>
