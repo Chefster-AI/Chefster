@@ -3,7 +3,6 @@ using static Chefster.Common.Constants;
 using Chefster.Context;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
 namespace Chefster.Services;
 

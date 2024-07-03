@@ -3,7 +3,6 @@ using Chefster.Constants;
 using Chefster.Context;
 using Chefster.Interfaces;
 using Chefster.Models;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 namespace Chefster.Services;
