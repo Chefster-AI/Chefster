@@ -42,7 +42,7 @@
                     Family members
                 </div>
                 <hr class="border border-primary border-1 opacity-100">
-                <div id="familyMembersFeedback" class="text-danger fw-bold fs-4 d-none">
+                <div id="familyMembersFeedback" class="bg-danger text-white rounded mb-4 p-2 fw-bold fs-4 d-none">
                     Must have at least 1 family member!
                 </div>
                 <div id="familyMembersContainer" class="mt-0">
@@ -51,25 +51,28 @@
                     How many recipes do you need each week?
                 </div>
                 <hr class="border border-primary border-1 opacity-100">
+                <div id="mealCountFeedback" class="bg-danger text-white rounded mb-4 p-2 fw-bold fs-4 d-none">
+                    Must have at least 1 meal selected!
+                </div>
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfBreakfastMeals">Breakfast</label>
-                            <input asp-for="NumberOfBreakfastMeals" type="number" class="form-control" min="0" max="7"
+                            <input id="NumberOfBreakfastMeals" asp-for="NumberOfBreakfastMeals" type="number" class="form-control" min="0" max="7"
                                 required />
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfLunchMeals">Lunch</label>
-                            <input asp-for="NumberOfLunchMeals" type="number" class="form-control" min="0" max="7"
+                            <input id="NumberOfLunchMeals" asp-for="NumberOfLunchMeals" type="number" class="form-control" min="0" max="7"
                                 required />
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfDinnerMeals">Dinner</label>
-                            <input asp-for="NumberOfDinnerMeals" type="number" class="form-control" min="0" max="7"
+                            <input id="NumberOfDinnerMeals" asp-for="NumberOfDinnerMeals" type="number" class="form-control" min="0" max="7"
                                 required />
                         </div>
                     </div>
@@ -174,16 +177,38 @@
             event.preventDefault();
 
             const familySize = document.getElementById('FamilySize')
+            const breakfastCount = parseInt(document.getElementById('NumberOfBreakfastMeals').value)
+            const lunchCount = parseInt(document.getElementById('NumberOfLunchMeals').value)
+            const dinnerCount = parseInt(document.getElementById('NumberOfDinnerMeals').value)
 
+            const familyMembersFeedback = document.getElementById('familyMembersFeedback');
+            const mealCountFeedback = document.getElementById('mealCountFeedback');
+
+            let isValid = true
+            
+            // ensure at least 1 member
             if (parseInt(familySize.value) <= 0) {
-                const feedbackElement = document.getElementById('familyMembersFeedback');
-                feedbackElement.classList.remove('d-none');
+                familyMembersFeedback.classList.remove('d-none');
                 window.scrollTo({
                     top: 0,
                     behavior: 'smooth'
                 });
+                isValid = false
             }
             else {
+                familyMembersFeedback.classList.add('d-none');
+            }
+
+            // esnure at least 1 meal
+            if (breakfastCount + lunchCount + dinnerCount <= 0) {
+                mealCountFeedback.classList.remove('d-none');
+                isValid = false
+            }
+            else {
+                mealCountFeedback.classList.add('d-none')
+            }
+
+            if (isValid) {
                 this.submit();
             }
         });

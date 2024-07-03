@@ -37,23 +37,26 @@
                     How many recipes do you need each week?
                 </div>
                 <hr class="border border-primary border-1 opacity-100">
+                <div id="mealCountFeedback" class="bg-danger text-white rounded mb-4 p-2 fw-bold fs-4 d-none">
+                    Must have at least 1 meal selected!
+                </div>
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfBreakfastMeals">Breakfast</label>
-                            <input asp-for="NumberOfBreakfastMeals" type="number" class="form-control" min="0" max="7" value="0" required />
+                            <input id="NumberOfBreakfastMeals" asp-for="NumberOfBreakfastMeals" type="number" class="form-control" min="0" max="7" value="0" required />
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfLunchMeals">Lunch</label>
-                            <input asp-for="NumberOfLunchMeals" type="number" class="form-control" min="0" max="7" value="0" required />
+                            <input id="NumberOfLunchMeals" asp-for="NumberOfLunchMeals" type="number" class="form-control" min="0" max="7" value="0" required />
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfDinnerMeals">Dinner</label>
-                            <input asp-for="NumberOfDinnerMeals" type="number" class="form-control" min="0" max="7" value="7" required />
+                            <input id="NumberOfDinnerMeals" asp-for="NumberOfDinnerMeals" type="number" class="form-control" min="0" max="7" value="7" required />
                         </div>
                     </div>
                 </div>
@@ -86,6 +89,23 @@
 
 @section Scripts {
     <script>
+        document.getElementById('createform').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const breakfastCount = parseInt(document.getElementById('NumberOfBreakfastMeals').value)
+            const lunchCount = parseInt(document.getElementById('NumberOfLunchMeals').value)
+            const dinnerCount = parseInt(document.getElementById('NumberOfDinnerMeals').value)
+
+            // make sure they sign up for at least 1 meal
+            if (breakfastCount + lunchCount + dinnerCount <= 0) {
+                const feedbackElement = document.getElementById('mealCountFeedback');
+                feedbackElement.classList.remove('d-none');
+            }
+            else {
+                this.submit();
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function () {
             // set the time zone
             const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
