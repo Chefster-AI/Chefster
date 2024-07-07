@@ -15,25 +15,21 @@
     }
 </style>
 
-<div class="container">
+<div class="container" style="max-width: 1000px;">
     <div class="fs-1 text-center">Welcome to Chefster!</div>
     <hr>
     <div class="fs-4 note">What is Chefster?</div>
     <div class="fs-5 ps-3">
-        Chefster is an email service that sends you weekly recipes that fit your family's dietary wants and needs.
-        It takes into consideration any allergies, dietary restrictions, desired outcomes of your diet, and your favorite cuisines when creating your recipes.
-        Each week, the email will contain unique recipes with full instructions and an ingredients list.
-        Each email will also come with a grocery list.
-    </div>
-    <div class="fs-4 note">Our Mission</div>
-    <div class="fs-5 ps-3">
+        Chefster is a service that provides weekly recipes that fit your family's dietary wants and needs.
+        It takes into consideration any allergies, restrictions, desired outcomes of your diet, and your favorite foods when creating your recipes.
+        Each week, the email will contain unique recipes with full instructions and an ingredients lists, as well as a comprehensive grocery list.
         The goal of Chefster is to reduce time spent deciding what to cook and what ingredients you need from the store.
         We hope that you find Chefster to be a service that is convenient and a time saver!
     </div>
     <div class="fs-4 note">Example</div>
     <div class="fs-5 ps-3 mb-3">
         Here is what the email might look like for a family of four that wants two breakfast, two lunch, and two dinner recipes a week,
-        and one of the family members has a nut allergy.
+        and one of the family members, Joe, has a nut allergy.
     </div>
     <div class="mt-5">
         @await Html.PartialAsync("EmailTemplate", Model)

@@ -93,7 +93,7 @@ public class JobService(
         string previousRecipes = GetPreviousRecipesText(family.Id);
         string gordonPrompt = $"Create {mealCounts} recipes, each being {family.FamilySize} servings. Here is a list of the dietary considerations:\n{dietaryConsiderations}{previousRecipes}";
         Console.WriteLine("Gordon's Prompt:\n" + gordonPrompt);
-        return gordonPrompt.ToString();
+        return gordonPrompt;
     }
 
     private string GetMealCountsText(int numberOfBreakfastMeals, int numberOfLunchMeals, int numberOfDinnerMeals)
