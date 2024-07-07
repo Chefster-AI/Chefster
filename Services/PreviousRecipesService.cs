@@ -59,14 +59,14 @@ public class PreviousRecipesService(ChefsterDbContext context)
         }
     }
 
-    public ServiceResult<string> RealeaseRecipes(string familyId)
+    public ServiceResult<string> RealeaseRecipes(string familyId, int mealCount)
     {
         try
         {
             var newestEntries = _context.PreviousRecipes
                 .Where(e => e.FamilyId == familyId)
                 .OrderByDescending(e => e.CreatedAt)
-                .Take(KEEP_N_PREVIOUS_RECIPES)
+                .Take(GetNumberOfPreviousRecipes(mealCount))
                 .Select(e => e.RecipeId)
                 .ToList();
 
@@ -85,5 +85,10 @@ public class PreviousRecipesService(ChefsterDbContext context)
                 $"Failed to release previous recipes for family {familyId}. Error: {e}"
             );
         }
+    }
+
+    public int GetNumberOfPreviousRecipes(int mealCount)
+    {
+        return Math.Max(10, mealCount * 2);
     }
 }

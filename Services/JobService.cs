@@ -82,8 +82,9 @@ public class JobService(
         }
 
         var recipesToHold = ExtractRecipes(familyId, gordonResponse.Data!);
+        int mealCount = family!.NumberOfBreakfastMeals + family.NumberOfLunchMeals + family.NumberOfDinnerMeals;
         _previousRecipeService.HoldRecipes(familyId, recipesToHold);
-        _previousRecipeService.RealeaseRecipes(familyId);
+        _previousRecipeService.RealeaseRecipes(familyId, mealCount);
     }
 
     public string BuildGordonPrompt(FamilyModel family)

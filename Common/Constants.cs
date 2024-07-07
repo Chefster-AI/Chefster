@@ -4,8 +4,6 @@ namespace Chefster.Common;
 
 public class Constants
 {
-    public static int KEEP_N_PREVIOUS_RECIPES = 30;
-
     public static GordonResponseModel GORDON_RESPONSE_EXAMPLE = new GordonResponseModel
     {
         Notes = "All recipes are 4 servings and nut-free to accommodate Joe's restriction.",
