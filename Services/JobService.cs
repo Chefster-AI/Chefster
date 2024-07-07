@@ -36,7 +36,6 @@ public class JobService(
 
         if (TimeZoneInfo.TryConvertIanaIdToWindowsId(family.TimeZone, out string windowsTimeZoneId))
         {
-            Console.WriteLine(windowsTimeZoneId);
             timeZone = TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZoneId);
         }
         else
@@ -72,8 +71,6 @@ public class JobService(
         var gordonPrompt = BuildGordonPrompt(family!)!;
         var gordonResponse = await _gordonService.GetMessageResponse(gordonPrompt);
         var body = await _viewToStringService.ViewToStringAsync("EmailTemplate", gordonResponse.Data!);
-
-        Console.WriteLine("\n\nHtml:\n" + body);
 
         if (family != null && body != null)
         {
