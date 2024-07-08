@@ -229,7 +229,7 @@ public class IndexController(
         {
             GenerationDay = family!.GenerationDay,
             GenerationTime = family.GenerationTime,
-            PreviousRecipes = previousRecipes
+            PreviousRecipes = previousRecipes!
         };
 
         return View(model);

@@ -5,9 +5,36 @@
 }
 
 <div class="container">
-    <div>@Model.GenerationDay</div>
-    <div>@Model.GenerationTime</div>
-    @if (Model.PreviousRecipes != null)
+    <div id="countdown">
+    </div>
+    <div class="container text-center fs-1 my-5" style="max-width: 800px">
+        <div class="row fs-2 mt-5 mb-4">
+            <div class="col-12">
+                You will receive your custom recipes in:
+            </div>
+        </div>
+        <div class="row gap-2 mt-4">
+            <div class="col-0 col-md-1 col-lg-1 col-xl-1"></div>
+            <div class="col-2 border border-3 border-primary rounded-3 p-4 vstack bg-light">
+                <div id="days"></div>
+                <div class="fs-5">days</div>
+            </div>
+            <div class="col-2 border border-3 border-primary rounded-3 p-4 vstack bg-light">
+                <div id="hours"></div>
+                <div class="fs-5">hours</div>
+            </div>
+            <div class="col-2 border border-3 border-primary rounded-3 p-4 vstack bg-light">
+                <div id="minutes"></div>
+                <div class="fs-5">minutes</div>
+            </div>
+            <div class="col-2 border border-3 border-primary rounded-3 p-4 vstack bg-light">
+                <div id="seconds"></div>
+                <div class="fs-5">seconds</div>
+            </div>
+            <div class="col-0 col-md-1 col-lg-1 col-xl-1"></div>
+        </div>
+    </div>
+    @if (Model.PreviousRecipes.Count > 0)
     {
         <div>Previous Recipes:</div>
         foreach (var recipe in Model.PreviousRecipes)
@@ -15,8 +42,58 @@
             <div>@recipe.DishName</div>
         }
     }
-    else
-    {
-        <div>no previous recipes</div>
-    }
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const daysElement = document.getElementById('days')
+            const hoursElement = document.getElementById('hours')
+            const minutesElement = document.getElementById('minutes')
+            const secondsElement = document.getElementById('seconds')
+
+            function getNextTargetDate(targetDay, targetTime) {
+                let now = new Date();
+                let daysUntilTarget = (targetDay - now.getDay() + 7) % 7;
+                let nextTarget = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilTarget);
+                nextTarget.setHours(targetTime.hours, targetTime.minutes, targetTime.seconds);
+                
+                if (nextTarget <= now) {
+                    nextTarget.setDate(nextTarget.getDate() + 7);
+                }
+                
+                return nextTarget;
+            }
+
+            function updateCountdown() {
+                const targetDay = @((int)Model.GenerationDay);
+                const targetTime = { 
+                    hours: @Model.GenerationTime.Hours, 
+                    minutes: @Model.GenerationTime.Minutes, 
+                    seconds: @Model.GenerationTime.Seconds 
+                };
+
+                const nextTarget = getNextTargetDate(targetDay, targetTime);
+                const now = new Date();
+                const difference = nextTarget - now;
+
+                if (difference > 0) {
+                    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+                    daysElement.innerHTML = days
+                    hoursElement.innerHTML = hours
+                    minutesElement.innerHTML = minutes
+                    secondsElement.innerHTML = seconds
+                } else {
+                    document.getElementById('countdown').innerHTML = "It's time!";
+                }
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        })
+    </script>
+}
