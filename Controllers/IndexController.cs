@@ -14,14 +14,16 @@ namespace Chefster.Controllers;
 // use this to make swagger ignore this controller if its not really an api
 [ApiExplorerSettings(IgnoreApi = true)]
 public class IndexController(
+    ConsiderationsService considerationsService,
     FamilyService familyService,
     MemberService memberService,
-    ConsiderationsService considerationsService
+    PreviousRecipesService previousRecipesService
 ) : Controller
 {
+    private readonly ConsiderationsService _considerationService = considerationsService;
     private readonly FamilyService _familyService = familyService;
     private readonly MemberService _memberService = memberService;
-    private readonly ConsiderationsService _considerationService = considerationsService;
+    private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
 
     [Authorize]
     [Route("/chat")]
@@ -199,7 +201,7 @@ public class IndexController(
     [Route("/email")]
     public IActionResult EmailTemplate()
     {
-        return View(Common.Constants.GORDON_RESPONSE_EXAMPLE);
+        return View(Constants.GORDON_RESPONSE_EXAMPLE);
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -213,6 +215,24 @@ public class IndexController(
     public IActionResult Index()
     {
         return View(Common.Constants.GORDON_RESPONSE_EXAMPLE);
+    }
+
+    [Authorize]
+    [Route("/overview")]
+    public IActionResult Overview()
+    {
+        var id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        var family = _familyService.GetById(id!).Data;
+        var previousRecipes = _previousRecipeService.GetPreviousRecipes(id!).Data;
+
+        var model = new OverviewViewModel
+        {
+            GenerationDay = family!.GenerationDay,
+            GenerationTime = family.GenerationTime,
+            PreviousRecipes = previousRecipes
+        };
+
+        return View(model);
     }
 
     [Route("/privacy")]

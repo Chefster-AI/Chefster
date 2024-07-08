@@ -1,0 +1,22 @@
+@model Chefster.ViewModels.OverviewViewModel
+
+@{
+    ViewData["Title"] = "Overview";
+}
+
+<div class="container">
+    <div>@Model.GenerationDay</div>
+    <div>@Model.GenerationTime</div>
+    @if (Model.PreviousRecipes != null)
+    {
+        <div>Previous Recipes:</div>
+        foreach (var recipe in Model.PreviousRecipes)
+        {
+            <div>@recipe.DishName</div>
+        }
+    }
+    else
+    {
+        <div>no previous recipes</div>
+    }
+</div>
