@@ -109,7 +109,10 @@
     <div class="email-container">
         <div class="title">Here are your recipes for the week! <a href="#grocery-list" class="jump-link">Jump to Grocery List</a></div>
 
-        <div class="notes">@Model.Notes</div>
+        @if (Model.Notes != "")
+        {
+            <div class="notes">@Model.Notes</div>
+        }
 
         @if (Model.BreakfastRecipes!.Count > 0) {
             <div class="subtitle">Breakfast</div>
