@@ -301,13 +301,13 @@
 
                 const notesTextarea = document.createElement('textarea');
                 notesTextarea.setAttribute('name', `Members[${member}].Notes`);
-                notesTextarea.className = 'form-control mt-3 col-10';
+                notesTextarea.className = 'form-control mt-3 col-11';
                 notesTextarea.type = "text"
                 notesTextarea.value = note;
                 notesTextarea.id = `Members[${member}].Notes`
 
                 const textwrapper = document.createElement('div')
-                textwrapper.className = 'col-8'
+                textwrapper.className = 'col-11'
                 textwrapper.appendChild(notesTextarea);
 
                 const inputwrapper = document.createElement('div')
@@ -341,7 +341,7 @@
                 } else {
                     if (member > fSize - 1) {
                         const removedUnused = document.createElement('button');
-                        removedUnused.className = 'btn btn-danger w-50 me-3';
+                        removedUnused.className = 'btn btn-danger w-100 me-3';
                         removedUnused.innerHTML = 'Remove';
                         removedUnused.type = 'button';
 
@@ -357,8 +357,12 @@
                 rowDiv.appendChild(nameLabel);
                 rowDiv.appendChild(inputwrapper);
                 rowDiv.appendChild(deleteWrapper)
-                rowDiv.appendChild(notesLabel);
-                rowDiv.appendChild(textwrapper);
+
+                // create notes row
+                const notesRow = document.createElement('div');
+                notesRow.className = 'row my-3';
+                notesRow.appendChild(notesLabel);
+                notesRow.appendChild(textwrapper);
 
                 // create a new one for each member besides the first since its already done above
                 const considerationRow = document.createElement('div');
@@ -367,6 +371,7 @@
 
                 // Append rowDiv to the main member tile div
                 memberDiv.appendChild(rowDiv);
+                memberDiv.appendChild(notesRow)
                 memberDiv.appendChild(considerationRow)
 
                 // render all considerations
