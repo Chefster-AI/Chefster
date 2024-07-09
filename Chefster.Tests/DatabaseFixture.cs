@@ -1,3 +1,4 @@
+using Chefster.Common;
 using Chefster.Context;
 using Chefster.Models;
 using Chefster.Services;
@@ -28,7 +29,6 @@ public class DatabaseFixture
     // Add items to database for testing
     public void Initialize()
     {
-
         Context.Families.AddRange(
             new FamilyModel
             {
@@ -39,7 +39,10 @@ public class DatabaseFixture
                 GenerationDay = DayOfWeek.Friday,
                 GenerationTime = new TimeSpan(10000),
                 PhoneNumber = "0001112222",
-                TimeZone="America/Chicago"
+                TimeZone = "America/Chicago",
+                NumberOfBreakfastMeals = 2,
+                NumberOfLunchMeals = 3,
+                NumberOfDinnerMeals = 5
             },
             new FamilyModel
             {
@@ -50,7 +53,10 @@ public class DatabaseFixture
                 GenerationDay = DayOfWeek.Monday,
                 GenerationTime = new TimeSpan(19000),
                 PhoneNumber = "5556664444",
-                TimeZone="America/Chicago"
+                TimeZone = "America/Chicago",
+                NumberOfBreakfastMeals = 2,
+                NumberOfLunchMeals = 3,
+                NumberOfDinnerMeals = 5
             }
         );
 
@@ -73,7 +79,7 @@ public class DatabaseFixture
                 FamilyId = "1",
                 Name = "testName3"
             },
-             new MemberModel
+            new MemberModel
             {
                 MemberId = "mem4",
                 FamilyId = "4",
@@ -86,7 +92,7 @@ public class DatabaseFixture
             {
                 ConsiderationId = "consider1",
                 MemberId = "mem1",
-                Type = Enums.ConsiderationsEnum.Goal,
+                Type = ConsiderationsEnum.Goal,
                 Value = "Lose weight",
                 CreatedAt = DateTime.Now.AddDays(-4)
             },
@@ -94,7 +100,7 @@ public class DatabaseFixture
             {
                 ConsiderationId = "consider2",
                 MemberId = "mem1",
-                Type = Enums.ConsiderationsEnum.Note,
+                Type = ConsiderationsEnum.Note,
                 Value = "Gain weight",
                 CreatedAt = DateTime.Now.AddDays(-8)
             },
@@ -102,7 +108,7 @@ public class DatabaseFixture
             {
                 ConsiderationId = "consider3",
                 MemberId = "mem4",
-                Type = Enums.ConsiderationsEnum.Restriction,
+                Type = ConsiderationsEnum.Restriction,
                 Value = "More energy",
                 CreatedAt = DateTime.Now.AddDays(-2)
             }

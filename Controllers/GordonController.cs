@@ -57,7 +57,7 @@ public class GordonController(
         //         return BadRequest($"Failed to get Gordon response. Error: {response.Error}");
         //     }
 
-        await _jobService.GatherAndSendEmail(familyId);
+        await _jobService.GenerateAndSendRecipes(familyId);
 
         //return Ok();
     }

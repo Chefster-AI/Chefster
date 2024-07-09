@@ -1,95 +1,6 @@
 using Chefster.Models;
-using Xunit;
 
 namespace Chefster.Tests;
-
-public class DatabaseFixture : IAsyncLifetime
-{
-    public ChefsterDbContext Context { get; private set; }
-
-    public DatabaseFixture()
-    {
-        var options = new DbContextOptionsBuilder<ChefsterDbContext>()
-            .UseInMemoryDatabase(databaseName: "TEST_family_service_db")
-            .Options;
-
-        Context = new ChefsterDbContext(options);
-        InitializeAsync();
-    }
-
-    // create the in memory DB with one entry
-    public Task InitializeAsync()
-    {
-        Context.Database.EnsureDeleted();
-        Context.Families.AddRange(
-            new FamilyModel
-            {
-                Id = "1",
-                CreatedAt = DateTime.Now,
-                Email = "test@email.com",
-                FamilySize = 2,
-                NumberOfBreakfastMeals = 0,
-                NumberOfLunchMeals = 0,
-                NumberOfDinnerMeals = 7,
-                GenerationDay = DayOfWeek.Friday,
-                GenerationTime = new TimeSpan(10000),
-                TimeZone = "America/Chicago",
-                PhoneNumber = "0001112222"
-            },
-            new FamilyModel
-            {
-                Id = "4",
-                CreatedAt = DateTime.Now,
-                Email = "test4@email.com",
-                FamilySize = 8,
-                NumberOfBreakfastMeals = 0,
-                NumberOfLunchMeals = 0,
-                NumberOfDinnerMeals = 7,
-                GenerationDay = DayOfWeek.Monday,
-                GenerationTime = new TimeSpan(19000),
-                TimeZone = "America/Chicago",
-                PhoneNumber = "5556664444"
-            }
-        );
-
-        Context.Members.AddRange(
-            new MemberModel
-            {
-                MemberId = "mem1",
-                FamilyId = "1",
-                Name = "testName"
-            },
-            new MemberModel
-            {
-                MemberId = "mem2",
-                FamilyId = "1",
-                Name = "testName2"
-            },
-            new MemberModel
-            {
-                MemberId = "mem3",
-                FamilyId = "1",
-                Name = "testName3"
-            }
-        );
-        Context.SaveChanges();
-
-        // detach all entities from context so that we can freely add and delete what we want
-        foreach (var entity in Context.ChangeTracker.Entries().ToList())
-        {
-            entity.State = EntityState.Detached;
-        }
-        return Task.CompletedTask;
-    }
-
-    // cleanup db after test run. Runs automatically
-    public Task DisposeAsync()
-    {
-        Context.Database.EnsureDeleted();
-        Context.Dispose();
-        return Task.CompletedTask;
-    }
-}
 
 public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<DatabaseFixture>
 {
@@ -107,9 +18,8 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
         Assert.Equal(DayOfWeek.Friday, family.Data.GenerationDay);
         Assert.Equal(new TimeSpan(10000), family.Data.GenerationTime);
         Assert.Equal("0001112222", family.Data.PhoneNumber);
-       
+
         _fixture.Cleanup();
- 
     }
 
     [Fact]
@@ -198,7 +108,7 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
         Assert.Equal(new TimeSpan(100000), family.Data.GenerationTime);
         Assert.Equal("7778889999", family.Data.PhoneNumber);
         Assert.Equal("merica", family.Data.TimeZone);
-        
+
         _fixture.Cleanup();
     }
 

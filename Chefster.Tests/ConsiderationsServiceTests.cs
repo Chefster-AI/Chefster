@@ -1,4 +1,4 @@
-using Chefster.Enums;
+using Chefster.Common;
 using Chefster.Models;
 using Xunit;
 
