@@ -4,20 +4,21 @@ namespace Chefster.Models;
 
 public class GordonResponseModel
 {
-    public required List<GordonRecipeModel?> Response { get; set; }
-    public required bool Success { get; set; }
-}
-
-public class GordonRecipeModel
-{
-    [JsonProperty("allIngredients")]
-    public required List<string> AllIngredients { get; set; }
+    [JsonProperty("groceryList")]
+    public required List<string> GroceryList { get; set; }
 
     [JsonProperty("notes")]
     public required string Notes { get; set; }
 
-    [JsonProperty("recipes")]
-    public required List<Recipe> Recipes { get; set; }
+    [JsonProperty("breakfastRecipes")]
+    public List<Recipe>? BreakfastRecipes { get; set; }
+
+    [JsonProperty("lunchRecipes")]
+    public List<Recipe>? LunchRecipes { get; set; }
+
+    [JsonProperty("dinnerRecipes")]
+    public List<Recipe>? DinnerRecipes { get; set; }
+
 
     public class Recipe
     {

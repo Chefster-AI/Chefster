@@ -1,0 +1,34 @@
+@{
+    ViewData["Title"] = "Thank You";
+    
+    var hour = Model.GenerationTime.Hours % 12;
+    if (hour == 0)
+    {
+        hour = 12;
+    }
+    var amPm = Model.GenerationTime.Hours < 12 ? "AM" : "PM";
+    var time = $"{hour}:{Model.GenerationTime.Minutes:D2} {amPm}";
+}
+
+@model Chefster.ViewModels.ThankYouViewModel
+
+<div class="d-flex justify-content-center align-items-center text-center fs-3 pt-5">
+    <div class="vstack w-50 gap-3 mt-5 pt-5">
+        <div class="text-success fs-1 fw-bold">
+            You have successfully signed up!
+        </div>
+        <div class="fs-4">
+            Thank you for signing up for Chefster. We hope you appreciate this service as much as we appreciate you.
+        </div>
+        <hr>
+        <div class="fw-bold">
+            @Model.EmailAddress
+        </div>
+        <div>
+            will receive weekly recipes at the following time:
+        </div>
+        <div class="fw-bold">
+            @Model.GenerationDay, @time
+        </div>
+    </div>
+</div>  

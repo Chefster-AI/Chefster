@@ -2,8 +2,9 @@ using System.Text;
 using System.Text.Json;
 using Chefster.Common;
 using Chefster.Models;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Chefster.Services;
 
@@ -61,7 +62,7 @@ public class GordonService(IHttpClientFactory httpClientFactory)
         //create request body
         var jsonBody = new { role = "user", content = considerations };
         var strContent = new StringContent(
-            JsonSerializer.Serialize(jsonBody),
+            System.Text.Json.JsonSerializer.Serialize(jsonBody),
             Encoding.UTF8,
             "application/json"
         );
@@ -93,7 +94,7 @@ public class GordonService(IHttpClientFactory httpClientFactory)
 
         var jsonBody = new { assistant_id = ASSIST_ID };
         var strContent = new StringContent(
-            JsonSerializer.Serialize(jsonBody),
+            System.Text.Json.JsonSerializer.Serialize(jsonBody),
             Encoding.UTF8,
             "application/json"
         );
@@ -193,85 +194,34 @@ public class GordonService(IHttpClientFactory httpClientFactory)
             }
 
             // wait a few seconds before trying again
-            await Task.Delay(3000);
+            await Task.Delay(5000);
         } while (attempts != MAX_ATTEMPTS);
 
         // try to grab the response
-        var gordonResponse = await httpClient.GetAsync(
+        var response = await httpClient.GetAsync(
             $"https://api.openai.com/v1/threads/{threadId}/messages"
         );
-        var content = await gordonResponse.Content.ReadAsStringAsync();
 
-        // fail out if we couldnt get anything
-        if (attempts == MAX_ATTEMPTS || content == null)
+        var content = await response.Content.ReadAsStringAsync();
+
+        var json = JsonConvert.DeserializeObject<JObject>(content);
+
+        var jsonString = json!["data"]![0]!["content"]![0]!["text"]!["value"]!.ToString();
+
+        var gordonResponse = JsonConvert.DeserializeObject<GordonResponseModel>(jsonString);
+
+        Console.WriteLine("Response Content:\n" + jsonString);
+
+        if (gordonResponse != null)
+        {
+            return ServiceResult<GordonResponseModel>.SuccessResult(gordonResponse);
+        }
+        else
         {
             Console.WriteLine($"Failed to retrieve Gordon response");
             return ServiceResult<GordonResponseModel>.ErrorResult(
                 "Failed to retrieve Gordon response"
             );
-        }
-
-        // get final gordon response
-        var json = JsonDocument.Parse(content).RootElement;
-
-        try
-        {
-            var result = json.GetProperty("data")[0].GetProperty("content")[0].ToString();
-            if (result == null)
-            {
-                return ServiceResult<GordonResponseModel>.ErrorResult(
-                    "Gordons response content was null. Exiting"
-                );
-            }
-            var converted = ConvertGordonResponse(result);
-
-            if (converted.IsNullOrEmpty())
-            {
-                return ServiceResult<GordonResponseModel>.ErrorResult("");
-            }
-            return ServiceResult<GordonResponseModel>.SuccessResult(
-                new GordonResponseModel { Response = converted, Success = true }
-            );
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to grab final result from run. Error: {ex}");
-            return ServiceResult<GordonResponseModel>.ErrorResult(
-                $"Failed to grab final result from run. Result object did not contain the correct json keys. Error: {ex}"
-            );
-        }
-    }
-
-    private static List<GordonRecipeModel?> ConvertGordonResponse(string response)
-    {
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true
-        };
-
-        var recipes = new List<GordonRecipeModel?>();
-        try
-        {
-            var json = JsonDocument
-                .Parse(response)
-                .RootElement.GetProperty("text")
-                .GetProperty("value")
-                .ToString();
-            var recipes_json = new List<string> { json };
-
-            foreach (var r in recipes_json)
-            {
-                var recipe = JsonSerializer.Deserialize<GordonRecipeModel>(r, options);
-                recipes.Add(recipe);
-            }
-
-            return recipes;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"Failure: {e}");
-            return [];
         }
     }
 }

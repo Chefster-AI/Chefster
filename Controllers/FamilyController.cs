@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Chefster.Common;
 using Chefster.Models;
 using Chefster.Services;
 using Chefster.ViewModels;
@@ -13,15 +14,22 @@ namespace Chefster.Controllers;
 [ApiController]
 public class FamilyController(
     ConsiderationsService considerationsService,
+    EmailService emailService,
     FamilyService familyService,
     MemberService memberService,
-    JobService jobService
+    JobService jobService,
+    ViewToStringService viewToStringService,
+    UpdateProfileService updateProfileService
 ) : ControllerBase
 {
     private readonly ConsiderationsService _considerationsService = considerationsService;
+    private readonly EmailService _emailService = emailService;
     private readonly FamilyService _familyService = familyService;
     private readonly MemberService _memberService = memberService;
     private readonly JobService _jobService = jobService;
+    private readonly ViewToStringService _viewToStringService = viewToStringService;
+
+    private readonly UpdateProfileService _updateProfileService = updateProfileService;
 
     [HttpGet("{Id}")]
     public ActionResult<FamilyModel> GetFamily(string Id)
@@ -44,17 +52,26 @@ public class FamilyController(
     }
 
     [HttpPost]
-    public IActionResult CreateFamily([FromForm] FamilyViewModel Family)
+    public async Task<ActionResult> CreateFamily([FromForm] FamilyViewModel Family)
     {
+        var familyId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value!;
+
+        if (familyId == null)
+        {
+            return BadRequest("FamilyId was null when creating family");
+        }
         // create the new family
         var NewFamily = new FamilyModel
         {
             // these shouldn't  be null so we added a "!"
-            Id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value!,
+            Id = familyId,
             Email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!,
             CreatedAt = DateTime.UtcNow,
             PhoneNumber = Family.PhoneNumber,
             FamilySize = Family.FamilySize,
+            NumberOfBreakfastMeals = Family.NumberOfBreakfastMeals,
+            NumberOfLunchMeals = Family.NumberOfLunchMeals,
+            NumberOfDinnerMeals = Family.NumberOfDinnerMeals,
             GenerationDay = Family.GenerationDay,
             GenerationTime = Family.GenerationTime,
             TimeZone = Family.TimeZone,
@@ -67,71 +84,24 @@ public class FamilyController(
             _jobService.CreateorUpdateEmailJob(created.Data!.Id);
         }
 
-        foreach (MemberViewModel Member in Family.Members)
+        // create all members and considerations for family
+        await CreateMembersAndConsiderations(Family);
+
+        // TODO: send confirmation email
+        var body = await _viewToStringService.ViewToStringAsync(
+            "ConfirmationEmail",
+            new { FamilyId = NewFamily.Id }
+        );
+        _emailService.SendEmail(NewFamily.Email, "Thanks for signing up for Chefster!", body);
+
+        var model = new ThankYouViewModel
         {
-            // create the new member
-            var NewMember = new MemberCreateDto
-            {
-                FamilyId = User
-                    .Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)
-                    ?.Value!,
-                Name = Member.Name
-            };
+            EmailAddress = NewFamily.Email,
+            GenerationDay = NewFamily.GenerationDay,
+            GenerationTime = NewFamily.GenerationTime
+        };
 
-            MemberModel CreatedMember = _memberService.CreateMember(NewMember).Data!;
-
-            // and their considerations
-            foreach (SelectListItem r in Member.Restrictions)
-            {
-                if (r.Selected)
-                {
-                    // create a new consideration
-                    ConsiderationsCreateDto restriction =
-                        new()
-                        {
-                            MemberId = CreatedMember.MemberId,
-                            Type = Enums.ConsiderationsEnum.Restriction,
-                            Value = r.Text
-                        };
-
-                    _considerationsService.CreateConsideration(restriction);
-                }
-            }
-
-            foreach (SelectListItem g in Member.Goals)
-            {
-                if (g.Selected)
-                {
-                    ConsiderationsCreateDto goal =
-                        new()
-                        {
-                            MemberId = CreatedMember.MemberId,
-                            Type = Enums.ConsiderationsEnum.Goal,
-                            Value = g.Text
-                        };
-
-                    _considerationsService.CreateConsideration(goal);
-                }
-            }
-
-            foreach (SelectListItem c in Member.Cuisines)
-            {
-                if (c.Selected)
-                {
-                    ConsiderationsCreateDto cuisine =
-                        new()
-                        {
-                            MemberId = CreatedMember.MemberId,
-                            Type = Enums.ConsiderationsEnum.Cuisine,
-                            Value = c.Text
-                        };
-
-                    _considerationsService.CreateConsideration(cuisine);
-                }
-            }
-        }
-
-        return RedirectToAction("Index", "Chat");
+        return RedirectToAction("ThankYou", "Index", model);
     }
 
     [HttpDelete("{Id}")]
@@ -161,5 +131,118 @@ public class FamilyController(
         _jobService.CreateorUpdateEmailJob(updated.Data!.Id);
 
         return Ok(updated.Data);
+    }
+
+    // this function is specificly for updating through a form since forms only support POST and PUT
+    [HttpPost("/api/update/family")]
+    public async Task<ActionResult<FamilyModel>> PostUpdateFamily(
+        [FromForm] FamilyUpdateViewModel family
+    )
+    {
+        var familyId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+        if (familyId == null)
+        {
+            return Unauthorized("No Authorized User. Denied");
+        }
+
+        var updatedFamily = new FamilyUpdateDto
+        {
+            PhoneNumber = family.PhoneNumber,
+            FamilySize = family.FamilySize,
+            NumberOfBreakfastMeals = family.NumberOfBreakfastMeals,
+            NumberOfLunchMeals = family.NumberOfLunchMeals,
+            NumberOfDinnerMeals = family.NumberOfDinnerMeals,
+            GenerationDay = family.GenerationDay,
+            GenerationTime = family.GenerationTime,
+            TimeZone = family.TimeZone,
+        };
+
+        var updated = _familyService.UpdateFamily(familyId, updatedFamily);
+
+        Console.WriteLine("WE SHOULD HAVE UPDATED");
+
+        if (!updated.Success)
+        {
+            return BadRequest($"Error: {updated.Error}");
+        }
+
+        // once we updated successfully, not now update the job with new generation times
+        _jobService.CreateorUpdateEmailJob(updated.Data!.Id);
+
+        // Update old members and create new considerations
+        await _updateProfileService.UpdateOrCreateMembersAndCreateConsiderations(familyId, family);
+
+        // probably redirect to summary page
+        return RedirectToAction("Index", "Profile");
+    }
+
+    private Task CreateMembersAndConsiderations(FamilyViewModel Family)
+    {
+        foreach (MemberViewModel Member in Family.Members)
+        {
+            // create the new member
+            var NewMember = new MemberCreateDto
+            {
+                FamilyId = User
+                    .Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)
+                    ?.Value!,
+                Name = Member.Name,
+                Notes = Member.Notes
+            };
+
+            MemberModel CreatedMember = _memberService.CreateMember(NewMember).Data!;
+
+            // and their considerations
+            foreach (SelectListItem r in Member.Restrictions)
+            {
+                if (r.Selected)
+                {
+                    // create a new consideration
+                    ConsiderationsCreateDto restriction =
+                        new()
+                        {
+                            MemberId = CreatedMember.MemberId,
+                            Type = ConsiderationsEnum.Restriction,
+                            Value = r.Text
+                        };
+
+                    _considerationsService.CreateConsideration(restriction);
+                }
+            }
+
+            foreach (SelectListItem g in Member.Goals)
+            {
+                if (g.Selected)
+                {
+                    ConsiderationsCreateDto goal =
+                        new()
+                        {
+                            MemberId = CreatedMember.MemberId,
+                            Type = ConsiderationsEnum.Goal,
+                            Value = g.Text
+                        };
+
+                    _considerationsService.CreateConsideration(goal);
+                }
+            }
+
+            foreach (SelectListItem c in Member.Cuisines)
+            {
+                if (c.Selected)
+                {
+                    ConsiderationsCreateDto cuisine =
+                        new()
+                        {
+                            MemberId = CreatedMember.MemberId,
+                            Type = ConsiderationsEnum.Cuisine,
+                            Value = c.Text
+                        };
+
+                    _considerationsService.CreateConsideration(cuisine);
+                }
+            }
+        }
+        return Task.CompletedTask;
     }
 }

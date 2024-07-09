@@ -81,6 +81,24 @@ public class ConsiderationsService(ChefsterDbContext context) : IConsiderations
         }
     }
 
+    public ServiceResult<List<ConsiderationsModel>> GetMemberConsiderations(string memberId)
+    {
+        try
+        {
+            var considerations = _context
+                .Considerations.Where(c => c.MemberId == memberId)
+                .ToList();
+
+            return ServiceResult<List<ConsiderationsModel>>.SuccessResult(considerations);
+        }
+        catch (SqlException e)
+        {
+            return ServiceResult<List<ConsiderationsModel>>.ErrorResult(
+                $"Failed to get considerations for member with id {memberId}. Error: {e}"
+            );
+        }
+    }
+
     public ServiceResult<List<ConsiderationsModel>> GetAllFamilyConsiderations(string familyId)
     {
         try

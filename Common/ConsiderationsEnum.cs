@@ -1,4 +1,4 @@
-namespace Chefster.Enums;
+namespace Chefster.Common;
 
 public enum ConsiderationsEnum
 {

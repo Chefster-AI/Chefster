@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type="text/css">
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .logo {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+        .divider {
+            border: none;
+            border-top: 1px solid #cccccc;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 24px;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <!-- Include logo for recognition -->            
+            <p>Thank you for signing up for the Chefster service.</p>
+            
+            <hr class="divider">
+            
+            <p>If this was a mistake, or it was not you that signed up, unsubscribe below.</p>
+
+            <!-- TODO: the issue is if the unsub button is an 'a' tag dressed as a button, the text appears purple,
+            if the unsub button is a proper form with the button as a submit, it requires a confirmation via a pop up and its spooky for users -->
+            
+            <form action="http://localhost:5144/unsubscribe/@Model.FamilyId" method="post">
+                <button type="submit" class="button">Unsubscribe</button>
+            </form>
+            @* 
+            <form action="https://chefster.azurewebsites.net/unsubscribe/@ViewBag.FamilyId" method="post">
+                <button type="submit" class="button">Unsubscribe</button>
+            </form>
+            *@
+        </div>
+    </div>
+</body>
+</html>

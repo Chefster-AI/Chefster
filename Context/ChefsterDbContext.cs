@@ -9,6 +9,7 @@ public class ChefsterDbContext(DbContextOptions<ChefsterDbContext> options) : Db
     public DbSet<FamilyModel> Families { get; set; }
     public DbSet<MemberModel> Members { get; set; }
     public DbSet<ConsiderationsModel> Considerations { get; set; }
+    public DbSet<PreviousRecipeModel> PreviousRecipes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder options)
     {
@@ -16,5 +17,6 @@ public class ChefsterDbContext(DbContextOptions<ChefsterDbContext> options) : Db
         options.Entity<FamilyModel>().ToTable("Families");
         options.Entity<MemberModel>().ToTable("Members");
         options.Entity<ConsiderationsModel>().ToTable("Considerations");
+        options.Entity<PreviousRecipeModel>().ToTable("PreviousRecipes");
     }
 }

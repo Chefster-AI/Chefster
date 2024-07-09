@@ -1,6 +1,6 @@
 namespace Chefster.ViewModels;
 
-public class FamilyViewModel
+public class FamilyUpdateViewModel
 {
     public required string PhoneNumber { get; set; }
     public required int FamilySize { get; set; }
@@ -10,5 +10,5 @@ public class FamilyViewModel
     public required DayOfWeek GenerationDay { get; set; }
     public required TimeSpan GenerationTime { get; set; }
     public required string TimeZone { get; set; }
-    public required List<MemberViewModel> Members { get; set; }
+    public required List<MemberUpdateViewModel> Members { get; set; }
 }

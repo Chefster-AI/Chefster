@@ -1,9 +1,8 @@
- using Chefster.Common;
+using Chefster.Common;
 using Chefster.Constants;
 using Chefster.Context;
 using Chefster.Interfaces;
 using Chefster.Models;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 namespace Chefster.Services;
@@ -28,7 +27,8 @@ public class MemberService(ChefsterDbContext context, FamilyService familyServic
         {
             MemberId = Guid.NewGuid().ToString("N"), // make a random unique id for now
             FamilyId = member.FamilyId,
-            Name = member.Name
+            Name = member.Name,
+            Notes = member.Notes
         };
 
         try
@@ -107,6 +107,7 @@ public class MemberService(ChefsterDbContext context, FamilyService familyServic
             }
 
             existingMem.Name = member.Name;
+            existingMem.Notes = member.Notes;
 
             _context.SaveChanges();
             return ServiceResult<MemberModel>.SuccessResult(existingMem);

@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using Chefster.Enums;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Chefster.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace Chefster.Models;

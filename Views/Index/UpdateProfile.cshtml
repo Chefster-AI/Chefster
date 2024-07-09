@@ -1,0 +1,454 @@
+@{
+    ViewData["Title"] = "Edit Profile";
+}
+
+@model Chefster.ViewModels.FamilyUpdateViewModel;
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-12 col-lg-8">
+            <form id="updateform" class="row g-3" action="/api/update/family" method="post" disabled>
+                <div class="fs-3">
+                    Your Profile
+                </div>
+                <hr class="border border-primary border-1 opacity-100">
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label asp-for="PhoneNumber">Phone Number</label>
+                            <input asp-for="PhoneNumber" type="tel" pattern="^\+?\d{0,13}" class="form-control"
+                                required />
+                            <small>Format: +1234567890</small>
+                        </div>
+                    </div>
+                    <div class="col pe-0">
+                        <label asp-for="FamilySize">Number of Family Members</label>
+                        <div class="row g-0 input-group pe-0 me-0">
+                            <div class="col-3 pe-0">
+                                <input asp-for="FamilySize" type="number" id="FamilySize" style="border-radius: 0;"
+                                    class="form-control text-center rounded-start ps-4" min="1" max="10" readonly
+                                    required />
+                            </div>
+                            <div class="col-9">
+                                <button id="addMemberButton" type="button" style="border-radius: 0;"
+                                    class="btn btn-primary w-100 rounded-end">
+                                    Add Member
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="fs-3 pt-5">
+                    Family members
+                </div>
+                <hr class="border border-primary border-1 opacity-100">
+                <div id="familyMembersFeedback" class="text-danger fw-bold fs-4 d-none">
+                    Must have at least 1 family member!
+                </div>
+                <div id="familyMembersContainer" class="mt-0">
+                </div>
+                <div class="fs-3 pt-5">
+                    How many recipes do you need each week?
+                </div>
+                <hr class="border border-primary border-1 opacity-100">
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label asp-for="NumberOfBreakfastMeals">Breakfast</label>
+                            <input asp-for="NumberOfBreakfastMeals" type="number" class="form-control" min="0" max="7"
+                                required />
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label asp-for="NumberOfLunchMeals">Lunch</label>
+                            <input asp-for="NumberOfLunchMeals" type="number" class="form-control" min="0" max="7"
+                                required />
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label asp-for="NumberOfDinnerMeals">Dinner</label>
+                            <input asp-for="NumberOfDinnerMeals" type="number" class="form-control" min="0" max="7"
+                                required />
+                        </div>
+                    </div>
+                </div>
+                <div class="fs-3 pt-5">
+                    When would you like to receive weekly recipes?
+                </div>
+                <hr class="border border-primary border-1 opacity-100">
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label asp-for="GenerationDay">Day of Week</label>
+                            <select class="form-control" asp-for="GenerationDay"
+                                asp-items="Html.GetEnumSelectList<DayOfWeek>()" required></select>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label asp-for="GenerationTime">Time</label>
+                            <input asp-for="GenerationTime" class="form-control" type="time" required />
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="TimeZone" asp-for="TimeZone" value="" required />
+                <div class="form-group pt-5 pb-3">
+                    <button id="updateButton" type="submit" class="btn btn-primary w-100">Update Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function increaseFamilySize() {
+            // get all the member tiles
+            const visibleMembers = document.querySelectorAll('[id*="memberDiv"]');
+            const familySize = document.getElementById('FamilySize')
+
+            familySize.value = visibleMembers.length + 1
+
+            const addMemberButton = document.getElementById('addMemberButton')
+            if (familySize.value >= 10) {
+                addMemberButton.disabled = true
+            }
+        }
+
+        async function removeUnusedMember(divToDelete) {
+            const visibleMembers = document.querySelectorAll('[id*="memberDiv"]');
+            const familyMembersContainer = document.getElementById('familyMembersContainer');
+            familyMembersContainer.removeChild(divToDelete)
+            let familySize = document.getElementById('FamilySize');
+
+            familySize.value = visibleMembers.length - 1;
+
+            const addMemberButton = document.getElementById('addMemberButton')
+            if (familySize.value < 10) {
+                addMemberButton.disabled = false
+            }
+            await renderMemberTiles();
+        }
+
+        async function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function toggleDisable(memberNumber) {
+            let memberForm = document.getElementById("memberDiv" + memberNumber)
+            memberForm.classList.toggle('bg-light')
+
+            const familySize = document.getElementById('FamilySize')
+            const inputs = memberForm.querySelectorAll('input, textarea, select, button');
+
+            // inputs[0] is the checkbox, if its checked, decrement family size
+            if (inputs[0].checked) {
+                familySize.value = parseInt(familySize.value) - 1
+            } else {
+                familySize.value = parseInt(familySize.value) + 1
+            }
+
+            inputs.forEach(element => {
+                // don't modify the 'Delete Member' checkbox
+                if (element.id != `shouldDelete${memberNumber - 1}`) {
+                    element.readOnly = !element.readOnly;
+                    if (element.hasAttribute("data-should-allow-check")) {
+                        let shouldAllowCheck = element.getAttribute('data-should-allow-check')
+                        if (shouldAllowCheck == "true") {
+                            element.setAttribute('data-should-allow-check', false)
+                            element.setAttribute('onclick', 'return false;')
+                            element.classList.add('bg-light')
+                        } else {
+                            element.setAttribute('data-should-allow-check', true)
+                            element.setAttribute('onclick', 'return true;')
+                            element.classList.remove('bg-light')
+                        }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('updateform').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const familySize = document.getElementById('FamilySize')
+
+            if (parseInt(familySize.value) <= 0) {
+                const feedbackElement = document.getElementById('familyMembersFeedback');
+                feedbackElement.classList.remove('d-none');
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            }
+            else {
+                this.submit();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            // set the time zone
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            document.getElementById('TimeZone').value = timeZone;
+
+            await renderMemberTiles()
+
+            // When we add a member, increase size and rerender
+            var addMemberButton = document.getElementById('addMemberButton')
+            addMemberButton.addEventListener('click', async function () {
+                increaseFamilySize()
+                await renderMemberTiles()
+            });
+        });
+
+        const considerationTypes = {
+            RESTRICTIONS: "Restrictions",
+            GOALS: "Goals",
+            CUISINES: "Cuisines"
+        };
+
+        async function renderMemberTiles() {
+            const familyMembersContainer = document.getElementById('familyMembersContainer');
+
+            // clear the member container on rerender
+            familyMembersContainer.innerHTML = '';
+
+            const familySize = document.getElementById('FamilySize').value;
+            const members = @Html.Raw(Json.Serialize(Model.Members));
+            const fSize = @Model.FamilySize;
+
+            for (let member = 0; member < familySize; member++) {
+
+                const name = members[member] ? members[member]["name"] : "";
+                const note = members[member] ? members[member]["notes"] : "";
+                const id = members[member] ? members[member]["memberId"] : null;
+
+                // create hidden Id attribute
+                let hiddenId = document.createElement('input');
+                hiddenId.type = "hidden"
+                hiddenId.name = `Members[${member}].MemberId`
+                hiddenId.id = `Members[${member}].MemberId`
+                hiddenId.value = id
+
+                // Create main container div
+                const memberDiv = document.createElement('div');
+                memberDiv.id = "memberDiv" + (member + 1);
+                memberDiv.className = 'p-3 mt-4 rounded border border-primary border-2 opacity-100';
+
+                // wrapper for top row of member tile
+                const memberNameDeleteRow = document.createElement("div")
+                memberNameDeleteRow.className = "row my-2"
+
+                // Create Member title
+                const memberTitle = document.createElement('div');
+                memberTitle.className = 'col py-1 fs-5';
+                memberTitle.textContent = "Member " + (member + 1);
+                memberTitle.id = "Member " + (member + 1);
+                memberNameDeleteRow.appendChild(memberTitle);
+
+                const deleteWrapper = document.createElement('div');
+                deleteWrapper.className = 'col-md-4 form-check d-flex align-items-center justify-content-end';
+
+                const deleteCheck = document.createElement("input")
+                deleteCheck.type = "checkbox"
+                deleteCheck.name = `Members[${member}].ShouldDelete`
+                deleteCheck.value = true
+                deleteCheck.className = "form-check-input"
+                deleteCheck.style.marginRight = '10px'
+                deleteCheck.style.marginBottom = '4px'
+                deleteCheck.id = `shouldDelete${member}`
+                deleteCheck.addEventListener('click', () => toggleDisable(member + 1))
+
+                const deleteLabel = document.createElement("label");
+                deleteLabel.className = "form-check-label ms-1"
+                deleteLabel.innerHTML = " Delete Member"
+                deleteLabel.id = `shouldDelete${member}label`
+                deleteLabel.setAttribute('for', `shouldDelete${member}`);
+
+                // if its from the db allow deletion
+                if (member <= fSize - 1) {
+                    deleteWrapper.appendChild(deleteCheck)
+                    deleteWrapper.appendChild(deleteLabel)
+                    // else if its not from the db, show remove unused button    
+                } else {
+                    if (member > fSize - 1) {
+                        const removedUnused = document.createElement('button');
+                        removedUnused.className = 'btn btn-danger w-30';
+                        removedUnused.innerHTML = 'Remove';
+                        removedUnused.type = 'button';
+
+                        removedUnused.onclick = function () {
+                            removeUnusedMember(memberDiv);
+                        }
+                        deleteWrapper.appendChild(removedUnused);
+                    }
+                }
+
+                memberNameDeleteRow.appendChild(deleteWrapper)
+                memberDiv.appendChild(memberNameDeleteRow)
+
+                // Create row div for inputs
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'row my-3';
+
+                // Create name label and input
+                const nameLabel = document.createElement('label');
+                nameLabel.setAttribute('name', `Members[${member}].Name`);
+                nameLabel.className = 'col-1 col-form-label';
+                nameLabel.textContent = 'Name';
+                nameLabel.id = `Members[${member}].NameLabel`
+
+                const nameInput = document.createElement('input');
+                nameInput.setAttribute('type', 'text');
+                nameInput.setAttribute('name', `Members[${member}].Name`);
+                nameInput.className = 'form-control';
+                nameInput.value = name;
+                nameInput.setAttribute('required', '');
+                nameInput.id = `Members[${member}].Name`
+
+                // create note label and input
+                const notesLabel = document.createElement('label');
+                notesLabel.setAttribute('name', `Members[${member}].Notes`);
+                notesLabel.className = 'col-1 col-form-label mt-3';
+                notesLabel.textContent = 'Notes'
+                notesLabel.id = `Members[${member}].NotesLabel`
+
+                const notesTextarea = document.createElement('textarea');
+                notesTextarea.setAttribute('name', `Members[${member}].Notes`);
+                notesTextarea.className = 'form-control mt-3';
+                notesTextarea.type = "text"
+                notesTextarea.value = note;
+                notesTextarea.id = `Members[${member}].Notes`
+
+                const textwrapper = document.createElement('div')
+                textwrapper.className = 'col-11'
+                textwrapper.appendChild(notesTextarea);
+
+                const inputwrapper = document.createElement('div')
+                inputwrapper.className = 'col-11'
+                inputwrapper.appendChild(nameInput);
+
+                // Append all created items to the rowDiv
+                rowDiv.appendChild(hiddenId);
+                rowDiv.appendChild(nameLabel);
+                rowDiv.appendChild(inputwrapper);
+                rowDiv.appendChild(notesLabel);
+                rowDiv.appendChild(textwrapper);
+
+                // create a new one for each member besides the first since its already done above
+                const considerationRow = document.createElement('div');
+                considerationRow.className = 'row my-3';
+                considerationRow.id = `ConsiderationRow${member}`
+
+                // Append rowDiv to the main member tile div
+                memberDiv.appendChild(rowDiv);
+                memberDiv.appendChild(considerationRow)
+
+                // render all considerations
+                renderConsiderationsColumn(member, considerationTypes.RESTRICTIONS, considerationRow);
+                renderConsiderationsColumn(member, considerationTypes.GOALS, considerationRow);
+                renderConsiderationsColumn(member, considerationTypes.CUISINES, considerationRow);
+
+                // Append memberDiv to the main container
+                familyMembersContainer.appendChild(memberDiv);
+                populateSelectedConsiderations(member, members);
+            }
+        }
+
+        async function renderConsiderationsColumn(index, considerationType, considerationRow) {
+            const members = @Html.Raw(Json.Serialize(Model.Members));
+
+            let numConsiderations;
+            if (considerationType == considerationTypes.CUISINES) {
+                numConsiderations = members[0]["cuisines"].length;
+            } else if (considerationType == considerationTypes.GOALS) {
+                numConsiderations = members[0]["goals"].length;
+            } else {
+                numConsiderations = members[0]["restrictions"].length;
+            }
+
+            let considerationCol = document.createElement('div');
+            considerationCol.className = 'col-md-4';
+
+            let columnLabel = document.createElement('label');
+            columnLabel.className = "form-label";
+            columnLabel.innerHTML = considerationType;
+            considerationCol.appendChild(columnLabel);
+
+            for (let consideration = 0; consideration < numConsiderations; consideration++) {
+
+                const restrictionItem = document.createElement('div');
+                restrictionItem.className = 'form-check';
+
+                let checkbox = document.createElement('input');
+                checkbox.id = "memberBox" + considerationType.toLowerCase() + index + consideration;
+                checkbox.type = "checkbox"
+                checkbox.value = true
+                // Custom attributes must start with data
+                checkbox.setAttribute('data-should-allow-check', true)
+                checkbox.className = "form-check-input"
+                checkbox.name = `Members[${index}].${considerationType}[${consideration}].Selected`
+
+                let checkLabel = document.createElement("label");
+                checkLabel.className = "form-check-label"
+                checkLabel.innerHTML = members[0][considerationType.toLowerCase()][consideration]["text"]
+
+                let hiddenCheck1 = document.createElement('input');
+                hiddenCheck1.type = "hidden"
+                hiddenCheck1.name = `Members[${index}].${considerationType}[${consideration}].Selected`;
+                hiddenCheck1.value = false
+
+                let hiddenCheck2 = document.createElement('input');
+                hiddenCheck2.type = "hidden"
+                hiddenCheck2.name = `Members[${index}].${considerationType}[${consideration}].Text`;
+                hiddenCheck2.value = members[0][considerationType.toLowerCase()][consideration]["text"]
+
+                restrictionItem.appendChild(checkbox)
+                restrictionItem.appendChild(checkLabel)
+                restrictionItem.appendChild(hiddenCheck1)
+                restrictionItem.appendChild(hiddenCheck2)
+                considerationCol.appendChild(restrictionItem)
+
+            }
+            considerationRow.appendChild(considerationCol)
+        }
+
+        async function populateSelectedConsiderations(index, members) {
+
+            let restrictions = members[index]["restrictions"].length
+            let goals = members[index]["goals"].length
+            let cuisines = members[index]["cuisines"].length
+
+            for (let j = 0; j < restrictions; j++) {
+                if (members[index] != null) {
+                    if (members[index]["restrictions"][j]["selected"] == true) {
+                        let cb = document.getElementById("memberBox" + "restrictions" + index + j)
+                        if (cb != null) {
+                            cb.checked = true;
+                        }
+                    }
+                }
+                for (let j = 0; j < goals; j++) {
+                    if (members[index]["goals"][j]["selected"] == true) {
+                        let cb = document.getElementById("memberBox" + "goals" + index + j)
+                        if (cb != null) {
+                            cb.checked = true;
+                        }
+                    }
+                }
+
+                for (let j = 0; j < cuisines; j++) {
+                    if (members[index]["cuisines"][j]["selected"] == true) {
+                        let cb = document.getElementById("memberBox" + "cuisines" + index + j)
+                        if (cb != null) {
+                            cb.checked = true;
+                        }
+                    }
+                }
+
+            }
+        }
+    </script>
+}
