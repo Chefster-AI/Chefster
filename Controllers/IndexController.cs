@@ -225,14 +225,45 @@ public class IndexController(
         var family = _familyService.GetById(id!).Data;
         var previousRecipes = _previousRecipeService.GetPreviousRecipes(id!).Data;
 
+        // groups the recipes by day and then by meal type for display
+        var groupedRecipes = previousRecipes!
+            .GroupBy(r => r.CreatedAt.Date)
+            .OrderByDescending(g => g.Key)
+            .ToDictionary(
+                g => g.Key,
+                g => g.GroupBy(r => r.MealType)
+                    .OrderBy(m => GetMealTypeOrder(m.Key))
+                    .ToDictionary(m => m.Key, m => m.ToList())
+            );
+
+        // helper that assigns number to meal type for sorting purposes
+        int GetMealTypeOrder(string mealType)
+        {
+            return mealType switch
+            {
+                "Breakfast" => 1,
+                "Lunch" => 2,
+                "Dinner" => 3,
+                _ => 4
+            };
+        }
+
         var model = new OverviewViewModel
         {
             GenerationDay = family!.GenerationDay,
             GenerationTime = family.GenerationTime,
-            PreviousRecipes = previousRecipes!
+            Recipes = groupedRecipes
         };
 
         return View(model);
+    }
+
+    [HttpPost]
+    [Route("/previousRecipe")]
+    public ActionResult PreviousRecipe([FromBody] PreviousRecipeUpdateDto previousRecipe)
+    {
+        _previousRecipeService.UpdatePreviousRecipe(previousRecipe);
+        return Ok();
     }
 
     [Route("/privacy")]

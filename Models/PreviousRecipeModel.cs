@@ -21,3 +21,9 @@ public class PreviousRecipeCreateDto
     public required string DishName { get; set; }
     public required string MealType { get; set; }
 }
+
+public class PreviousRecipeUpdateDto
+{
+    public required string RecipeId { get; set; }
+    public bool? Enjoyed { get; set; }
+}

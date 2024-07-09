@@ -1,8 +1,8 @@
 using Chefster.Common;
-using static Chefster.Common.Constants;
 using Chefster.Context;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
+using MongoDB.Bson;
 
 namespace Chefster.Services;
 
@@ -26,6 +26,27 @@ public class PreviousRecipesService(ChefsterDbContext context)
             return ServiceResult<List<PreviousRecipeModel>>.ErrorResult(
                 $"Failed to get previous recipes for family {familyId}. Error: {e}"
             );
+        }
+    }
+
+    public Task UpdatePreviousRecipe(PreviousRecipeUpdateDto previousRecipe)
+    {
+        try
+        {
+            var existingPreviousRecipe = _context.PreviousRecipes.Find(previousRecipe.RecipeId);
+            if (existingPreviousRecipe == null)
+            {
+                return Task.FromException(new Exception("Failed to find previous recipe " + previousRecipe.RecipeId));
+            }
+            
+            existingPreviousRecipe.Enjoyed = previousRecipe.Enjoyed;
+            _context.SaveChanges();
+            
+            return Task.CompletedTask;
+        }
+        catch (SqlException e)
+        {
+            return Task.FromException(new Exception("Failed to update previous recipe " + previousRecipe.ToJson()));
         }
     }
 
