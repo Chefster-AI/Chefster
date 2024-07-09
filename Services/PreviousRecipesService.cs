@@ -41,7 +41,7 @@ public class PreviousRecipesService(ChefsterDbContext context)
                     FamilyId = recipe.FamilyId,
                     DishName = recipe.DishName,
                     MealType = recipe.MealType,
-                    Enjoyed = false,
+                    Enjoyed = null,
                     CreatedAt = DateTime.UtcNow,
                 };
 

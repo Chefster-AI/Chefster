@@ -11,7 +11,7 @@ public class PreviousRecipeModel
     public required string FamilyId { get; set; }
     public required string DishName { get; set; }
     public required string MealType { get; set; }
-    public required bool Enjoyed { get; set; }
+    public bool? Enjoyed { get; set; }
     public required DateTime CreatedAt { get; set; }
 }
 

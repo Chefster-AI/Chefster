@@ -39,13 +39,50 @@
         <div>Previous Recipes:</div>
         foreach (var recipe in Model.PreviousRecipes)
         {
-            <div>@recipe.DishName</div>
+            <div class="hstack">
+                <div>@recipe.DishName</div>
+
+                <div>
+                    <input type="radio" class="btn-check" name="@recipe.RecipeId" id="@recipe.RecipeId-yes" autocomplete="off" @(recipe.Enjoyed == true ? "checked" : "") onchange="updateRecipeEnjoyment('@recipe.RecipeId', true)">
+                    <label class="btn btn-outline-success" for="@recipe.RecipeId-yes">Yes</label>
+                </div>
+
+                <div>
+                    <input type="radio" class="btn-check" name="@recipe.RecipeId" id="@recipe.RecipeId-meh" autocomplete="off" @(recipe.Enjoyed == null ? "checked" : "") onchange="updateRecipeEnjoyment('@recipe.RecipeId', null)">
+                    <label class="btn btn-outline-secondary" for="@recipe.RecipeId-meh">Meh</label>
+                </div>
+
+                <div>
+                    <input type="radio" class="btn-check" name="@recipe.RecipeId" id="@recipe.RecipeId-no" autocomplete="off" @(recipe.Enjoyed == false ? "checked" : "") onchange="updateRecipeEnjoyment('@recipe.RecipeId', false)">
+                    <label class="btn btn-outline-danger" for="@recipe.RecipeId-no">No</label>
+                </div>
+            </div>
         }
     }
 </div>
 
 @section Scripts {
     <script>
+        function updateRecipeEnjoyment(recipeId, enjoyed) {
+            fetch('/your-backend-endpoint', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    recipeId: recipeId,
+                    enjoyed: enjoyed
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             const daysElement = document.getElementById('days')
             const hoursElement = document.getElementById('hours')

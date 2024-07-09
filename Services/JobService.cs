@@ -193,23 +193,45 @@ public class JobService(
         var enjoyedBreakfast = new List<string>();
         var enjoyedLunch = new List<string>();
         var enjoyedDinner = new List<string>();
+        var indifferentBreakfast = new List<string>();
+        var indifferentLunch = new List<string>();
+        var indifferentDinner = new List<string>();
         var notEnjoyedBreakfast = new List<string>();
         var notEnjoyedLunch = new List<string>();
         var notEnjoyedDinner = new List<string>();
 
         foreach (var recipe in previousRecipes)
         {
-            switch (recipe.MealType)
+            if (recipe.Enjoyed != null)
             {
-                case "Breakfast":
-                    (recipe.Enjoyed ? enjoyedBreakfast : notEnjoyedBreakfast).Add(recipe.DishName);
-                    break;
-                case "Lunch":
-                    (recipe.Enjoyed ? enjoyedLunch : notEnjoyedLunch).Add(recipe .DishName);
-                    break;
-                case "Dinner":
-                    (recipe.Enjoyed ? enjoyedDinner : notEnjoyedDinner).Add(recipe.DishName);
-                    break;
+                switch (recipe.MealType)
+                {
+                    case "Breakfast":
+                        ((bool)recipe.Enjoyed ? enjoyedBreakfast : notEnjoyedBreakfast).Add(recipe.DishName);
+                        break;
+                    case "Lunch":
+                        ((bool)recipe.Enjoyed ? enjoyedLunch : notEnjoyedLunch).Add(recipe .DishName);
+                        break;
+                    case "Dinner":
+                        ((bool)recipe.Enjoyed ? enjoyedDinner : notEnjoyedDinner).Add(recipe.DishName);
+                        break;
+                }
+            }
+            else 
+            {
+                switch (recipe.MealType)
+                {
+                    case "Breakfast":
+                        indifferentBreakfast.Add(recipe.DishName);
+                        break;
+                    case "Lunch":
+                        indifferentLunch.Add(recipe .DishName);
+                        break;
+                    case "Dinner":
+                        indifferentDinner.Add(recipe.DishName);
+                        break;
+                }
+
             }
         }
 
