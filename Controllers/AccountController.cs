@@ -11,7 +11,7 @@ public class AccountController : Controller
     public async Task LogIn()
     {
         var authenticationProperties = new LoginAuthenticationPropertiesBuilder()
-            .WithRedirectUri(Url.Action("Chat", "Index")!)
+            .WithRedirectUri(Url.Action("Profile", "Index")!)
             .Build();
 
         await HttpContext.ChallengeAsync(Auth0Constants.AuthenticationScheme, authenticationProperties);

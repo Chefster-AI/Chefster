@@ -1,9 +1,9 @@
 using Chefster.Common;
-using Chefster.Constants;
 using Chefster.Context;
 using Chefster.Interfaces;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
+using static Chefster.Common.Constants;
 
 namespace Chefster.Services;
 
@@ -16,10 +16,10 @@ public class MemberService(ChefsterDbContext context, FamilyService familyServic
     {
         // is this too resource intensive? Since queried values are saved in context it shouldn't be too bad
         var members = _context.Members.Where(m => m.FamilyId == member.FamilyId).ToList();
-        if (members.Count == ChefsterConstants.MAX_MEMBERS)
+        if (members.Count == MAX_MEMBERS)
         {
             return ServiceResult<MemberModel>.ErrorResult(
-                $"Member limit reached of {ChefsterConstants.MAX_MEMBERS}."
+                $"Member limit reached of {MAX_MEMBERS}."
             );
         }
 

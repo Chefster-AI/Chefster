@@ -14,27 +14,21 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-controller="Index" asp-action="Index">Chefster</a>
+                <a class="navbar-brand fs-4" asp-controller="Index" asp-action="Index">Chefster</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between fs-5">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Index" asp-action="Index">Home</a>
                         </li>
-                        @* <li class="nav-item">
-                        <a class="nav-link text-dark" asp-controller="Index" asp-action="Privacy">Privacy</a>
-                        </li> *@
-                        @* <li class="nav-item">
-                        <a class="nav-link text-dark" asp-controller="Index" asp-action="Chat">Chat</a>
-                        </li> *@
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Index" asp-action="UpdateProfile">Profile</a>
+                            <a class="nav-link text-dark" asp-controller="Index" asp-action="Profile">Profile</a>
                         </li>
                     </ul>
-                    <div class="d-flex">
+                    <div class="d-flex hstack gap-3">
                         @if (User.Identity != null)
                         {
                             @if (User.Identity.IsAuthenticated)
@@ -42,25 +36,19 @@
                                 var profilePicture = User.Claims.FirstOrDefault(claim => claim.Type == "picture")?.Value;
 
                                 <img src="@profilePicture" class="rounded-circle my-1" style="width: 30px; height: 30px;">
-                                <div>
-                                    <div class="vr d-none d-lg-flex h-100 mx-lg-2 text-black"></div>
-                                    <hr class="d-lg-none my-2 text-black-50">
-                                </div>
+                                <div class="vr"></div>
                                 <form asp-controller="Account" asp-action="LogOut">
-                                    <button class="btn btn-outline-secondary" type="submit">Log Out</button>
+                                    <button class="btn btn-outline-secondary fs-5" type="submit">Log Out</button>
                                 </form>
                             }
                             else
                             {
                                 <form asp-controller="Account" asp-action="SignUp">
-                                    <button class="btn btn-outline-primary" type="submit">Sign Up</button>
+                                    <button class="btn btn-outline-primary fs-5" type="submit">Sign Up</button>
                                 </form>
-                                <div>
-                                    <div class="vr d-none d-lg-flex h-100 mx-lg-2 text-black"></div>
-                                    <hr class="d-lg-none my-2 text-black-50">
-                                </div>
+                                <div class="vr"></div>
                                 <form class="me-2" asp-controller="Account" asp-action="LogIn">
-                                    <button class="btn btn-outline-secondary" type="submit">Log In</button>
+                                    <button class="btn btn-outline-secondary fs-5" type="submit">Log In</button>
                                 </form>
                             }
                         }
