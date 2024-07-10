@@ -25,6 +25,7 @@ public class ConsiderationsCreateDto
 
 public class ConsiderationsUpdateDto
 {
+    public required string MemberId { get; set; }
     public required ConsiderationsEnum Type { get; set; }
     public required string Value { get; set; }
 }

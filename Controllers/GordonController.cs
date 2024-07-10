@@ -42,7 +42,7 @@ public class GordonController(
     /// FOR TESTING ONLY. Create a response based on a families considerations and send an email.
     /// </summary>
     [HttpPost("{familyId}")]
-    public ActionResult CreatedGordonResponseForFamily(string familyId)
+    public async Task CreatedGordonResponseForFamily(string familyId)
     {
         //    var formatted = _jobService.BuildGordonRequest(familyId);
 
@@ -57,8 +57,8 @@ public class GordonController(
         //         return BadRequest($"Failed to get Gordon response. Error: {response.Error}");
         //     }
 
-        _jobService.CreateorUpdateEmailJob(familyId);
+        await _jobService.GenerateAndSendRecipes(familyId);
 
-        return Ok();
+        //return Ok();
     }
 }

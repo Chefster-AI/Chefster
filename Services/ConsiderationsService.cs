@@ -60,6 +60,27 @@ public class ConsiderationsService(ChefsterDbContext context) : IConsiderations
         }
     }
 
+    public ServiceResult<ConsiderationsModel> GetConsiderationById(string considerationId)
+    {
+        try
+        {
+            var consideration = _context.Considerations.Find(considerationId);
+
+            if (consideration == null)
+            {
+                return ServiceResult<ConsiderationsModel>.ErrorResult($"Consideration was null");
+            }
+
+            return ServiceResult<ConsiderationsModel>.SuccessResult(consideration);
+        }
+        catch (SqlException e)
+        {
+            return ServiceResult<ConsiderationsModel>.ErrorResult(
+                $"Failed to find consideration with id {considerationId}. Error: {e}"
+            );
+        }
+    }
+
     public ServiceResult<List<ConsiderationsModel>> GetMemberConsiderations(string memberId)
     {
         try
