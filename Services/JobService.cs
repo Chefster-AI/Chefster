@@ -34,23 +34,25 @@ public class JobService(
         var family = _familyService.GetById(familyId).Data;
         TimeZoneInfo timeZone;
 
-        if (TimeZoneInfo.TryConvertIanaIdToWindowsId(family.TimeZone, out string windowsTimeZoneId))
-        {
-            timeZone = TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZoneId);
-        }
-        else
-        {
-            timeZone = TimeZoneInfo.Utc;
-        }
-        
-        var options = new RecurringJobOptions
-        {
-            TimeZone = timeZone
-        };
-
         // create the job for the family
         if (family != null)
         {
+            if (
+                TimeZoneInfo.TryConvertIanaIdToWindowsId(
+                    family.TimeZone,
+                    out string? windowsTimeZoneId
+                )
+            )
+            {
+                timeZone = TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZoneId);
+            }
+            else
+            {
+                timeZone = TimeZoneInfo.Utc;
+            }
+
+            var options = new RecurringJobOptions { TimeZone = timeZone };
+
             RecurringJob.AddOrUpdate(
                 family.Id,
                 () => GenerateAndSendRecipes(familyId),
@@ -70,34 +72,43 @@ public class JobService(
         var family = _familyService.GetById(familyId).Data;
         var gordonPrompt = BuildGordonPrompt(family!)!;
         var gordonResponse = await _gordonService.GetMessageResponse(gordonPrompt);
-        var body = await _viewToStringService.ViewToStringAsync("EmailTemplate", gordonResponse.Data!);
+        var body = await _viewToStringService.ViewToStringAsync(
+            "EmailTemplate",
+            gordonResponse.Data!
+        );
 
         if (family != null && body != null)
         {
-            _emailService.SendEmail(
-                family.Email,
-                "Your weekly meal plan has arrived!",
-                body
-            );
+            _emailService.SendEmail(family.Email, "Your weekly meal plan has arrived!", body);
         }
 
         var recipesToHold = ExtractRecipes(familyId, gordonResponse.Data!);
-        int mealCount = family!.NumberOfBreakfastMeals + family.NumberOfLunchMeals + family.NumberOfDinnerMeals;
+        int mealCount =
+            family!.NumberOfBreakfastMeals + family.NumberOfLunchMeals + family.NumberOfDinnerMeals;
         _previousRecipeService.HoldRecipes(familyId, recipesToHold);
         _previousRecipeService.RealeaseRecipes(familyId, mealCount);
     }
 
     public string BuildGordonPrompt(FamilyModel family)
     {
-        string mealCounts = GetMealCountsText(family.NumberOfBreakfastMeals, family.NumberOfLunchMeals, family.NumberOfDinnerMeals);
+        string mealCounts = GetMealCountsText(
+            family.NumberOfBreakfastMeals,
+            family.NumberOfLunchMeals,
+            family.NumberOfDinnerMeals
+        );
         string dietaryConsiderations = GetDietaryConsiderationsText(family.Id);
         string previousRecipes = GetPreviousRecipesText(family.Id);
-        string gordonPrompt = $"Create {mealCounts} recipes, each being {family.FamilySize} servings. Here is a list of the dietary considerations:\n{dietaryConsiderations}{previousRecipes}";
+        string gordonPrompt =
+            $"Create {mealCounts} recipes, each being {family.FamilySize} servings. Here is a list of the dietary considerations:\n{dietaryConsiderations}{previousRecipes}";
         Console.WriteLine("Gordon's Prompt:\n" + gordonPrompt);
         return gordonPrompt;
     }
 
-    private string GetMealCountsText(int numberOfBreakfastMeals, int numberOfLunchMeals, int numberOfDinnerMeals)
+    private string GetMealCountsText(
+        int numberOfBreakfastMeals,
+        int numberOfLunchMeals,
+        int numberOfDinnerMeals
+    )
     {
         List<string> mealCounts = new List<string>();
         string mealCountsText = "";
@@ -175,10 +186,11 @@ public class JobService(
                 {
                     throw new NotImplementedException();
                 }
-                var memberConsiderationsText = $"Name: {member.Name}\nNotes: {member.Notes}\nRestrictions: {string.Join(", ", restrictions)}\nGoals: {string.Join(", ", goals)}\nFavorite Cuisines: {string.Join(", ", cuisines)}\n";
+                var memberConsiderationsText =
+                    $"Name: {member.Name}\nNotes: {member.Notes}\nRestrictions: {string.Join(", ", restrictions)}\nGoals: {string.Join(", ", goals)}\nFavorite Cuisines: {string.Join(", ", cuisines)}\n";
                 considerationsText.Append(memberConsiderationsText);
             }
-            
+
             return considerationsText.ToString();
         }
         else
@@ -249,7 +261,10 @@ Dinner: {string.Join(", ", notEnjoyedDinner)}
         ";
     }
 
-    private List<PreviousRecipeCreateDto> ExtractRecipes(string familyId, GordonResponseModel gordonResponse)
+    private List<PreviousRecipeCreateDto> ExtractRecipes(
+        string familyId,
+        GordonResponseModel gordonResponse
+    )
     {
         var recipes = new List<PreviousRecipeCreateDto>();
 
@@ -257,7 +272,14 @@ Dinner: {string.Join(", ", notEnjoyedDinner)}
         {
             foreach (var recipe in gordonResponse.BreakfastRecipes)
             {
-                recipes.Add(new PreviousRecipeCreateDto { FamilyId = familyId, DishName = recipe.DishName, MealType = "Breakfast" });
+                recipes.Add(
+                    new PreviousRecipeCreateDto
+                    {
+                        FamilyId = familyId,
+                        DishName = recipe.DishName,
+                        MealType = "Breakfast"
+                    }
+                );
             }
         }
 
@@ -265,7 +287,14 @@ Dinner: {string.Join(", ", notEnjoyedDinner)}
         {
             foreach (var recipe in gordonResponse.LunchRecipes)
             {
-                recipes.Add(new PreviousRecipeCreateDto { FamilyId = familyId, DishName = recipe.DishName, MealType = "Lunch" });
+                recipes.Add(
+                    new PreviousRecipeCreateDto
+                    {
+                        FamilyId = familyId,
+                        DishName = recipe.DishName,
+                        MealType = "Lunch"
+                    }
+                );
             }
         }
 
@@ -273,7 +302,14 @@ Dinner: {string.Join(", ", notEnjoyedDinner)}
         {
             foreach (var recipe in gordonResponse.DinnerRecipes)
             {
-                recipes.Add(new PreviousRecipeCreateDto { FamilyId = familyId, DishName = recipe.DishName, MealType = "Dinner" });
+                recipes.Add(
+                    new PreviousRecipeCreateDto
+                    {
+                        FamilyId = familyId,
+                        DishName = recipe.DishName,
+                        MealType = "Dinner"
+                    }
+                );
             }
         }
 

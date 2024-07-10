@@ -24,6 +24,18 @@ public class ConsiderationController(ConsiderationsService considerationsService
         return Ok(consideration.Data);
     }
 
+        [HttpGet("api/id/{ConsiderationId}")]
+    public ActionResult<ConsiderationsModel> GetConsiderationById(string ConsiderationId)
+    {
+        var consideration = _considerationsService.GetConsiderationById(ConsiderationId);
+        if (consideration.Success == false)
+        {
+            return BadRequest($"no considerations for family with Id {ConsiderationId}");
+        }
+ 
+        return Ok(consideration.Data);
+    }
+
     /// <summary>
     /// Gets Family Notes from the last 7 days
     /// </summary>
@@ -66,7 +78,7 @@ public class ConsiderationController(ConsiderationsService considerationsService
     }
 
     [HttpPut("{ConsiderationId}")]
-    public ActionResult<ConsiderationsModel> UpdateNote(string ConsiderationId, ConsiderationsUpdateDto consideration)
+    public ActionResult<ConsiderationsModel> UpdateConsideration(ConsiderationsUpdateDto consideration, string ConsiderationId)
     {
         var updated = _considerationsService.UpdateConsideration(ConsiderationId, consideration);
 

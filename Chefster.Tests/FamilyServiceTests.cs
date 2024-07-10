@@ -1,107 +1,17 @@
-using Chefster.Context;
 using Chefster.Models;
-using Chefster.Services;
-using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Chefster.Tests;
 
-public class DatabaseFixture : IAsyncLifetime
-{
-    public ChefsterDbContext Context { get; private set; }
-
-    public DatabaseFixture()
-    {
-        var options = new DbContextOptionsBuilder<ChefsterDbContext>()
-            .UseInMemoryDatabase(databaseName: "TEST_family_service_db")
-            .Options;
-
-        Context = new ChefsterDbContext(options);
-        InitializeAsync();
-    }
-
-    // create the in memory DB with one entry
-    public Task InitializeAsync()
-    {
-        Context.Database.EnsureDeleted();
-        Context.Families.AddRange(
-            new FamilyModel
-            {
-                Id = "1",
-                CreatedAt = DateTime.Now,
-                Email = "test@email.com",
-                FamilySize = 2,
-                NumberOfBreakfastMeals = 0,
-                NumberOfLunchMeals = 0,
-                NumberOfDinnerMeals = 7,
-                GenerationDay = DayOfWeek.Friday,
-                GenerationTime = new TimeSpan(10000),
-                TimeZone = "America/Chicago",
-                PhoneNumber = "0001112222"
-            },
-            new FamilyModel
-            {
-                Id = "4",
-                CreatedAt = DateTime.Now,
-                Email = "test4@email.com",
-                FamilySize = 8,
-                NumberOfBreakfastMeals = 0,
-                NumberOfLunchMeals = 0,
-                NumberOfDinnerMeals = 7,
-                GenerationDay = DayOfWeek.Monday,
-                GenerationTime = new TimeSpan(19000),
-                TimeZone = "America/Chicago",
-                PhoneNumber = "5556664444"
-            }
-        );
-
-        Context.Members.AddRange(
-            new MemberModel
-            {
-                MemberId = "mem1",
-                FamilyId = "1",
-                Name = "testName"
-            },
-            new MemberModel
-            {
-                MemberId = "mem2",
-                FamilyId = "1",
-                Name = "testName2"
-            },
-            new MemberModel
-            {
-                MemberId = "mem3",
-                FamilyId = "1",
-                Name = "testName3"
-            }
-        );
-        Context.SaveChanges();
-
-        // detach all entities from context so that we can freely add and delete what we want
-        foreach (var entity in Context.ChangeTracker.Entries().ToList())
-        {
-            entity.State = EntityState.Detached;
-        }
-        return Task.CompletedTask;
-    }
-
-    // cleanup db after test run. Runs automatically
-    public Task DisposeAsync()
-    {
-        Context.Database.EnsureDeleted();
-        Context.Dispose();
-        return Task.CompletedTask;
-    }
-}
-
 public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<DatabaseFixture>
 {
-    private readonly FamilyService _familyService = new(fixture.Context);
+    private readonly DatabaseFixture _fixture = fixture;
 
     [Fact]
     public void GetFamily_ReturnsFamily()
     {
-        var family = _familyService.GetById("1");
+        _fixture.Initialize();
+        var family = _fixture.FamilyService.GetById("1");
 
         Assert.NotNull(family.Data);
         Assert.Equal("test@email.com", family.Data.Email);
@@ -109,11 +19,14 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
         Assert.Equal(DayOfWeek.Friday, family.Data.GenerationDay);
         Assert.Equal(new TimeSpan(10000), family.Data.GenerationTime);
         Assert.Equal("0001112222", family.Data.PhoneNumber);
+
+        _fixture.Cleanup();
     }
 
     [Fact]
     public void CreateFamily_SavesFamilyToDatabase()
     {
+        _fixture.Initialize();
         var familyToAdd = new FamilyModel
         {
             Id = "2",
@@ -129,11 +42,11 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
             PhoneNumber = "1112223333"
         };
 
-        _familyService.CreateFamily(familyToAdd);
-        var family = _familyService.GetById("2");
+        _fixture.FamilyService.CreateFamily(familyToAdd);
+        var family = _fixture.FamilyService.GetById("2");
 
         // family doesnt exist case
-        var failed = _familyService.CreateFamily(familyToAdd);
+        var failed = _fixture.FamilyService.CreateFamily(familyToAdd);
         Assert.False(failed.Success);
 
         Assert.NotNull(family.Data);
@@ -142,11 +55,14 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
         Assert.Equal(DayOfWeek.Sunday, family.Data.GenerationDay);
         Assert.Equal(new TimeSpan(1000), family.Data.GenerationTime);
         Assert.Equal("1112223333", family.Data.PhoneNumber);
+
+        _fixture.Cleanup();
     }
 
     [Fact]
     public void UpdateFamily_UpdatesFamilyInDatabase()
     {
+        _fixture.Initialize();
         var familyToUpdate = new FamilyModel
         {
             Id = "3",
@@ -162,7 +78,7 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
             PhoneNumber = "9998887777"
         };
 
-        _familyService.CreateFamily(familyToUpdate);
+        _fixture.FamilyService.CreateFamily(familyToUpdate);
 
         var updated = new FamilyUpdateDto
         {
@@ -176,13 +92,13 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
             TimeZone = "merica"
         };
 
-        _familyService.UpdateFamily("3", updated);
+        _fixture.FamilyService.UpdateFamily("3", updated);
 
         // family doesnt exist case
-        var failed = _familyService.UpdateFamily("doesntExist", updated);
+        var failed = _fixture.FamilyService.UpdateFamily("doesntExist", updated);
         Assert.False(failed.Success);
 
-        var family = _familyService.GetById("3");
+        var family = _fixture.FamilyService.GetById("3");
         Assert.NotNull(family.Data);
         Assert.Equal("test3@email.com", family.Data.Email);
         Assert.Equal(10, family.Data.FamilySize);
@@ -194,12 +110,14 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
         Assert.Equal("7778889999", family.Data.PhoneNumber);
         Assert.Equal("merica", family.Data.TimeZone);
 
+        _fixture.Cleanup();
     }
 
     [Fact]
     public void GetAllFamilies_AllFamiliesAreReturned()
     {
-        var families = _familyService.GetAll();
+        _fixture.Initialize();
+        var families = _fixture.FamilyService.GetAll();
 
         Assert.NotNull(families.Data);
         foreach (var family in families.Data)
@@ -209,12 +127,15 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
             Assert.NotNull(family.PhoneNumber);
             Assert.True(family.FamilySize > 0);
         }
+
+        _fixture.Cleanup();
     }
 
     [Fact]
     public void GetFamilyMembers_MembersAreReturned()
     {
-        var members = _familyService.GetMembers("1");
+        _fixture.Initialize();
+        var members = _fixture.FamilyService.GetMembers("1");
 
         Assert.NotNull(members.Data);
         foreach (var member in members.Data)
@@ -223,5 +144,6 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
             Assert.NotNull(member.MemberId);
             Assert.NotNull(member.Name);
         }
+        _fixture.Cleanup();
     }
 }
