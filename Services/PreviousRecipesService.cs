@@ -10,38 +10,39 @@ public class PreviousRecipesService(ChefsterDbContext context)
 {
     private readonly ChefsterDbContext _context = context;
 
-    public ServiceResult<List<string>> GetPreviousRecipes(string familyId)
+    public ServiceResult<List<PreviousRecipeModel>> GetPreviousRecipes(string familyId)
     {
-        var previousRecipes = new List<string>();
+        var previousRecipes = new List<PreviousRecipeModel>();
         try
         {
             previousRecipes = _context.PreviousRecipes
                 .Where(e => e.FamilyId == familyId)
-                .Select(e => e.DishName.ToString())
                 .ToList();
             
-            return ServiceResult<List<string>>.SuccessResult(previousRecipes);
+            return ServiceResult<List<PreviousRecipeModel>>.SuccessResult(previousRecipes);
         }
         catch (SqlException e)
         {
-            return ServiceResult<List<string>>.ErrorResult(
+            return ServiceResult<List<PreviousRecipeModel>>.ErrorResult(
                 $"Failed to get previous recipes for family {familyId}. Error: {e}"
             );
         }
     }
 
-    public ServiceResult<string> HoldRecipes(string familyId, List<string> dishNames)
+    public ServiceResult<string> HoldRecipes(string familyId, List<PreviousRecipeCreateDto> recipesToHold)
     {
         try
         {
-            foreach (var dishName in dishNames)
+            foreach (var recipe in recipesToHold)
             {
                 var previousRecipe = new PreviousRecipeModel
                 {
                     RecipeId = Guid.NewGuid().ToString("N"),
-                    FamilyId = familyId,
-                    DishName = dishName,
-                    CreatedAt = DateTime.UtcNow
+                    FamilyId = recipe.FamilyId,
+                    DishName = recipe.DishName,
+                    MealType = recipe.MealType,
+                    Enjoyed = false,
+                    CreatedAt = DateTime.UtcNow,
                 };
 
                 _context.PreviousRecipes.Add(previousRecipe);
@@ -56,18 +57,16 @@ public class PreviousRecipesService(ChefsterDbContext context)
                 $"Failed to hold previous recipes for family {familyId}. Error: {e}"
             );
         }
-
-        return ServiceResult<string>.ErrorResult($"Failed to hold previous recipes for family {familyId}.");
     }
 
-    public ServiceResult<string> RealeaseRecipes(string familyId)
+    public ServiceResult<string> RealeaseRecipes(string familyId, int mealCount)
     {
         try
         {
             var newestEntries = _context.PreviousRecipes
                 .Where(e => e.FamilyId == familyId)
                 .OrderByDescending(e => e.CreatedAt)
-                .Take(KEEP_N_PREVIOUS_RECIPES)
+                .Take(GetNumberOfPreviousRecipes(mealCount))
                 .Select(e => e.RecipeId)
                 .ToList();
 
@@ -86,5 +85,10 @@ public class PreviousRecipesService(ChefsterDbContext context)
                 $"Failed to release previous recipes for family {familyId}. Error: {e}"
             );
         }
+    }
+
+    public int GetNumberOfPreviousRecipes(int mealCount)
+    {
+        return Math.Max(10, mealCount * 2);
     }
 }

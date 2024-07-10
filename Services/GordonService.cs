@@ -210,8 +210,6 @@ public class GordonService(IHttpClientFactory httpClientFactory)
 
         var gordonResponse = JsonConvert.DeserializeObject<GordonResponseModel>(jsonString);
 
-        Console.WriteLine("Response Content:\n" + jsonString);
-
         if (gordonResponse != null)
         {
             return ServiceResult<GordonResponseModel>.SuccessResult(gordonResponse);

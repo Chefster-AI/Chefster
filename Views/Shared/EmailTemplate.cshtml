@@ -6,11 +6,11 @@
     <meta charset=""UTF-8"">
     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0>
     <style>
-        .container {
+        .email-container {
             background-color: #ffffff;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0,0,0,0.15);
         }
 
         .title {
@@ -91,10 +91,22 @@
             font-style: italic;
             color: #2c3e50;
         }
+
+        .feedback-link {
+            display: inline-block;
+            font-size: 16px;
+            font-weight: bold;
+            color: #0d6efd;
+            text-decoration: none;
+        }
+
+        .feedback-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="email-container">
         <div class="title">Here are your recipes for the week! <a href="#grocery-list" class="jump-link">Jump to Grocery List</a></div>
 
         <div class="notes">@Model.Notes</div>
@@ -176,6 +188,10 @@
                 }
             </ul>
         </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a class="feedback-link" href="https://chefster.azurewebsites.net/overview" target="_blank">Tell us what you think about these recipes!</a>
+        </div>    
     </div>
 </body>
 </html>
