@@ -258,7 +258,7 @@ public class IndexController(
         return View(model);
     }
 
-    [HttpPost]
+    [HttpPut]
     [Route("/previousRecipe")]
     public ActionResult PreviousRecipe([FromBody] PreviousRecipeUpdateDto previousRecipe)
     {

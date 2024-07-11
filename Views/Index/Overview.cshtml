@@ -87,7 +87,7 @@
     <script>
         function updateRecipeEnjoyment(recipeId, enjoyed) {
             fetch('/previousRecipe', {
-                method: 'POST',
+                method: 'Put',
                 headers: {
                     'Content-Type': 'application/json'
                 },
