@@ -58,22 +58,22 @@
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfBreakfastMeals">Breakfast</label>
-                            <input id="NumberOfBreakfastMeals" asp-for="NumberOfBreakfastMeals" type="number" class="form-control" min="0" max="7"
-                                required />
+                            <input id="NumberOfBreakfastMeals" asp-for="NumberOfBreakfastMeals" type="number"
+                                class="form-control" min="0" max="7" required />
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfLunchMeals">Lunch</label>
-                            <input id="NumberOfLunchMeals" asp-for="NumberOfLunchMeals" type="number" class="form-control" min="0" max="7"
-                                required />
+                            <input id="NumberOfLunchMeals" asp-for="NumberOfLunchMeals" type="number"
+                                class="form-control" min="0" max="7" required />
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfDinnerMeals">Dinner</label>
-                            <input id="NumberOfDinnerMeals" asp-for="NumberOfDinnerMeals" type="number" class="form-control" min="0" max="7"
-                                required />
+                            <input id="NumberOfDinnerMeals" asp-for="NumberOfDinnerMeals" type="number"
+                                class="form-control" min="0" max="7" required />
                         </div>
                     </div>
                 </div>
@@ -140,17 +140,17 @@
         }
 
         function toggleDisable(memberNumber) {
-            let memberForm = document.getElementById("memberDiv" + memberNumber)
-            memberForm.classList.toggle('bg-light')
+            let memberForm = document.getElementById("memberDiv" + memberNumber);
+            memberForm.classList.toggle('bg-light');
 
-            const familySize = document.getElementById('FamilySize')
+            const familySize = document.getElementById('FamilySize');
             const inputs = memberForm.querySelectorAll('input, textarea, select, button');
+            const deleteCheckBox = document.getElementById('shouldDelete' + (memberNumber - 1));
 
-            // inputs[0] is the checkbox, if its checked, decrement family size
-            if (inputs[0].checked) {
-                familySize.value = parseInt(familySize.value) - 1
+            if (deleteCheckBox.checked) {
+                familySize.value = parseInt(familySize.value) - 1;
             } else {
-                familySize.value = parseInt(familySize.value) + 1
+                familySize.value = parseInt(familySize.value) + 1;
             }
 
             inputs.forEach(element => {
@@ -185,7 +185,7 @@
             const mealCountFeedback = document.getElementById('mealCountFeedback');
 
             let isValid = true
-            
+
             // ensure at least 1 member
             if (parseInt(familySize.value) <= 0) {
                 familyMembersFeedback.classList.remove('d-none');
