@@ -24,11 +24,11 @@ public class JobService(
     private readonly ViewToStringService _viewToStringService = viewToStringService;
 
     /*
-    The service is responsible for created and updating jobs that will
-    gather gordons response and then send emails when the correct time comes
+        The service is responsible for created, updating and executing jobs that will
+        gather gordons response and then send emails when the correct time comes
     */
 
-    // Since hangfire has one function for creating and updating jobs this made the most sense
+    // Since hangfire has one function for creating and updating jobs we are using one function here for that
     public void CreateorUpdateEmailJob(string familyId)
     {
         var family = _familyService.GetById(familyId).Data;
@@ -37,22 +37,23 @@ public class JobService(
         // create the job for the family
         if (family != null)
         {
-            if (
-                TimeZoneInfo.TryConvertIanaIdToWindowsId(
-                    family.TimeZone,
-                    out string? windowsTimeZoneId
-                )
-            )
+            // attempt to get user time zone
+            var timeZoneConversion = TimeZoneInfo.TryConvertIanaIdToWindowsId(
+                family.TimeZone,
+                out string? windowsTimeZoneId
+            );
+            if (timeZoneConversion && windowsTimeZoneId != null)
             {
                 timeZone = TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZoneId);
             }
             else
             {
+                // default to UTC if we can't get it
                 timeZone = TimeZoneInfo.Utc;
             }
 
+            // set time zone and update/create job
             var options = new RecurringJobOptions { TimeZone = timeZone };
-
             RecurringJob.AddOrUpdate(
                 family.Id,
                 () => GenerateAndSendRecipes(familyId),
@@ -70,23 +71,28 @@ public class JobService(
     {
         // grab family, get gordon's prompt, create the email, then send it
         var family = _familyService.GetById(familyId).Data;
-        var gordonPrompt = BuildGordonPrompt(family!)!;
-        var gordonResponse = await _gordonService.GetMessageResponse(gordonPrompt);
-        var body = await _viewToStringService.ViewToStringAsync(
-            "EmailTemplate",
-            gordonResponse.Data!
-        );
-
-        if (family != null && body != null)
+        if (family != null)
         {
-            _emailService.SendEmail(family.Email, "Your weekly meal plan has arrived!", body);
-        }
+            var gordonPrompt = BuildGordonPrompt(family!)!;
+            var gordonResponse = await _gordonService.GetMessageResponse(gordonPrompt);
+            var body = await _viewToStringService.ViewToStringAsync(
+                "EmailTemplate",
+                gordonResponse.Data!
+            );
 
-        var recipesToHold = ExtractRecipes(familyId, gordonResponse.Data!);
-        int mealCount =
-            family!.NumberOfBreakfastMeals + family.NumberOfLunchMeals + family.NumberOfDinnerMeals;
-        _previousRecipeService.HoldRecipes(familyId, recipesToHold);
-        _previousRecipeService.RealeaseRecipes(familyId, mealCount);
+            if (body != null)
+            {
+                _emailService.SendEmail(family.Email, "Your weekly meal plan has arrived!", body);
+            }
+
+            var recipesToHold = ExtractRecipes(familyId, gordonResponse.Data!);
+            int mealCount =
+                family!.NumberOfBreakfastMeals
+                + family.NumberOfLunchMeals
+                + family.NumberOfDinnerMeals;
+            _previousRecipeService.HoldRecipes(familyId, recipesToHold);
+            _previousRecipeService.RealeaseRecipes(familyId, mealCount);
+        }
     }
 
     public string BuildGordonPrompt(FamilyModel family)
@@ -104,13 +110,13 @@ public class JobService(
         return gordonPrompt;
     }
 
-    private string GetMealCountsText(
+    private static string GetMealCountsText(
         int numberOfBreakfastMeals,
         int numberOfLunchMeals,
         int numberOfDinnerMeals
     )
     {
-        List<string> mealCounts = new List<string>();
+        List<string> mealCounts = [];
         string mealCountsText = "";
 
         if (numberOfBreakfastMeals > 0)
@@ -150,22 +156,22 @@ public class JobService(
     {
         var considerationsText = new StringBuilder();
 
-        var result = _memberService.GetByFamilyId(familyId);
+        var members = _memberService.GetByFamilyId(familyId).Data;
 
-        if (result.Success)
+        if (members != null)
         {
-            var members = result.Data;
-            foreach (var member in members!)
+            foreach (var member in members)
             {
-                List<string> restrictions = new List<string>();
-                List<string> goals = new List<string>();
-                List<string> cuisines = new List<string>();
-                var result2 = _considerationService.GetMemberConsiderations(member.MemberId);
+                List<string> restrictions = [];
+                List<string> goals = [];
+                List<string> cuisines = [];
 
-                if (result2.Success)
+                var memberConsiderations = _considerationService
+                    .GetMemberConsiderations(member.MemberId)
+                    .Data;
+
+                if (memberConsiderations != null)
                 {
-                    var memberConsiderations = result2.Data;
-
                     foreach (var consideration in memberConsiderations!)
                     {
                         switch (consideration.Type)
@@ -184,8 +190,10 @@ public class JobService(
                 }
                 else
                 {
-                    throw new NotImplementedException();
+                    throw new Exception("Member considerations list was null rather than empty");
                 }
+
+                // Is it acceptable to send empty lists to Gordon if the Member didn't select any preferences?
                 var memberConsiderationsText =
                     $"Name: {member.Name}\nNotes: {member.Notes}\nRestrictions: {string.Join(", ", restrictions)}\nGoals: {string.Join(", ", goals)}\nFavorite Cuisines: {string.Join(", ", cuisines)}\n";
                 considerationsText.Append(memberConsiderationsText);
@@ -195,22 +203,24 @@ public class JobService(
         }
         else
         {
-            throw new NotImplementedException();
+            throw new Exception("Members list was null rather than empty");
         }
     }
 
     private string GetPreviousRecipesText(string familyId)
     {
+        // a list of recipes if they exist otherwise []
         var previousRecipes = _previousRecipeService.GetPreviousRecipes(familyId).Data!;
-        var enjoyedBreakfast = new List<string>();
-        var enjoyedLunch = new List<string>();
-        var enjoyedDinner = new List<string>();
-        var indifferentBreakfast = new List<string>();
-        var indifferentLunch = new List<string>();
-        var indifferentDinner = new List<string>();
-        var notEnjoyedBreakfast = new List<string>();
-        var notEnjoyedLunch = new List<string>();
-        var notEnjoyedDinner = new List<string>();
+
+        List<string> enjoyedBreakfast = [];
+        List<string> enjoyedLunch = [];
+        List<string> enjoyedDinner = [];
+        List<string> indifferentBreakfast = [];
+        List<string> indifferentLunch = [];
+        List<string> indifferentDinner = [];
+        List<string> notEnjoyedBreakfast = [];
+        List<string> notEnjoyedLunch = [];
+        List<string> notEnjoyedDinner = [];
 
         foreach (var recipe in previousRecipes)
         {
@@ -219,17 +229,23 @@ public class JobService(
                 switch (recipe.MealType)
                 {
                     case "Breakfast":
-                        ((bool)recipe.Enjoyed ? enjoyedBreakfast : notEnjoyedBreakfast).Add(recipe.DishName);
+                        ((bool)recipe.Enjoyed ? enjoyedBreakfast : notEnjoyedBreakfast).Add(
+                            recipe.DishName
+                        );
                         break;
                     case "Lunch":
-                        ((bool)recipe.Enjoyed ? enjoyedLunch : notEnjoyedLunch).Add(recipe .DishName);
+                        ((bool)recipe.Enjoyed ? enjoyedLunch : notEnjoyedLunch).Add(
+                            recipe.DishName
+                        );
                         break;
                     case "Dinner":
-                        ((bool)recipe.Enjoyed ? enjoyedDinner : notEnjoyedDinner).Add(recipe.DishName);
+                        ((bool)recipe.Enjoyed ? enjoyedDinner : notEnjoyedDinner).Add(
+                            recipe.DishName
+                        );
                         break;
                 }
             }
-            else 
+            else
             {
                 switch (recipe.MealType)
                 {
@@ -237,13 +253,12 @@ public class JobService(
                         indifferentBreakfast.Add(recipe.DishName);
                         break;
                     case "Lunch":
-                        indifferentLunch.Add(recipe .DishName);
+                        indifferentLunch.Add(recipe.DishName);
                         break;
                     case "Dinner":
                         indifferentDinner.Add(recipe.DishName);
                         break;
                 }
-
             }
         }
 
@@ -261,7 +276,7 @@ Dinner: {string.Join(", ", notEnjoyedDinner)}
         ";
     }
 
-    private List<PreviousRecipeCreateDto> ExtractRecipes(
+    private static List<PreviousRecipeCreateDto> ExtractRecipes(
         string familyId,
         GordonResponseModel gordonResponse
     )
