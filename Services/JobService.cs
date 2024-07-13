@@ -90,8 +90,18 @@ public class JobService(
                 family!.NumberOfBreakfastMeals
                 + family.NumberOfLunchMeals
                 + family.NumberOfDinnerMeals;
-            _previousRecipeService.HoldRecipes(familyId, recipesToHold);
-            _previousRecipeService.RealeaseRecipes(familyId, mealCount);
+            var holdSuccess = _previousRecipeService.HoldRecipes(familyId, recipesToHold);
+            if (!holdSuccess.Success)
+            {
+                // We realllly should log this stuff so we can track it
+                Console.WriteLine($"Failed to hold recipes. Error {holdSuccess.Error}");
+            }
+            var releaseSuccess = _previousRecipeService.RealeaseRecipes(familyId, mealCount);
+            if (!releaseSuccess.Success)
+            {
+                // We realllly should log this stuff so we can track it
+                Console.WriteLine($"Failed to release recipes. Error {releaseSuccess.Error}");
+            }
         }
     }
 

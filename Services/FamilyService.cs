@@ -23,26 +23,27 @@ public class FamilyService(ChefsterDbContext context) : IFamily
         try
         {
             _context.Families.Add(family);
-            _context.SaveChanges(); // Save changes to database after altering it
+            _context.SaveChanges(); // Save changes to database
             return ServiceResult<FamilyModel>.SuccessResult(family);
         }
         catch (SqlException e)
         {
             return ServiceResult<FamilyModel>.ErrorResult(
-                $"Failed to write Family to database. Error: {e}"
+                $"Failed to insert Family into database. Error: {e}"
             );
         }
     }
 
-    public ServiceResult<FamilyModel> DeleteFamily(string id)
+    public ServiceResult<FamilyModel> DeleteFamily(string familyId)
     {
         try
         {
-            var fam = _context.Families.Find(id);
+            var fam = _context.Families.Find(familyId);
             if (fam == null)
             {
                 return ServiceResult<FamilyModel>.ErrorResult("Family doesn't exist");
             }
+
             _context.Remove(fam);
             _context.SaveChanges();
             return ServiceResult<FamilyModel>.SuccessResult(fam);
@@ -50,11 +51,12 @@ public class FamilyService(ChefsterDbContext context) : IFamily
         catch (Exception e)
         {
             return ServiceResult<FamilyModel>.ErrorResult(
-                $"Failed to remove family from database. Error: {e}"
+                $"Failed to remove family from database with Id {familyId}. Error: {e}"
             );
         }
     }
 
+    // This function is pretty heavy handed if we have a lot of Families. Should only be used for testing
     public ServiceResult<List<FamilyModel>> GetAll()
     {
         try
@@ -69,11 +71,12 @@ public class FamilyService(ChefsterDbContext context) : IFamily
         }
     }
 
-    public ServiceResult<FamilyModel?> GetById(string id)
+    public ServiceResult<FamilyModel?> GetById(string familyId)
     {
         try
         {
-            return ServiceResult<FamilyModel?>.SuccessResult(_context.Families.Find(id));
+            var family = _context.Families.Find(familyId);
+            return ServiceResult<FamilyModel?>.SuccessResult(family);
         }
         catch (SqlException e)
         {
@@ -83,33 +86,33 @@ public class FamilyService(ChefsterDbContext context) : IFamily
         }
     }
 
-    public ServiceResult<List<MemberModel>> GetMembers(string id)
+    public ServiceResult<List<MemberModel>> GetMembers(string familyId)
     {
         try
         {
-            var mem = _context.Members.Where(m => m.FamilyId == id).ToList();
+            var mem = _context.Members.Where(m => m.FamilyId == familyId).ToList();
             return ServiceResult<List<MemberModel>>.SuccessResult(mem);
         }
         catch (SqlException e)
         {
             return ServiceResult<List<MemberModel>>.ErrorResult(
-                $"Failed to retrieve all members for family with id {id}. Error: {e}"
+                $"Failed to retrieve all members for family with id {familyId}. Error: {e}"
             );
         }
     }
 
-    public ServiceResult<FamilyModel> UpdateFamily(string id, FamilyUpdateDto family)
+    public ServiceResult<FamilyModel> UpdateFamily(string familyId, FamilyUpdateDto family)
     {
         try
         {
             // find the family
-            var existingFam = _context.Families.Find(id);
+            var existingFam = _context.Families.Find(familyId);
             if (existingFam == null)
             {
                 return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
             }
 
-            // update everything even if it wasnt changed. Not the most efficient, but works.
+            // update attributes
             existingFam.PhoneNumber = family.PhoneNumber;
             existingFam.FamilySize = family.FamilySize;
             existingFam.GenerationDay = family.GenerationDay;
@@ -119,23 +122,25 @@ public class FamilyService(ChefsterDbContext context) : IFamily
             existingFam.NumberOfDinnerMeals = family.NumberOfDinnerMeals;
             existingFam.TimeZone = family.TimeZone;
 
-            // we've edited the item in context, now just save it
             _context.SaveChanges();
-            // return existing family since it should be the same as the new one "family"
+            // return updated family
             return ServiceResult<FamilyModel>.SuccessResult(existingFam);
         }
         catch (Exception e)
         {
-            return ServiceResult<FamilyModel>.ErrorResult($"Failed to update Family. Error: {e}");
+            return ServiceResult<FamilyModel>.ErrorResult(
+                $"Failed to update Family with Id {familyId}. Error: {e}"
+            );
         }
     }
 
-    public ServiceResult<FamilyModel> UpdateFamilySize(string id, int size)
+    // useful utility if we just need to update the size due to the deletion or addition of a member
+    public ServiceResult<FamilyModel> UpdateFamilySize(string familyId, int size)
     {
         try
         {
             // find the family
-            var existingFam = _context.Families.Find(id);
+            var existingFam = _context.Families.Find(familyId);
             if (existingFam == null)
             {
                 return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");

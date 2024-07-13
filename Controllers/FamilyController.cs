@@ -6,6 +6,8 @@ using Chefster.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.ObjectPool;
 
 namespace Chefster.Controllers;
 
@@ -58,7 +60,7 @@ public class FamilyController(
 
         if (familyId == null)
         {
-            return BadRequest("FamilyId was null when creating family");
+            return RedirectToAction("Index", "save-error");
         }
         // create the new family
         var NewFamily = new FamilyModel
@@ -77,15 +79,21 @@ public class FamilyController(
             TimeZone = Family.TimeZone,
         };
 
-        // create family and job
+        // create job
         var created = _familyService.CreateFamily(NewFamily);
-        if (created.Success)
+        if (!created.Success)
         {
-            _jobService.CreateorUpdateEmailJob(created.Data!.Id);
+            return RedirectToAction("Index", "save-error");
         }
 
         // create all members and considerations for family
-        await CreateMembersAndConsiderations(Family);
+        var memberSuccess = CreateMembersAndConsiderations(Family);
+        if (!memberSuccess.Success)
+        {
+            return RedirectToAction("Index", "save-error");
+        }
+
+        _jobService.CreateorUpdateEmailJob(created.Data!.Id);
 
         // TODO: send confirmation email
         var body = await _viewToStringService.ViewToStringAsync(
@@ -160,11 +168,9 @@ public class FamilyController(
 
         var updated = _familyService.UpdateFamily(familyId, updatedFamily);
 
-        Console.WriteLine("WE SHOULD HAVE UPDATED");
-
         if (!updated.Success)
         {
-            return BadRequest($"Error: {updated.Error}");
+            return RedirectToAction("Index", "save-error");
         }
 
         // once we updated successfully, not now update the job with new generation times
@@ -174,10 +180,10 @@ public class FamilyController(
         await _updateProfileService.UpdateOrCreateMembersAndCreateConsiderations(familyId, family);
 
         // probably redirect to summary page
-        return RedirectToAction("Index", "Profile");
+        return RedirectToAction("Index", "profile");
     }
 
-    private Task CreateMembersAndConsiderations(FamilyViewModel Family)
+    private ServiceResult<Task> CreateMembersAndConsiderations(FamilyViewModel Family)
     {
         foreach (MemberViewModel Member in Family.Members)
         {
@@ -191,7 +197,14 @@ public class FamilyController(
                 Notes = Member.Notes
             };
 
-            MemberModel CreatedMember = _memberService.CreateMember(NewMember).Data!;
+            var CreatedMember = _memberService.CreateMember(NewMember);
+
+            if (!CreatedMember.Success)
+            {
+                return ServiceResult<Task>.ErrorResult(
+                    $"Error creating restriction consideration. Error: {CreatedMember.Error}"
+                );
+            }
 
             // and their considerations
             foreach (SelectListItem r in Member.Restrictions)
@@ -202,12 +215,18 @@ public class FamilyController(
                     ConsiderationsCreateDto restriction =
                         new()
                         {
-                            MemberId = CreatedMember.MemberId,
+                            MemberId = CreatedMember.Data!.MemberId,
                             Type = ConsiderationsEnum.Restriction,
                             Value = r.Text
                         };
 
-                    _considerationsService.CreateConsideration(restriction);
+                    var isSuccess = _considerationsService.CreateConsideration(restriction);
+                    if (!isSuccess.Success)
+                    {
+                        return ServiceResult<Task>.ErrorResult(
+                            $"Error creating restriction consideration. Error: {isSuccess.Error}"
+                        );
+                    }
                 }
             }
 
@@ -218,12 +237,18 @@ public class FamilyController(
                     ConsiderationsCreateDto goal =
                         new()
                         {
-                            MemberId = CreatedMember.MemberId,
+                            MemberId = CreatedMember.Data!.MemberId,
                             Type = ConsiderationsEnum.Goal,
                             Value = g.Text
                         };
 
-                    _considerationsService.CreateConsideration(goal);
+                    var isSuccess = _considerationsService.CreateConsideration(goal);
+                    if (!isSuccess.Success)
+                    {
+                        return ServiceResult<Task>.ErrorResult(
+                            $"Error creating goal consideration. Error: {isSuccess.Error}"
+                        );
+                    }
                 }
             }
 
@@ -234,15 +259,21 @@ public class FamilyController(
                     ConsiderationsCreateDto cuisine =
                         new()
                         {
-                            MemberId = CreatedMember.MemberId,
+                            MemberId = CreatedMember.Data!.MemberId,
                             Type = ConsiderationsEnum.Cuisine,
                             Value = c.Text
                         };
 
-                    _considerationsService.CreateConsideration(cuisine);
+                    var isSuccess = _considerationsService.CreateConsideration(cuisine);
+                    if (!isSuccess.Success)
+                    {
+                        return ServiceResult<Task>.ErrorResult(
+                            $"Error creating cuisine consideration. Error: {isSuccess.Error}"
+                        );
+                    }
                 }
             }
         }
-        return Task.CompletedTask;
+        return ServiceResult<Task>.SuccessResult(Task.CompletedTask);
     }
 }

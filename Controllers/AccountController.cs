@@ -14,7 +14,10 @@ public class AccountController : Controller
             .WithRedirectUri(Url.Action("Profile", "Index")!)
             .Build();
 
-        await HttpContext.ChallengeAsync(Auth0Constants.AuthenticationScheme, authenticationProperties);
+        await HttpContext.ChallengeAsync(
+            Auth0Constants.AuthenticationScheme,
+            authenticationProperties
+        );
     }
 
     [Authorize]
@@ -24,7 +27,10 @@ public class AccountController : Controller
             .WithRedirectUri(Url.Action("Index", "Index")!)
             .Build();
 
-        await HttpContext.SignOutAsync(Auth0Constants.AuthenticationScheme, authenticationProperties);
+        await HttpContext.SignOutAsync(
+            Auth0Constants.AuthenticationScheme,
+            authenticationProperties
+        );
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     }
 
@@ -32,9 +38,12 @@ public class AccountController : Controller
     {
         var authenticationProperties = new LoginAuthenticationPropertiesBuilder()
             .WithParameter("screen_hint", "signup")
-            .WithRedirectUri(Url.Action("CreateProfile", "Index")!)
+            .WithRedirectUri(Url.Action("Profile", "Index")!)
             .Build();
 
-        await HttpContext.ChallengeAsync(Auth0Constants.AuthenticationScheme, authenticationProperties);
+        await HttpContext.ChallengeAsync(
+            Auth0Constants.AuthenticationScheme,
+            authenticationProperties
+        );
     }
 }

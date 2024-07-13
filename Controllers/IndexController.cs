@@ -58,8 +58,8 @@ public class IndexController(
                 GenerationDay = DayOfWeek.Sunday,
                 GenerationTime = TimeSpan.Zero,
                 TimeZone = "",
-                Members = new List<MemberViewModel>
-                {
+                Members =
+                [
                     new()
                     {
                         Name = "",
@@ -67,7 +67,7 @@ public class IndexController(
                         Goals = ConsiderationsLists.GoalsList,
                         Cuisines = ConsiderationsLists.CuisinesList
                     }
-                }
+                ]
             };
 
             Console.WriteLine(model.ToJson());
@@ -99,6 +99,7 @@ public class IndexController(
                 var considerations = _considerationService
                     .GetMemberConsiderations(member.MemberId)
                     .Data;
+                Console.WriteLine(considerations.ToJson());
                 var goalSelectListsItems = new List<SelectListItem>();
                 goalSelectListsItems.AddRange(ConsiderationsLists.GoalsList);
                 var restrictionsSelectListsItems = new List<SelectListItem>();
@@ -176,6 +177,22 @@ public class IndexController(
                 }
             }
 
+            if (members.Count == 0)
+            {
+                var emptyMem = new MemberUpdateViewModel
+                {
+                    MemberId = null,
+                    Name = "",
+                    Notes = "",
+                    Restrictions = ConsiderationsLists.RestrictionsList,
+                    Goals = ConsiderationsLists.GoalsList,
+                    Cuisines = ConsiderationsLists.CuisinesList,
+                    ShouldDelete = false
+                };
+
+                viewModelMembers.Add(emptyMem);
+            }
+
             var populatedModel = new FamilyUpdateViewModel
             {
                 PhoneNumber = family.PhoneNumber,
@@ -196,6 +213,18 @@ public class IndexController(
             Console.WriteLine("Family was null");
             return View("CreateProfile");
         }
+    }
+
+    [Route("/save-error")]
+    public ActionResult GenericSaveError()
+    {
+        return View("GenericSaveError");
+    }
+
+    [Route("/account-error")]
+    public ActionResult RetreiveAccountError()
+    {
+        return View("RetreiveAccountError");
     }
 
     [Route("/email")]
@@ -231,9 +260,10 @@ public class IndexController(
             .OrderByDescending(g => g.Key)
             .ToDictionary(
                 g => g.Key,
-                g => g.GroupBy(r => r.MealType)
-                    .OrderBy(m => GetMealTypeOrder(m.Key))
-                    .ToDictionary(m => m.Key, m => m.ToList())
+                g =>
+                    g.GroupBy(r => r.MealType)
+                        .OrderBy(m => GetMealTypeOrder(m.Key))
+                        .ToDictionary(m => m.Key, m => m.ToList())
             );
 
         // helper that assigns number to meal type for sorting purposes

@@ -14,7 +14,7 @@ public class ConsiderationsService(ChefsterDbContext context) : IConsiderations
         ConsiderationsCreateDto consideration
     )
     {
-        var n = new ConsiderationsModel
+        var newConsideration = new ConsiderationsModel
         {
             ConsiderationId = Guid.NewGuid().ToString("N"),
             MemberId = consideration.MemberId,
@@ -25,14 +25,14 @@ public class ConsiderationsService(ChefsterDbContext context) : IConsiderations
 
         try
         {
-            _context.Considerations.Add(n);
+            _context.Considerations.Add(newConsideration);
             _context.SaveChanges(); // Save changes to database after altering it
-            return ServiceResult<ConsiderationsModel>.SuccessResult(n);
+            return ServiceResult<ConsiderationsModel>.SuccessResult(newConsideration);
         }
         catch (SqlException e)
         {
             return ServiceResult<ConsiderationsModel>.ErrorResult(
-                $"Failed to write note to database. Error: {e}"
+                $"Failed to insert consideration into database. Error: {e}"
             );
         }
     }
@@ -85,6 +85,7 @@ public class ConsiderationsService(ChefsterDbContext context) : IConsiderations
     {
         try
         {
+            // Get considerations that have the same memberId
             var considerations = _context
                 .Considerations.Where(c => c.MemberId == memberId)
                 .ToList();
@@ -154,6 +155,7 @@ public class ConsiderationsService(ChefsterDbContext context) : IConsiderations
 
             existingConsideration.Type = consideration.Type;
             existingConsideration.Value = consideration.Value;
+
             _context.SaveChanges();
             return ServiceResult<ConsiderationsModel>.SuccessResult(existingConsideration);
         }
