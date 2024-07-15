@@ -55,6 +55,7 @@ public class FamilyController(
     public async Task<ActionResult> CreateFamily([FromForm] FamilyViewModel Family)
     {
         var familyId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value!;
+        var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(Family.TimeZone);
 
         if (familyId == null)
         {
@@ -66,7 +67,7 @@ public class FamilyController(
             // these shouldn't  be null so we added a "!"
             Id = familyId,
             Email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo),
             PhoneNumber = Family.PhoneNumber,
             FamilySize = Family.FamilySize,
             NumberOfBreakfastMeals = Family.NumberOfBreakfastMeals,

@@ -83,9 +83,8 @@ public class JobService(
         }
 
         var recipesToHold = ExtractRecipes(familyId, gordonResponse.Data!);
-        int mealCount =
-            family!.NumberOfBreakfastMeals + family.NumberOfLunchMeals + family.NumberOfDinnerMeals;
-        _previousRecipeService.HoldRecipes(familyId, recipesToHold);
+        int mealCount = family!.NumberOfBreakfastMeals + family.NumberOfLunchMeals + family.NumberOfDinnerMeals;
+        _previousRecipeService.HoldRecipes(familyId, family.TimeZone, recipesToHold);
         _previousRecipeService.RealeaseRecipes(familyId, mealCount);
     }
 
