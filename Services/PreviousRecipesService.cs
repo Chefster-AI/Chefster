@@ -1,8 +1,8 @@
 using Chefster.Common;
-using static Chefster.Common.Constants;
 using Chefster.Context;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
+using MongoDB.Bson;
 
 namespace Chefster.Services;
 
@@ -29,10 +29,33 @@ public class PreviousRecipesService(ChefsterDbContext context)
         }
     }
 
-    public ServiceResult<string> HoldRecipes(string familyId, List<PreviousRecipeCreateDto> recipesToHold)
+    public Task UpdatePreviousRecipe(PreviousRecipeUpdateDto previousRecipe)
     {
         try
         {
+            var existingPreviousRecipe = _context.PreviousRecipes.Find(previousRecipe.RecipeId);
+            if (existingPreviousRecipe == null)
+            {
+                return Task.FromException(new Exception("Failed to find previous recipe " + previousRecipe.RecipeId));
+            }
+            
+            existingPreviousRecipe.Enjoyed = previousRecipe.Enjoyed;
+            _context.SaveChanges();
+            
+            return Task.CompletedTask;
+        }
+        catch (SqlException e)
+        {
+            return Task.FromException(new Exception("Failed to update previous recipe " + previousRecipe.ToJson()));
+        }
+    }
+
+    public ServiceResult<string> HoldRecipes(string familyId, string familyTimeZone, List<PreviousRecipeCreateDto> recipesToHold)
+    {
+        try
+        {
+            var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(familyTimeZone);
+
             foreach (var recipe in recipesToHold)
             {
                 var previousRecipe = new PreviousRecipeModel
@@ -41,8 +64,8 @@ public class PreviousRecipesService(ChefsterDbContext context)
                     FamilyId = recipe.FamilyId,
                     DishName = recipe.DishName,
                     MealType = recipe.MealType,
-                    Enjoyed = false,
-                    CreatedAt = DateTime.UtcNow,
+                    Enjoyed = null,
+                    CreatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo),
                 };
 
                 _context.PreviousRecipes.Add(previousRecipe);

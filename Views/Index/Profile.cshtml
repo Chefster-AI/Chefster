@@ -58,22 +58,22 @@
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfBreakfastMeals">Breakfast</label>
-                            <input id="NumberOfBreakfastMeals" asp-for="NumberOfBreakfastMeals" type="number" class="form-control" min="0" max="7"
-                                required />
+                            <input id="NumberOfBreakfastMeals" asp-for="NumberOfBreakfastMeals" type="number"
+                                class="form-control" min="0" max="7" required />
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfLunchMeals">Lunch</label>
-                            <input id="NumberOfLunchMeals" asp-for="NumberOfLunchMeals" type="number" class="form-control" min="0" max="7"
-                                required />
+                            <input id="NumberOfLunchMeals" asp-for="NumberOfLunchMeals" type="number"
+                                class="form-control" min="0" max="7" required />
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfDinnerMeals">Dinner</label>
-                            <input id="NumberOfDinnerMeals" asp-for="NumberOfDinnerMeals" type="number" class="form-control" min="0" max="7"
-                                required />
+                            <input id="NumberOfDinnerMeals" asp-for="NumberOfDinnerMeals" type="number"
+                                class="form-control" min="0" max="7" required />
                         </div>
                     </div>
                 </div>
@@ -140,17 +140,17 @@
         }
 
         function toggleDisable(memberNumber) {
-            let memberForm = document.getElementById("memberDiv" + memberNumber)
-            memberForm.classList.toggle('bg-light')
+            let memberForm = document.getElementById("memberDiv" + memberNumber);
+            memberForm.classList.toggle('bg-light');
 
-            const familySize = document.getElementById('FamilySize')
+            const familySize = document.getElementById('FamilySize');
             const inputs = memberForm.querySelectorAll('input, textarea, select, button');
+            const deleteCheckBox = document.getElementById('shouldDelete' + (memberNumber - 1));
 
-            // inputs[0] is the checkbox, if its checked, decrement family size
-            if (inputs[0].checked) {
-                familySize.value = parseInt(familySize.value) - 1
+            if (deleteCheckBox.checked) {
+                familySize.value = parseInt(familySize.value) - 1;
             } else {
-                familySize.value = parseInt(familySize.value) + 1
+                familySize.value = parseInt(familySize.value) + 1;
             }
 
             inputs.forEach(element => {
@@ -185,7 +185,7 @@
             const mealCountFeedback = document.getElementById('mealCountFeedback');
 
             let isValid = true
-            
+
             // ensure at least 1 member
             if (parseInt(familySize.value) <= 0) {
                 familyMembersFeedback.classList.remove('d-none');
@@ -273,47 +273,6 @@
                 memberTitle.id = "Member " + (member + 1);
                 memberNameDeleteRow.appendChild(memberTitle);
 
-                const deleteWrapper = document.createElement('div');
-                deleteWrapper.className = 'col-md-4 form-check d-flex align-items-center justify-content-end';
-
-                const deleteCheck = document.createElement("input")
-                deleteCheck.type = "checkbox"
-                deleteCheck.name = `Members[${member}].ShouldDelete`
-                deleteCheck.value = true
-                deleteCheck.className = "form-check-input"
-                deleteCheck.style.marginRight = '10px'
-                deleteCheck.style.marginBottom = '4px'
-                deleteCheck.id = `shouldDelete${member}`
-                deleteCheck.addEventListener('click', () => toggleDisable(member + 1))
-
-                const deleteLabel = document.createElement("label");
-                deleteLabel.className = "form-check-label ms-1"
-                deleteLabel.innerHTML = " Delete Member"
-                deleteLabel.id = `shouldDelete${member}label`
-                deleteLabel.setAttribute('for', `shouldDelete${member}`);
-
-                // if its from the db allow deletion
-                if (member <= fSize - 1) {
-                    deleteWrapper.appendChild(deleteCheck)
-                    deleteWrapper.appendChild(deleteLabel)
-                    // else if its not from the db, show remove unused button    
-                } else {
-                    if (member > fSize - 1) {
-                        const removedUnused = document.createElement('button');
-                        removedUnused.className = 'btn btn-danger w-30';
-                        removedUnused.innerHTML = 'Remove';
-                        removedUnused.type = 'button';
-
-                        removedUnused.onclick = function () {
-                            removeUnusedMember(memberDiv);
-                        }
-                        deleteWrapper.appendChild(removedUnused);
-                    }
-                }
-
-                memberNameDeleteRow.appendChild(deleteWrapper)
-                memberDiv.appendChild(memberNameDeleteRow)
-
                 // Create row div for inputs
                 const rowDiv = document.createElement('div');
                 rowDiv.className = 'row my-3';
@@ -342,7 +301,7 @@
 
                 const notesTextarea = document.createElement('textarea');
                 notesTextarea.setAttribute('name', `Members[${member}].Notes`);
-                notesTextarea.className = 'form-control mt-3';
+                notesTextarea.className = 'form-control mt-3 col-11';
                 notesTextarea.type = "text"
                 notesTextarea.value = note;
                 notesTextarea.id = `Members[${member}].Notes`
@@ -352,15 +311,58 @@
                 textwrapper.appendChild(notesTextarea);
 
                 const inputwrapper = document.createElement('div')
-                inputwrapper.className = 'col-11'
+                inputwrapper.className = 'col-8'
                 inputwrapper.appendChild(nameInput);
+
+                const deleteWrapper = document.createElement('div');
+                deleteWrapper.className = 'col-3 form-check d-flex align-items-center justify-content-center';
+
+                const deleteCheck = document.createElement("input")
+                deleteCheck.type = "checkbox"
+                deleteCheck.name = `Members[${member}].ShouldDelete`
+                deleteCheck.value = true
+                deleteCheck.className = "form-check-input"
+                deleteCheck.style.marginRight = '10px'
+                deleteCheck.id = `shouldDelete${member}`
+                deleteCheck.addEventListener('click', () => toggleDisable(member + 1))
+
+                const deleteLabel = document.createElement("label");
+                deleteLabel.className = "form-check-label ms-1"
+                deleteLabel.innerHTML = " Delete Member"
+                deleteLabel.style.marginRight = '10px'
+                deleteLabel.id = `shouldDelete${member}label`
+                deleteLabel.setAttribute('for', `shouldDelete${member}`);
+
+                // if its from the db allow deletion
+                if (member <= fSize - 1) {
+                    deleteWrapper.appendChild(deleteCheck)
+                    deleteWrapper.appendChild(deleteLabel)
+                    // else if its not from the db, show remove unused button    
+                } else {
+                    if (member > fSize - 1) {
+                        const removedUnused = document.createElement('button');
+                        removedUnused.className = 'btn btn-danger w-100 me-3';
+                        removedUnused.innerHTML = 'Remove';
+                        removedUnused.type = 'button';
+
+                        removedUnused.onclick = function () {
+                            removeUnusedMember(memberDiv);
+                        }
+                        deleteWrapper.appendChild(removedUnused);
+                    }
+                }
 
                 // Append all created items to the rowDiv
                 rowDiv.appendChild(hiddenId);
                 rowDiv.appendChild(nameLabel);
                 rowDiv.appendChild(inputwrapper);
-                rowDiv.appendChild(notesLabel);
-                rowDiv.appendChild(textwrapper);
+                rowDiv.appendChild(deleteWrapper)
+
+                // create notes row
+                const notesRow = document.createElement('div');
+                notesRow.className = 'row my-3';
+                notesRow.appendChild(notesLabel);
+                notesRow.appendChild(textwrapper);
 
                 // create a new one for each member besides the first since its already done above
                 const considerationRow = document.createElement('div');
@@ -369,6 +371,7 @@
 
                 // Append rowDiv to the main member tile div
                 memberDiv.appendChild(rowDiv);
+                memberDiv.appendChild(notesRow)
                 memberDiv.appendChild(considerationRow)
 
                 // render all considerations
