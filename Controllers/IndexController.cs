@@ -69,9 +69,6 @@ public class IndexController(
                     }
                 ]
             };
-
-            Console.WriteLine(model.ToJson());
-
             return View(model);
         }
         else
@@ -99,7 +96,6 @@ public class IndexController(
                 var considerations = _considerationService
                     .GetMemberConsiderations(member.MemberId)
                     .Data;
-                Console.WriteLine(considerations.ToJson());
                 var goalSelectListsItems = new List<SelectListItem>();
                 goalSelectListsItems.AddRange(ConsiderationsLists.GoalsList);
                 var restrictionsSelectListsItems = new List<SelectListItem>();
@@ -215,16 +211,10 @@ public class IndexController(
         }
     }
 
-    [Route("/save-error")]
-    public ActionResult GenericSaveError()
+    [Route("/error")]
+    public ActionResult GenericError(string route)
     {
-        return View("GenericSaveError");
-    }
-
-    [Route("/account-error")]
-    public ActionResult RetreiveAccountError()
-    {
-        return View("RetreiveAccountError");
+        return View(new GenericErrorViewModel { BackRoute = route });
     }
 
     [Route("/email")]

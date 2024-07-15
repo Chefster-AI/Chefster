@@ -6,8 +6,6 @@ using Chefster.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.Extensions.ObjectPool;
 
 namespace Chefster.Controllers;
 
@@ -60,12 +58,11 @@ public class FamilyController(
 
         if (familyId == null)
         {
-            return RedirectToAction("Index", "save-error");
+            return RedirectToAction("Index", "error", new { route = "/profile" });
         }
         // create the new family
         var NewFamily = new FamilyModel
         {
-            // these shouldn't  be null so we added a "!"
             Id = familyId,
             Email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!,
             CreatedAt = DateTime.UtcNow,
@@ -83,14 +80,14 @@ public class FamilyController(
         var created = _familyService.CreateFamily(NewFamily);
         if (!created.Success)
         {
-            return RedirectToAction("Index", "save-error");
+            return RedirectToAction("Index", "error", new { route = "/profile" });
         }
 
         // create all members and considerations for family
         var memberSuccess = CreateMembersAndConsiderations(Family);
         if (!memberSuccess.Success)
         {
-            return RedirectToAction("Index", "save-error");
+            return RedirectToAction("Index", "error", new { route = "/profile" });
         }
 
         _jobService.CreateorUpdateEmailJob(created.Data!.Id);
@@ -170,7 +167,7 @@ public class FamilyController(
 
         if (!updated.Success)
         {
-            return RedirectToAction("Index", "save-error");
+            return RedirectToAction("Index", "error", new { route = "/profile" });
         }
 
         // once we updated successfully, not now update the job with new generation times

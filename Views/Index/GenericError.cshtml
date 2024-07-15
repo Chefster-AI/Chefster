@@ -2,6 +2,8 @@
     ViewData["Title"] = "Oops!";
 }
 
+@model Chefster.ViewModels.GenericErrorViewModel;
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -17,12 +19,13 @@
         .error-container {
             height: 100vh;
             display: flex;
+            using Chefster.ViewModels;
             justify-content: center;
             align-items: center;
         }
 
         .error-message {
-            max-width: 400px;
+            max-width: 500px;
             text-align: center;
         }
 
@@ -54,14 +57,13 @@
     <div class="error-container">
         <div class="error-message">
             <h1 class="display-4">Oops!</h1>
-            <p class="lead">Looks like we had an issue retreiving your information!</p>
+            <p class="lead">Looks like we ran into an issue on our end!</p>
             <hr>
             <p>Don't worry, you can try again!</p>
             <p>We appreciate your patience.</p>
-            <a href="/profile" class="btn btn-primary mt-3">Go Back</a>
+            <a href=@Html.Raw(Json.Serialize(@Model.BackRoute)) id="backButton" class="btn btn-primary mt-3">Go Back</a>
         </div>
     </div>
-
 </body>
 
 </html>
