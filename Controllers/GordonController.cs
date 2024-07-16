@@ -16,7 +16,6 @@ public class GordonController(
 {
     private readonly GordonService _gordonService = gordonService;
     private readonly JobService _jobService = jobService;
-    private readonly EmailService _emailService = emailService;
 
     /// <summary>
     /// FOR TESTING ONLY. Send consideration in body

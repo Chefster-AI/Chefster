@@ -2,8 +2,8 @@ using System.Text;
 using System.Text.Json;
 using Chefster.Common;
 using Chefster.Models;
-using Hangfire.Common;
 using Microsoft.Net.Http.Headers;
+using MongoDB.Bson;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -177,6 +177,14 @@ public class GordonService(IHttpClientFactory httpClientFactory)
             // wait a few seconds before trying again
             await Task.Delay(5000);
         } while (attempts != Constants.MAX_ATTEMPTS);
+
+        if (attempts == Constants.MAX_ATTEMPTS)
+        {
+            Console.WriteLine("Reached the end with no result...");
+            return ServiceResult<GordonResponseModel>.ErrorResult(
+                $"Run loop has reached max iterations for response. Exiting"
+            );
+        }
 
         // try to grab the response
         var response = await httpClient.GetAsync(

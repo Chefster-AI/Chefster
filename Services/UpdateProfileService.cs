@@ -125,7 +125,10 @@ public class UpdateProfileService(
                     var created = _considerationsService.CreateConsideration(restriction);
                     if (!created.Success)
                     {
-                        Console.WriteLine($"Error creating consideration. Error: {created.Error}");
+                        // We should log this stuff
+                        return Task.FromException(
+                            new Exception($"Error creating consideration. Error: {created.Error}")
+                        );
                     }
                 }
             }
@@ -144,6 +147,7 @@ public class UpdateProfileService(
                     var created = _considerationsService.CreateConsideration(goal);
                     if (!created.Success)
                     {
+                        // We should log this stuff
                         return Task.FromException(
                             new Exception($"Error creating consideration. Error: {created.Error}")
                         );
@@ -165,6 +169,7 @@ public class UpdateProfileService(
                     var created = _considerationsService.CreateConsideration(cuisine);
                     if (!created.Success)
                     {
+                        // We should log this stuff
                         return Task.FromException(
                             new Exception($"Error creating consideration. Error: {created.Error}")
                         );
