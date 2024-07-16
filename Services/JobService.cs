@@ -29,6 +29,8 @@ public class JobService(
     */
 
     // Since hangfire has one function for creating and updating jobs we are using one function here for that
+    // Obsolute tag suppresses the warning for QueueName
+    [Obsolete("Uses QueueName in job option which is obsolete. Still acceptable to use")]
     public void CreateorUpdateEmailJob(string familyId)
     {
         var family = _familyService.GetById(familyId).Data;
@@ -52,8 +54,15 @@ public class JobService(
                 timeZone = TimeZoneInfo.Utc;
             }
 
+            string queueName = "default";
+            var isProd = Environment.GetEnvironmentVariable("IS_PROD");
+            if (isProd == "false")
+            {
+                queueName = Environment.GetEnvironmentVariable("QUEUE_NAME")!;
+            }
+
             // set time zone and update/create job
-            var options = new RecurringJobOptions { TimeZone = timeZone };
+            var options = new RecurringJobOptions { TimeZone = timeZone, QueueName = queueName };
             RecurringJob.AddOrUpdate(
                 family.Id,
                 () => GenerateAndSendRecipes(familyId),
@@ -90,7 +99,11 @@ public class JobService(
                 family!.NumberOfBreakfastMeals
                 + family.NumberOfLunchMeals
                 + family.NumberOfDinnerMeals;
-            var holdSuccess = _previousRecipeService.HoldRecipes(familyId, recipesToHold);
+            var holdSuccess = _previousRecipeService.HoldRecipes(
+                familyId,
+                family.TimeZone,
+                recipesToHold
+            );
             if (!holdSuccess.Success)
             {
                 // We realllly should log this stuff so we can track it

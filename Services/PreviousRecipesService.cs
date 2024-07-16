@@ -54,7 +54,11 @@ public class PreviousRecipesService(ChefsterDbContext context)
         }
     }
 
-    public ServiceResult<string> HoldRecipes(string familyId, string familyTimeZone, List<PreviousRecipeCreateDto> recipesToHold)
+    public ServiceResult<Task> HoldRecipes(
+        string familyId,
+        string familyTimeZone,
+        List<PreviousRecipeCreateDto> recipesToHold
+    )
     {
         try
         {
