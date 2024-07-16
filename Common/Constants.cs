@@ -6,6 +6,7 @@ public class Constants
 {
     public const int MAX_MEMBERS = 10;
     public const int MAX_NOTES = 10;
+    public const int JOB_COOLDOWN_DAYS = 3;
     public static GordonResponseModel GORDON_RESPONSE_EXAMPLE = new GordonResponseModel
     {
         Notes = "All recipes are 4 servings and nut-free to accommodate Joe's restriction.",
