@@ -54,13 +54,12 @@ public class PreviousRecipesService(ChefsterDbContext context)
         }
     }
 
-    public ServiceResult<Task> HoldRecipes(
-        string familyId,
-        List<PreviousRecipeCreateDto> recipesToHold
-    )
+    public ServiceResult<string> HoldRecipes(string familyId, string familyTimeZone, List<PreviousRecipeCreateDto> recipesToHold)
     {
         try
         {
+            var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(familyTimeZone);
+
             foreach (var recipe in recipesToHold)
             {
                 var previousRecipe = new PreviousRecipeModel
@@ -70,7 +69,7 @@ public class PreviousRecipesService(ChefsterDbContext context)
                     DishName = recipe.DishName,
                     MealType = recipe.MealType,
                     Enjoyed = null,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo),
                 };
 
                 _context.PreviousRecipes.Add(previousRecipe);
