@@ -55,18 +55,21 @@ public class FamilyController(
     public async Task<ActionResult> CreateFamily([FromForm] FamilyViewModel Family)
     {
         var familyId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value!;
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!;
         var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(Family.TimeZone);
+        var createdAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo);
 
-        if (familyId == null)
+        if (familyId == null || email == null)
         {
             return RedirectToAction("Index", "error", new { route = "/profile" });
         }
+
         // create the new family
         var NewFamily = new FamilyModel
         {
             Id = familyId,
-            Email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!,
-            CreatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo),
+            Email = email,
+            CreatedAt = createdAt,
             PhoneNumber = Family.PhoneNumber,
             FamilySize = Family.FamilySize,
             NumberOfBreakfastMeals = Family.NumberOfBreakfastMeals,
