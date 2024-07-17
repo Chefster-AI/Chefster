@@ -2,6 +2,7 @@ using System.Text;
 using Chefster.Models;
 using Hangfire;
 using static Chefster.Common.ConsiderationsEnum;
+using static Chefster.Common.Constants;
 
 namespace Chefster.Services;
 
@@ -70,6 +71,24 @@ public class JobService(
     {
         // grab family, get gordon's prompt, create the email, then send it
         var family = _familyService.GetById(familyId).Data;
+
+        // ensure job run meets cooldown period
+        if (family!.JobTimestamp != null)
+        {
+            TimeZoneInfo familyTimeZone = TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone);
+            DateTime familyCurrentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, familyTimeZone);
+            double daysSinceLastRun = (familyCurrentTime - family.JobTimestamp).Value.TotalDays;
+            Console.WriteLine("Last Job Run Timestamp: " + family.JobTimestamp.ToString()!);
+            Console.WriteLine("Family's current time: " + familyCurrentTime.ToString());
+            Console.WriteLine("Days difference: " + daysSinceLastRun);
+            
+            if (daysSinceLastRun < JOB_COOLDOWN_DAYS)
+            {
+                Console.WriteLine("In Cooldown.");
+                return;
+            }
+        }
+
         var gordonPrompt = BuildGordonPrompt(family!)!;
         var gordonResponse = await _gordonService.GetMessageResponse(gordonPrompt);
         var body = await _viewToStringService.ViewToStringAsync(
@@ -86,6 +105,7 @@ public class JobService(
         int mealCount = family!.NumberOfBreakfastMeals + family.NumberOfLunchMeals + family.NumberOfDinnerMeals;
         _previousRecipeService.HoldRecipes(familyId, family.TimeZone, recipesToHold);
         _previousRecipeService.RealeaseRecipes(familyId, mealCount);
+        _familyService.UpdateFamilyJobTimestamp(familyId, TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)));
     }
 
     public string BuildGordonPrompt(FamilyModel family)

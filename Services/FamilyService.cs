@@ -149,4 +149,25 @@ public class FamilyService(ChefsterDbContext context) : IFamily
             return ServiceResult<FamilyModel>.ErrorResult($"Failed to update Family. Error: {e}");
         }
     }
+
+    public ServiceResult<FamilyModel> UpdateFamilyJobTimestamp(string familyId, DateTime timestamp)
+    {
+        try
+        {
+            var family = _context.Families.Find(familyId);
+            if (family == null)
+            {
+                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
+            }
+
+            family.JobTimestamp = timestamp;
+            _context.SaveChanges();
+
+            return ServiceResult<FamilyModel>.SuccessResult(family);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<FamilyModel>.ErrorResult($"Failed to update Family Job Timestamp. Error: {e}");
+        }
+    }
 }

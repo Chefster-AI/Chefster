@@ -18,6 +18,7 @@ public class FamilyModel
     public required DayOfWeek GenerationDay { get; set; }
     public required TimeSpan GenerationTime { get; set; }
     public required string TimeZone { get; set; }
+    public DateTime? JobTimestamp { get; set; }
 }
 
 public class FamilyUpdateDto
