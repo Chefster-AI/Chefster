@@ -61,7 +61,7 @@ public class JobService(
                 queueName = Environment.GetEnvironmentVariable("QUEUE_NAME")!;
             }
 
-            // set time zone and update/create job
+            // set time zone, queue name, and update/create job
             var options = new RecurringJobOptions { TimeZone = timeZone, QueueName = queueName };
             RecurringJob.AddOrUpdate(
                 family.Id,
@@ -82,7 +82,7 @@ public class JobService(
         var family = _familyService.GetById(familyId).Data;
         if (family != null)
         {
-            var gordonPrompt = BuildGordonPrompt(family!)!;
+            var gordonPrompt = BuildGordonPrompt(family)!;
             var gordonResponse = await _gordonService.GetMessageResponse(gordonPrompt);
             var body = await _viewToStringService.ViewToStringAsync(
                 "EmailTemplate",
@@ -92,6 +92,10 @@ public class JobService(
             if (body != null)
             {
                 _emailService.SendEmail(family.Email, "Your weekly meal plan has arrived!", body);
+            }
+            else
+            {
+                throw new Exception("Body for recipe email was null");
             }
 
             var recipesToHold = ExtractRecipes(familyId, gordonResponse.Data!);
@@ -115,6 +119,12 @@ public class JobService(
                 // We realllly should log this stuff so we can track it
                 Console.WriteLine($"Failed to release recipes. Error {releaseSuccess.Error}");
             }
+        }
+        else
+        {
+            throw new Exception(
+                "Family was null when attempting to generate and send recipe email"
+            );
         }
     }
 
