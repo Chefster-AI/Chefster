@@ -27,16 +27,19 @@ public class UpdateProfileService(
             {
                 if (consideration.CreatedAt <= timeAdded)
                 {
+                    Console.WriteLine(
+                        $"Deleting consideration with Id: {consideration.ConsiderationId}"
+                    );
                     var deleted = _considerationsService.DeleteConsideration(
                         consideration.ConsiderationId
                     );
 
-                    Console.WriteLine($"Deleting this consideration: {deleted.Data.ToJson()}");
-
                     if (!deleted.Success)
                     {
-                        return Task.FromException(
-                            new Exception("Failed to delete old consideration")
+                        // We reallly need to log this stuff as well.
+                        // Throwing exceptions is not good because we want to continue trying to delete others
+                        Console.WriteLine(
+                            $"Failed to delete consideration with Id: {deleted.Data!.ConsiderationId}"
                         );
                     }
                 }
@@ -68,13 +71,15 @@ public class UpdateProfileService(
                 var updated = _memberService.UpdateMember(Member.MemberId, UpdatedMember);
                 if (!updated.Success)
                 {
-                    return Task.FromException(
-                        new Exception(
-                            $"Failed to update member {UpdatedMember.ToJson()}. Error: {updated.Error}"
-                        )
+                    // needs logging
+                    Console.WriteLine(
+                        $"Failed to update member {UpdatedMember.ToJson()}. Error: {updated.Error}"
                     );
                 }
-                contextMember = updated.Data!;
+                else
+                {
+                    contextMember = updated.Data!;
+                }
             }
 
             // if the MemberId is null then it doesnt exist, create it
@@ -90,14 +95,16 @@ public class UpdateProfileService(
 
                 if (!created.Success)
                 {
-                    return Task.FromException(
-                        new Exception(
-                            $"Failed to create member. Member: {created.Error}. Error: {created.Error}"
-                        )
+                    // needs logging
+                    // We need some way of propgating this to the frontend if it does fail
+                    Console.WriteLine(
+                        $"Failed to create member. Member: {NewMember.ToJson()}. Error: {created.Error}"
                     );
                 }
-
-                contextMember = created.Data!;
+                else
+                {
+                    contextMember = created.Data;
+                }
             }
 
             // any considerations made before this time will be deleted
@@ -118,6 +125,7 @@ public class UpdateProfileService(
                     var created = _considerationsService.CreateConsideration(restriction);
                     if (!created.Success)
                     {
+                        // We should log this stuff
                         return Task.FromException(
                             new Exception($"Error creating consideration. Error: {created.Error}")
                         );
@@ -139,6 +147,7 @@ public class UpdateProfileService(
                     var created = _considerationsService.CreateConsideration(goal);
                     if (!created.Success)
                     {
+                        // We should log this stuff
                         return Task.FromException(
                             new Exception($"Error creating consideration. Error: {created.Error}")
                         );
@@ -160,6 +169,7 @@ public class UpdateProfileService(
                     var created = _considerationsService.CreateConsideration(cuisine);
                     if (!created.Success)
                     {
+                        // We should log this stuff
                         return Task.FromException(
                             new Exception($"Error creating consideration. Error: {created.Error}")
                         );

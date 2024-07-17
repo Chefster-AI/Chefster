@@ -58,8 +58,8 @@ public class IndexController(
                 GenerationDay = DayOfWeek.Sunday,
                 GenerationTime = TimeSpan.Zero,
                 TimeZone = "",
-                Members = new List<MemberViewModel>
-                {
+                Members =
+                [
                     new()
                     {
                         Name = "",
@@ -67,11 +67,8 @@ public class IndexController(
                         Goals = ConsiderationsLists.GoalsList,
                         Cuisines = ConsiderationsLists.CuisinesList
                     }
-                }
+                ]
             };
-
-            Console.WriteLine(model.ToJson());
-
             return View(model);
         }
         else
@@ -176,6 +173,22 @@ public class IndexController(
                 }
             }
 
+            if (members.Count == 0)
+            {
+                var emptyMem = new MemberUpdateViewModel
+                {
+                    MemberId = null,
+                    Name = "",
+                    Notes = "",
+                    Restrictions = ConsiderationsLists.RestrictionsList,
+                    Goals = ConsiderationsLists.GoalsList,
+                    Cuisines = ConsiderationsLists.CuisinesList,
+                    ShouldDelete = false
+                };
+
+                viewModelMembers.Add(emptyMem);
+            }
+
             var populatedModel = new FamilyUpdateViewModel
             {
                 PhoneNumber = family.PhoneNumber,
@@ -196,6 +209,12 @@ public class IndexController(
             Console.WriteLine("Family was null");
             return View("CreateProfile");
         }
+    }
+
+    [Route("/error")]
+    public ActionResult GenericError(string route)
+    {
+        return View(new GenericErrorViewModel { BackRoute = route });
     }
 
     [Route("/email")]
@@ -231,9 +250,10 @@ public class IndexController(
             .OrderByDescending(g => g.Key)
             .ToDictionary(
                 g => g.Key,
-                g => g.GroupBy(r => r.MealType)
-                    .OrderBy(m => GetMealTypeOrder(m.Key))
-                    .ToDictionary(m => m.Key, m => m.ToList())
+                g =>
+                    g.GroupBy(r => r.MealType)
+                        .OrderBy(m => GetMealTypeOrder(m.Key))
+                        .ToDictionary(m => m.Key, m => m.ToList())
             );
 
         // helper that assigns number to meal type for sorting purposes

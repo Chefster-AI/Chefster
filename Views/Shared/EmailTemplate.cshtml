@@ -1,16 +1,17 @@
 @model GordonResponseModel
 
 <!DOCTYPE html>
-<html lang=""en"">
+<html lang="" en"">
+
 <head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0>
+    <meta charset="" UTF-8"">
+    <meta name="" viewport"" content="" width=device-width, initial-scale=1.0>
     <style>
         .email-container {
             background-color: #ffffff;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.15);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
         }
 
         .title {
@@ -37,7 +38,8 @@
             margin-bottom: 10px;
         }
 
-        .ingredients-title, .instructions-title {
+        .ingredients-title,
+        .instructions-title {
             font-size: 16px;
             font-weight: bold;
             color: #0d6efd;
@@ -105,80 +107,95 @@
         }
     </style>
 </head>
+
 <body>
     <div class="email-container">
-        <div class="title">Here are your recipes for the week! <a href="#grocery-list" class="jump-link">Jump to Grocery List</a></div>
+        <div class="title">Here are your recipes for the week! <a href="#grocery-list" class="jump-link">Jump to Grocery
+                List</a></div>
 
         @if (Model.Notes != "")
         {
             <div class="notes">@Model.Notes</div>
         }
 
-        @if (Model.BreakfastRecipes!.Count > 0) {
+        @if (Model.BreakfastRecipes != null && Model.BreakfastRecipes!.Count > 0)
+        {
             <div class="subtitle">Breakfast</div>
-            @foreach (var recipe in Model.BreakfastRecipes) {
+            @foreach (var recipe in Model.BreakfastRecipes)
+            {
                 <div class="recipe-title">@recipe.DishName (@recipe.PrepareTime, @recipe.Servings servings)</div>
                 <div class="ingredients-title">Ingredients:</div>
                 <ul class="ingredients-list">
-                    @foreach (var ingredient in recipe.Ingredients) {
+                    @foreach (var ingredient in recipe.Ingredients)
+                    {
                         <li>@ingredient</li>
                     }
                 </ul>
                 <div class="instructions-title">Instructions:</div>
                 <ol class="instructions-list">
-                    @foreach (var instruction in recipe.Instructions) {
+                    @foreach (var instruction in recipe.Instructions)
+                    {
                         <li>@instruction</li>
                     }
                 </ol>
                 @if (recipe != Model.BreakfastRecipes.Last())
                 {
-                    <hr> 
+                    <hr>
                 }
             }
         }
 
-        @if (Model.LunchRecipes!.Count > 0) {
+        @if (Model.LunchRecipes != null && Model.LunchRecipes!.Count > 0)
+        {
             <div class="subtitle">Lunch</div>
-            @foreach (var recipe in Model.LunchRecipes) {
+            @foreach (var recipe in Model.LunchRecipes)
+            {
                 <div class="recipe-title">@recipe.DishName (@recipe.PrepareTime, @recipe.Servings servings)</div>
                 <div class="ingredients-title">Ingredients:</div>
                 <ul class="ingredients-list">
-                    @foreach (var ingredient in recipe.Ingredients) {
+                    @foreach (var ingredient in recipe.Ingredients)
+                    {
                         <li>@ingredient</li>
                     }
                 </ul>
                 <div class="instructions-title">Instructions:</div>
                 <ol class="instructions-list">
-                    @foreach (var instruction in recipe.Instructions) {
+                    @foreach (var instruction in recipe.Instructions)
+                    {
                         <li>@instruction</li>
                     }
                 </ol>
                 @if (recipe != Model.LunchRecipes.Last())
                 {
-                    <hr> 
+                    <hr>
                 }
             }
         }
 
-        @if (Model.DinnerRecipes!.Count > 0) {
+
+        @if (Model.DinnerRecipes != null && Model.DinnerRecipes!.Count > 0)
+        {
             <div class="subtitle">Dinner</div>
-            @foreach (var recipe in Model.DinnerRecipes) {
+            @foreach (var recipe in Model.DinnerRecipes)
+            {
                 <div class="recipe-title">@recipe.DishName (@recipe.PrepareTime, @recipe.Servings servings)</div>
                 <div class="ingredients-title">Ingredients:</div>
                 <ul class="ingredients-list">
-                    @foreach (var ingredient in recipe.Ingredients) {
+                    @foreach (var ingredient in recipe.Ingredients)
+                    {
                         <li>@ingredient</li>
                     }
                 </ul>
                 <div class="instructions-title">Instructions:</div>
                 <ol class="instructions-list">
-                    @foreach (var instruction in recipe.Instructions) {
+                    @foreach (var instruction in recipe.Instructions)
+                    {
                         <li>@instruction</li>
                     }
                 </ol>
                 @if (recipe != Model.DinnerRecipes.Last())
                 {
-                    <hr> 
+                    <hr>
                 }
             }
         }
@@ -186,15 +203,18 @@
         <div id="grocery-list" class="grocery-list">
             <div class="subtitle" style="margin-top: 0px; margin-bottom: 10px">Grocery List</div>
             <ul>
-                @foreach (var item in @Model.GroceryList) {
+                @foreach (var item in @Model.GroceryList)
+                {
                     <li>@item</li>
                 }
             </ul>
         </div>
 
         <div style="text-align: center; margin-top: 30px;">
-            <a class="feedback-link" href="https://chefster.azurewebsites.net/overview" target="_blank">Tell us what you think about these recipes!</a>
-        </div>    
+            <a class="feedback-link" href="https://chefster.azurewebsites.net/overview" target="_blank">Tell us what you
+                think about these recipes!</a>
+        </div>
     </div>
 </body>
+
 </html>

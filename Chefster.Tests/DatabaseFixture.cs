@@ -22,7 +22,7 @@ public class DatabaseFixture
         Context = new ChefsterDbContext(options);
 
         FamilyService = new FamilyService(Context);
-        MemberService = new MemberService(Context, FamilyService);
+        MemberService = new MemberService(Context);
         ConsiderationsService = new ConsiderationsService(Context);
     }
 

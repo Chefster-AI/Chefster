@@ -15,10 +15,8 @@ public class PreviousRecipesService(ChefsterDbContext context)
         var previousRecipes = new List<PreviousRecipeModel>();
         try
         {
-            previousRecipes = _context.PreviousRecipes
-                .Where(e => e.FamilyId == familyId)
-                .ToList();
-            
+            previousRecipes = [.. _context.PreviousRecipes.Where(e => e.FamilyId == familyId)];
+
             return ServiceResult<List<PreviousRecipeModel>>.SuccessResult(previousRecipes);
         }
         catch (SqlException e)
@@ -29,28 +27,38 @@ public class PreviousRecipesService(ChefsterDbContext context)
         }
     }
 
-    public Task UpdatePreviousRecipe(PreviousRecipeUpdateDto previousRecipe)
+    public ServiceResult<PreviousRecipeModel> UpdatePreviousRecipe(
+        PreviousRecipeUpdateDto previousRecipe
+    )
     {
         try
         {
             var existingPreviousRecipe = _context.PreviousRecipes.Find(previousRecipe.RecipeId);
             if (existingPreviousRecipe == null)
             {
-                return Task.FromException(new Exception("Failed to find previous recipe " + previousRecipe.RecipeId));
+                return ServiceResult<PreviousRecipeModel>.ErrorResult(
+                    "Failed to find previous recipe with Id:" + previousRecipe.RecipeId
+                );
             }
-            
+
             existingPreviousRecipe.Enjoyed = previousRecipe.Enjoyed;
             _context.SaveChanges();
-            
-            return Task.CompletedTask;
+
+            return ServiceResult<PreviousRecipeModel>.SuccessResult(existingPreviousRecipe);
         }
         catch (SqlException e)
         {
-            return Task.FromException(new Exception("Failed to update previous recipe " + previousRecipe.ToJson()));
+            return ServiceResult<PreviousRecipeModel>.ErrorResult(
+                $"Failed to update previous recipe with Id: {previousRecipe.RecipeId}. Error: {e}"
+            );
         }
     }
 
-    public ServiceResult<string> HoldRecipes(string familyId, string familyTimeZone, List<PreviousRecipeCreateDto> recipesToHold)
+    public ServiceResult<Task> HoldRecipes(
+        string familyId,
+        string familyTimeZone,
+        List<PreviousRecipeCreateDto> recipesToHold
+    )
     {
         try
         {
@@ -71,40 +79,42 @@ public class PreviousRecipesService(ChefsterDbContext context)
                 _context.PreviousRecipes.Add(previousRecipe);
                 _context.SaveChanges();
             }
-            
-            return ServiceResult<string>.SuccessResult("Successfully inserted previous recipes!");
+
+            return ServiceResult<Task>.SuccessResult(Task.CompletedTask);
         }
         catch (SqlException e)
         {
-            return ServiceResult<string>.ErrorResult(
+            return ServiceResult<Task>.ErrorResult(
                 $"Failed to hold previous recipes for family {familyId}. Error: {e}"
             );
         }
     }
 
-    public ServiceResult<string> RealeaseRecipes(string familyId, int mealCount)
+    public ServiceResult<Task> RealeaseRecipes(string familyId, int mealCount)
     {
         try
         {
-            var newestEntries = _context.PreviousRecipes
-                .Where(e => e.FamilyId == familyId)
+            var newestEntries = _context
+                .PreviousRecipes.Where(e => e.FamilyId == familyId)
                 .OrderByDescending(e => e.CreatedAt)
                 .Take(GetNumberOfPreviousRecipes(mealCount))
                 .Select(e => e.RecipeId)
                 .ToList();
 
-            var entriesToDelete = _context.PreviousRecipes
-                .Where(e => e.FamilyId == familyId && !newestEntries.Contains(e.RecipeId))
+            var entriesToDelete = _context
+                .PreviousRecipes.Where(e =>
+                    e.FamilyId == familyId && !newestEntries.Contains(e.RecipeId)
+                )
                 .ToList();
 
             _context.PreviousRecipes.RemoveRange(entriesToDelete);
             _context.SaveChanges();
 
-            return ServiceResult<string>.SuccessResult(familyId);
+            return ServiceResult<Task>.SuccessResult(Task.CompletedTask);
         }
         catch (SqlException e)
         {
-            return ServiceResult<string>.ErrorResult(
+            return ServiceResult<Task>.ErrorResult(
                 $"Failed to release previous recipes for family {familyId}. Error: {e}"
             );
         }

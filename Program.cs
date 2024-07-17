@@ -89,8 +89,17 @@ builder.Services.AddHangfire(
             );
     }
 );
-
-builder.Services.AddHangfireServer();
+var isProd = Environment.GetEnvironmentVariable("IS_PROD");
+var queueName = Environment.GetEnvironmentVariable("QUEUE_NAME");
+if (isProd == "false")
+{
+    // create a queue for testing purposes
+    builder.Services.AddHangfireServer(op => op.Queues = [queueName]);
+}
+else
+{
+    builder.Services.AddHangfireServer();
+}
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -120,7 +129,6 @@ else
     app.UseDeveloperExceptionPage();
 }
 
-var isProd = Environment.GetEnvironmentVariable("IS_PROD");
 if (isProd == "false")
 {
     Console.WriteLine("WE ARE IN DEVELOPMENT!");

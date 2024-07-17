@@ -1,7 +1,69 @@
 @{
-    ViewData["Title"] = "Uh Oh!";
+    ViewData["Title"] = "Oops!";
 }
 
-<div class="text-center">
-    <h2> There seems to be an error retrieving your information. Don't worry its all still there! Please try again later.</h2>
-</div>
+@model Chefster.ViewModels.GenericErrorViewModel;
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .error-container {
+            height: 100vh;
+            display: flex;
+            using Chefster.ViewModels;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .error-message {
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .error-message h1 {
+            font-size: 3.5rem;
+            font-weight: bold;
+        }
+
+        .error-message p {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: #6c757d;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="error-container">
+        <div class="error-message">
+            <h1 class="display-4">Oops!</h1>
+            <p class="lead">Looks like we ran into an issue on our end!</p>
+            <hr>
+            <p>Don't worry, you can try again!</p>
+            <p>We appreciate your patience.</p>
+            <a href=@Html.Raw(Json.Serialize(@Model.BackRoute)) id="backButton" class="btn btn-primary mt-3">Go Back</a>
+        </div>
+    </div>
+</body>
+
+</html>

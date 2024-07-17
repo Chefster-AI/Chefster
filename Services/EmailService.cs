@@ -16,7 +16,6 @@ public class EmailService()
             Port = 587,
             Host = "smtp.gmail.com",
             EnableSsl = true,
-            // to allow this to work you have to add an "App Password" that is used here instead of the original password
             Credentials = new NetworkCredential(fromEmail, pwd)
         };
 

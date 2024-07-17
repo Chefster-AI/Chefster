@@ -16,14 +16,16 @@
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="PhoneNumber">Phone Number</label>
-                            <input asp-for="PhoneNumber" type="tel" pattern="^\+?\d{0,13}" class="form-control" required />
+                            <input asp-for="PhoneNumber" type="tel" pattern="^\+?\d{0,13}" class="form-control"
+                                required />
                             <small>Format: +1234567890</small>
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="FamilySize">Number of Family Members</label>
-                            <input asp-for="FamilySize" type="number" id="FamilySize" class="form-control" min="1" max="10" value="1" required />
+                            <input asp-for="FamilySize" type="number" id="FamilySize" class="form-control" min="1"
+                                max="10" value="1" required />
                         </div>
                     </div>
                 </div>
@@ -44,19 +46,22 @@
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfBreakfastMeals">Breakfast</label>
-                            <input id="NumberOfBreakfastMeals" asp-for="NumberOfBreakfastMeals" type="number" class="form-control" min="0" max="7" value="0" required />
+                            <input id="NumberOfBreakfastMeals" asp-for="NumberOfBreakfastMeals" type="number"
+                                class="form-control" min="0" max="7" value="0" required />
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfLunchMeals">Lunch</label>
-                            <input id="NumberOfLunchMeals" asp-for="NumberOfLunchMeals" type="number" class="form-control" min="0" max="7" value="0" required />
+                            <input id="NumberOfLunchMeals" asp-for="NumberOfLunchMeals" type="number"
+                                class="form-control" min="0" max="7" value="0" required />
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="NumberOfDinnerMeals">Dinner</label>
-                            <input id="NumberOfDinnerMeals" asp-for="NumberOfDinnerMeals" type="number" class="form-control" min="0" max="7" value="7" required />
+                            <input id="NumberOfDinnerMeals" asp-for="NumberOfDinnerMeals" type="number"
+                                class="form-control" min="0" max="7" value="7" required />
                         </div>
                     </div>
                 </div>
@@ -68,7 +73,8 @@
                     <div class="col">
                         <div class="form-group">
                             <label asp-for="GenerationDay">Day of Week</label>
-                            <select class="form-control" asp-for="GenerationDay" asp-items="Html.GetEnumSelectList<DayOfWeek>()" required></select>
+                            <select class="form-control" asp-for="GenerationDay"
+                                asp-items="Html.GetEnumSelectList<DayOfWeek>()" required></select>
                         </div>
                     </div>
                     <div class="col">
@@ -123,152 +129,151 @@
                 formData.forEach((value, key) => {
                     json[key] = value;
                 });
-                console.log(json);
 
                 if (familySizeSelected > i) {
                     // add a new member with index as number of members
                     familyMembersContainer.innerHTML += `
-                        <div id="member${i}" class="p-3 mt-4 rounded border border-primary border-2 opacity-100">
-                            <div class="py-1 fs-5">
-                                Member ${i+1}
+                            <div id="member${i}" class="p-3 mt-4 rounded border border-primary border-2 opacity-100">
+                                <div class="py-1 fs-5">
+                                    Member ${i + 1}
+                                </div>
+                                <div class="row my-3">
+                                    <label name="Members[${i}].Name" class="col-1 col-form-label">Name</label>
+                                    <div class="col-11">
+                                        <input name="Members[${i}].Name" type="text" class="form-control" required>
+                                    </div>
+                                    <label name="Members[${i}].Notes" class="col-1 col-form-label mt-3">Notes</label>
+                                    <div class="col-11">
+                                        <textarea name="Members[${i}].Notes" type="text" class="form-control mt-3"></textarea>
+                                    </div>
+                                </div>
+                                <div id="considerationRow" class="row my-3 ms-5">
+                                    <div id="ConsiderationCol" class="col-md-4">
+                                        <label class="form-label">Dietary Restrictions</label>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[0].Selected" value="true">
+                                                <label class="form-check-label">Carnivore</label>
+                                                <input type="hidden" name="Members[${i}].Restrictions[0].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Restrictions[0].Text" value="Carnivore">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[1].Selected" value="true">
+                                                <label class="form-check-label">Gluten-Free</label>
+                                                <input type="hidden" name="Members[${i}].Restrictions[1].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Restrictions[1].Text" value="Gluten-Free">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[2].Selected" value="true">
+                                                <label class="form-check-label">Lactose Intolerant</label>
+                                                <input type="hidden" name="Members[${i}].Restrictions[2].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Restrictions[2].Text" value="Lactose Intolerant">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[3].Selected" value="true">
+                                                <label class="form-check-label">Nut-Free</label>
+                                                <input type="hidden" name="Members[${i}].Restrictions[3].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Restrictions[3].Text" value="Nut-Free">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[4].Selected" value="true">
+                                                <label class="form-check-label">Shellfish-Free</label>
+                                                <input type="hidden" name="Members[${i}].Restrictions[4].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Restrictions[4].Text" value="Shellfish-Free">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[5].Selected" value="true">
+                                                <label class="form-check-label">Vegan</label>
+                                                <input type="hidden" name="Members[${i}].Restrictions[5].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Restrictions[5].Text" value="Vegan">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[6].Selected" value="true">
+                                                <label class="form-check-label">Vegetarian</label>
+                                                <input type="hidden" name="Members[${i}].Restrictions[6].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Restrictions[6].Text" value="Vegetarian">
+                                            </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Diet Goals</label>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[0].Selected" value="true">
+                                                <label class="form-check-label">Increase Energy</label>
+                                                <input type="hidden" name="Members[${i}].Goals[0].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Goals[0].Text" value="Increase Energy">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[1].Selected" value="true">
+                                                <label class="form-check-label">Maintain Weight</label>
+                                                <input type="hidden" name="Members[${i}].Goals[1].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Goals[1].Text" value="Maintain Weight">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[2].Selected" value="true">
+                                                <label class="form-check-label">Mental Clarity</label>
+                                                <input type="hidden" name="Members[${i}].Goals[2].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Goals[2].Text" value="Mental Clarity">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[3].Selected" value="true">
+                                                <label class="form-check-label">Muscle Gain</label>
+                                                <input type="hidden" name="Members[${i}].Goals[3].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Goals[3].Text" value="Muscle Gain">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[4].Selected" value="true">
+                                                <label class="form-check-label">Overall Health</label>
+                                                <input type="hidden" name="Members[${i}].Goals[4].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Goals[4].Text" value="Overall Health">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[5].Selected" value="true">
+                                                <label class="form-check-label">Weight Loss</label>
+                                                <input type="hidden" name="Members[${i}].Goals[5].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Goals[5].Text" value="Weight Loss">
+                                            </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Cuisines</label>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[0].Selected" value="true">
+                                                <label class="form-check-label">American</label>
+                                                <input type="hidden" name="Members[${i}].Cuisines[0].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Cuisines[0].Text" value="American">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[1].Selected" value="true">
+                                                <label class="form-check-label">Asian</label>
+                                                <input type="hidden" name="Members[${i}].Cuisines[1].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Cuisines[1].Text" value="Asian">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[2].Selected" value="true">
+                                                <label class="form-check-label">Barbecue</label>
+                                                <input type="hidden" name="Members[${i}].Cuisines[2].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Cuisines[2].Text" value="Barbecue">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[3].Selected" value="true">
+                                                <label class="form-check-label">Italian</label>
+                                                <input type="hidden" name="Members[${i}].Cuisines[3].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Cuisines[3].Text" value="Italian">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[4].Selected" value="true">
+                                                <label class="form-check-label">Mexican</label>
+                                                <input type="hidden" name="Members[${i}].Cuisines[4].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Cuisines[4].Text" value="Mexican">
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[5].Selected" value="true">
+                                                <label class="form-check-label">Seafood</label>
+                                                <input type="hidden" name="Members[${i}].Cuisines[5].Selected" value="false">
+                                                <input type="hidden" name="Members[${i}].Cuisines[5].Text" value="Seafood">
+                                            </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="row my-3">
-                                <label name="Members[${i}].Name" class="col-1 col-form-label">Name</label>
-                                <div class="col-11">
-                                    <input name="Members[${i}].Name" type="text" class="form-control" required>
-                                </div>
-                                <label name="Members[${i}].Notes" class="col-1 col-form-label mt-3">Notes</label>
-                                <div class="col-11">
-                                    <textarea name="Members[${i}].Notes" type="text" class="form-control mt-3"></textarea>
-                                </div>
-                            </div>
-                            <div id="considerationRow" class="row my-3 ms-5">
-                                <div id="ConsiderationCol" class="col-md-4">
-                                    <label class="form-label">Dietary Restrictions</label>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[0].Selected" value="true">
-                                            <label class="form-check-label">Carnivore</label>
-                                            <input type="hidden" name="Members[${i}].Restrictions[0].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Restrictions[0].Text" value="Carnivore">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[1].Selected" value="true">
-                                            <label class="form-check-label">Gluten-Free</label>
-                                            <input type="hidden" name="Members[${i}].Restrictions[1].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Restrictions[1].Text" value="Gluten-Free">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[2].Selected" value="true">
-                                            <label class="form-check-label">Lactose Intolerant</label>
-                                            <input type="hidden" name="Members[${i}].Restrictions[2].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Restrictions[2].Text" value="Lactose Intolerant">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[3].Selected" value="true">
-                                            <label class="form-check-label">Nut-Free</label>
-                                            <input type="hidden" name="Members[${i}].Restrictions[3].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Restrictions[3].Text" value="Nut-Free">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[4].Selected" value="true">
-                                            <label class="form-check-label">Shellfish-Free</label>
-                                            <input type="hidden" name="Members[${i}].Restrictions[4].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Restrictions[4].Text" value="Shellfish-Free">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[5].Selected" value="true">
-                                            <label class="form-check-label">Vegan</label>
-                                            <input type="hidden" name="Members[${i}].Restrictions[5].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Restrictions[5].Text" value="Vegan">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Restrictions[6].Selected" value="true">
-                                            <label class="form-check-label">Vegetarian</label>
-                                            <input type="hidden" name="Members[${i}].Restrictions[6].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Restrictions[6].Text" value="Vegetarian">
-                                        </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Diet Goals</label>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[0].Selected" value="true">
-                                            <label class="form-check-label">Increase Energy</label>
-                                            <input type="hidden" name="Members[${i}].Goals[0].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Goals[0].Text" value="Increase Energy">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[1].Selected" value="true">
-                                            <label class="form-check-label">Maintain Weight</label>
-                                            <input type="hidden" name="Members[${i}].Goals[1].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Goals[1].Text" value="Maintain Weight">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[2].Selected" value="true">
-                                            <label class="form-check-label">Mental Clarity</label>
-                                            <input type="hidden" name="Members[${i}].Goals[2].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Goals[2].Text" value="Mental Clarity">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[3].Selected" value="true">
-                                            <label class="form-check-label">Muscle Gain</label>
-                                            <input type="hidden" name="Members[${i}].Goals[3].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Goals[3].Text" value="Muscle Gain">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[4].Selected" value="true">
-                                            <label class="form-check-label">Overall Health</label>
-                                            <input type="hidden" name="Members[${i}].Goals[4].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Goals[4].Text" value="Overall Health">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Goals[5].Selected" value="true">
-                                            <label class="form-check-label">Weight Loss</label>
-                                            <input type="hidden" name="Members[${i}].Goals[5].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Goals[5].Text" value="Weight Loss">
-                                        </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Cuisines</label>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[0].Selected" value="true">
-                                            <label class="form-check-label">American</label>
-                                            <input type="hidden" name="Members[${i}].Cuisines[0].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Cuisines[0].Text" value="American">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[1].Selected" value="true">
-                                            <label class="form-check-label">Asian</label>
-                                            <input type="hidden" name="Members[${i}].Cuisines[1].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Cuisines[1].Text" value="Asian">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[2].Selected" value="true">
-                                            <label class="form-check-label">Barbecue</label>
-                                            <input type="hidden" name="Members[${i}].Cuisines[2].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Cuisines[2].Text" value="Barbecue">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[3].Selected" value="true">
-                                            <label class="form-check-label">Italian</label>
-                                            <input type="hidden" name="Members[${i}].Cuisines[3].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Cuisines[3].Text" value="Italian">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[4].Selected" value="true">
-                                            <label class="form-check-label">Mexican</label>
-                                            <input type="hidden" name="Members[${i}].Cuisines[4].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Cuisines[4].Text" value="Mexican">
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" name="Members[${i}].Cuisines[5].Selected" value="true">
-                                            <label class="form-check-label">Seafood</label>
-                                            <input type="hidden" name="Members[${i}].Cuisines[5].Selected" value="false">
-                                            <input type="hidden" name="Members[${i}].Cuisines[5].Text" value="Seafood">
-                                        </div>
-                                </div>
-                            </div>
-                        </div>
-                    `
+                        `
 
                     i += 1;
                 }

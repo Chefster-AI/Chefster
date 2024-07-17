@@ -13,22 +13,51 @@
         margin-top: 20px;
         color: #2c3e50;
     }
+
+    .titleContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .content {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        text-align: center;
+    }
+
+    .logo {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        margin-left: 40px;
+        margin-bottom: 0px;
+    }
 </style>
 
 <div class="container" style="max-width: 1000px;">
-    <div class="fs-1 text-center">Welcome to Chefster!</div>
-    <hr>
+    <div class="titleContainer">
+        <div class="content">
+            <div class="fs-1">Welcome to Chefster!</div>
+            <img src="@Url.Content("~/images/chefsterIconLarge.png")" class="logo" alt="Chefster Logo" />
+        </div>
+    </div>
+    <hr class="mt-3">
     <div class="fs-4 note">What is Chefster?</div>
     <div class="fs-5 ps-3">
         Chefster is a service that provides weekly recipes that fit your family's dietary wants and needs.
-        It takes into consideration any allergies, restrictions, desired outcomes of your diet, and your favorite foods when creating your recipes.
-        Each week, the email will contain unique recipes with full instructions and an ingredients lists, as well as a comprehensive grocery list.
+        It takes into consideration any allergies, restrictions, desired outcomes of your diet, and your favorite foods
+        when creating your recipes.
+        Each week, the email will contain unique recipes with full instructions and an ingredients lists, as well as a
+        comprehensive grocery list.
         The goal of Chefster is to reduce time spent deciding what to cook and what ingredients you need from the store.
         We hope that you find Chefster to be a service that is convenient and a time saver!
     </div>
     <div class="fs-4 note">Example</div>
     <div class="fs-5 ps-3 mb-3">
-        Here is what the email might look like for a family of four that wants two breakfast, two lunch, and two dinner recipes a week,
+        Here is what the email might look like for a family of four that wants two breakfast, two lunch, and two dinner
+        recipes a week,
         and one of the family members, Joe, has a nut allergy.
     </div>
     <div class="mt-5">
