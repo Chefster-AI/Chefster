@@ -185,8 +185,16 @@ public class JobService(
                 {
                     throw new NotImplementedException();
                 }
-                var memberConsiderationsText =
-                    $"Name: {member.Name}\nNotes: {member.Notes}\nRestrictions: {string.Join(", ", restrictions)}\nGoals: {string.Join(", ", goals)}\nFavorite Cuisines: {string.Join(", ", cuisines)}\n";
+
+                var memberConsiderationsText = string.Join("\n", new[]
+                    {
+                        $"Name: {member.Name}",
+                        !string.IsNullOrEmpty(member.Notes) ? $"Notes: {member.Notes}" : null,
+                        restrictions.Any() ? $"Restrictions: {string.Join(", ", restrictions)}" : null,
+                        goals.Any() ? $"Goals: {string.Join(", ", goals)}" : null,
+                        cuisines.Any() ? $"Favorite Cuisines: {string.Join(", ", cuisines)}" : null
+                    }.Where(s => s != null)) + "\n\n";
+                
                 considerationsText.Append(memberConsiderationsText);
             }
 
@@ -201,63 +209,26 @@ public class JobService(
     private string GetPreviousRecipesText(string familyId)
     {
         var previousRecipes = _previousRecipeService.GetPreviousRecipes(familyId).Data!;
-        var enjoyedBreakfast = new List<string>();
-        var enjoyedLunch = new List<string>();
-        var enjoyedDinner = new List<string>();
-        var indifferentBreakfast = new List<string>();
-        var indifferentLunch = new List<string>();
-        var indifferentDinner = new List<string>();
-        var notEnjoyedBreakfast = new List<string>();
-        var notEnjoyedLunch = new List<string>();
-        var notEnjoyedDinner = new List<string>();
+        var enjoyed = new List<string>();
+        var notEnjoyed = new List<string>();
 
         foreach (var recipe in previousRecipes)
         {
             if (recipe.Enjoyed != null)
             {
-                switch (recipe.MealType)
-                {
-                    case "Breakfast":
-                        ((bool)recipe.Enjoyed ? enjoyedBreakfast : notEnjoyedBreakfast).Add(recipe.DishName);
-                        break;
-                    case "Lunch":
-                        ((bool)recipe.Enjoyed ? enjoyedLunch : notEnjoyedLunch).Add(recipe .DishName);
-                        break;
-                    case "Dinner":
-                        ((bool)recipe.Enjoyed ? enjoyedDinner : notEnjoyedDinner).Add(recipe.DishName);
-                        break;
-                }
+                ((bool)recipe.Enjoyed ? enjoyed : notEnjoyed).Add(recipe.DishName);
             }
-            else 
+            else
             {
-                switch (recipe.MealType)
-                {
-                    case "Breakfast":
-                        indifferentBreakfast.Add(recipe.DishName);
-                        break;
-                    case "Lunch":
-                        indifferentLunch.Add(recipe .DishName);
-                        break;
-                    case "Dinner":
-                        indifferentDinner.Add(recipe.DishName);
-                        break;
-                }
-
+                notEnjoyed.Add(recipe.DishName);
             }
         }
 
-        // this may need reworded
-        return $@"
-Generate recipes that are similar to the ones listed here, but be certain that you generate different recipes:
-Breakfast: {string.Join(", ", enjoyedBreakfast)}
-Lunch: {string.Join(", ", enjoyedLunch)}
-Dinner: {string.Join(", ", enjoyedDinner)}
-
-Do not generate recipes these recipes, or recipes that are similar to the ones listed here:
-Breakfast: {string.Join(", ", notEnjoyedBreakfast)}
-Lunch: {string.Join(", ", notEnjoyedLunch)}
-Dinner: {string.Join(", ", notEnjoyedDinner)}
-        ";
+        return string.Join("\n\n", new[]
+            {
+                enjoyed.Any() ? "Generate recipes that are similar to the ones listed here, but be certain that you generate different recipes:\n" + string.Join(", ", enjoyed) : null,
+                notEnjoyed.Any() ? "Do not generate recipes these recipes, or recipes that are similar to the ones listed here:\n" + string.Join(", ", notEnjoyed) : null
+            }.Where(s => s != null));
     }
 
     private List<PreviousRecipeCreateDto> ExtractRecipes(
