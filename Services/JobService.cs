@@ -30,7 +30,6 @@ public class JobService(
 
     // Since hangfire has one function for creating and updating jobs we are using one function here for that
     // Obsolute tag suppresses the warning for QueueName
-    [Obsolete("Uses QueueName in job option which is obsolete. Still acceptable to use")]
     public void CreateorUpdateEmailJob(string familyId)
     {
         var family = _familyService.GetById(familyId).Data;
@@ -226,15 +225,23 @@ public class JobService(
                     throw new Exception("Member considerations list was null rather than empty");
                 }
 
-                var memberConsiderationsText = string.Join("\n", new[]
-                    {
-                        $"Name: {member.Name}",
-                        !string.IsNullOrEmpty(member.Notes) ? $"Notes: {member.Notes}" : null,
-                        restrictions.Any() ? $"Restrictions: {string.Join(", ", restrictions)}" : null,
-                        goals.Any() ? $"Goals: {string.Join(", ", goals)}" : null,
-                        cuisines.Any() ? $"Favorite Cuisines: {string.Join(", ", cuisines)}" : null
-                    }.Where(s => s != null)) + "\n\n";
-                    
+                var memberConsiderationsText =
+                    string.Join(
+                        "\n",
+                        new[]
+                        {
+                            $"Name: {member.Name}",
+                            !string.IsNullOrEmpty(member.Notes) ? $"Notes: {member.Notes}" : null,
+                            restrictions.Any()
+                                ? $"Restrictions: {string.Join(", ", restrictions)}"
+                                : null,
+                            goals.Any() ? $"Goals: {string.Join(", ", goals)}" : null,
+                            cuisines.Any()
+                                ? $"Favorite Cuisines: {string.Join(", ", cuisines)}"
+                                : null
+                        }.Where(s => s != null)
+                    ) + "\n\n";
+
                 considerationsText.Append(memberConsiderationsText);
             }
 
@@ -250,7 +257,7 @@ public class JobService(
     {
         // a list of recipes if they exist otherwise []
         var previousRecipes = _previousRecipeService.GetPreviousRecipes(familyId).Data!;
-        
+
         var enjoyed = new List<string>();
         var notEnjoyed = new List<string>();
 
@@ -266,11 +273,20 @@ public class JobService(
             }
         }
 
-        return string.Join("\n\n", new[]
+        return string.Join(
+            "\n\n",
+            new[]
             {
-                enjoyed.Any() ? "Generate recipes that are similar to the ones listed here, but be certain that you generate different recipes:\n" + string.Join(", ", enjoyed) : null,
-                notEnjoyed.Any() ? "Do not generate recipes these recipes, or recipes that are similar to the ones listed here:\n" + string.Join(", ", notEnjoyed) : null
-            }.Where(s => s != null));
+                enjoyed.Any()
+                    ? "Generate recipes that are similar to the ones listed here, but be certain that you generate different recipes:\n"
+                        + string.Join(", ", enjoyed)
+                    : null,
+                notEnjoyed.Any()
+                    ? "Do not generate recipes these recipes, or recipes that are similar to the ones listed here:\n"
+                        + string.Join(", ", notEnjoyed)
+                    : null
+            }.Where(s => s != null)
+        );
     }
 
     private static List<PreviousRecipeCreateDto> ExtractRecipes(

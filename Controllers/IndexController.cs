@@ -7,7 +7,6 @@ using Chefster.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using MongoDB.Bson;
 
 namespace Chefster.Controllers;
 
@@ -212,7 +211,7 @@ public class IndexController(
     }
 
     [Route("/error")]
-    public ActionResult GenericError(string route)
+    public ActionResult GenericError(string route = "/")
     {
         return View(new GenericErrorViewModel { BackRoute = route });
     }
@@ -233,7 +232,7 @@ public class IndexController(
 
     public IActionResult Index()
     {
-        return View(Common.Constants.GORDON_RESPONSE_EXAMPLE);
+        return View(Constants.GORDON_RESPONSE_EXAMPLE);
     }
 
     [Authorize]
