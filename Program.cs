@@ -35,17 +35,26 @@ builder.Services.AddAuth0WebAppAuthentication(options =>
     }
 });
 
-var connString = Environment.GetEnvironmentVariable("SQL_CONN_STR");
+var isProd = Environment.GetEnvironmentVariable("IS_PROD");
+var prodConnString = Environment.GetEnvironmentVariable("SQL_CONN_STR");
+var testConnString = Environment.GetEnvironmentVariable("TEST_CONN_STR");
+
 builder.Services.AddDbContext<ChefsterDbContext>(options =>
 {
-    options.UseSqlServer(connString);
-    options.UseLoggerFactory(
-        LoggerFactory.Create(builder => builder.AddFilter((category, level) => false))
-    );
-    // options.UseInMemoryDatabase("TestDB");
+    if (isProd == "true")
+    {
+        options.UseSqlServer(prodConnString);
+        options.UseLoggerFactory(
+            LoggerFactory.Create(builder => builder.AddFilter((category, level) => false))
+        );
+    }
+    else
+    {
+        options.UseSqlite(testConnString)
+            .EnableSensitiveDataLogging()
+            .LogTo(Console.WriteLine);
+    }
 });
-
-//GlobalConfiguration.Configuration.UseSqlServerStorage("connection String");
 
 builder.Services.AddScoped<FamilyService>();
 builder.Services.AddScoped<MemberService>();
@@ -89,7 +98,6 @@ builder.Services.AddHangfire(
             );
     }
 );
-var isProd = Environment.GetEnvironmentVariable("IS_PROD");
 var queueName = Environment.GetEnvironmentVariable("QUEUE_NAME");
 if (isProd == "false")
 {
