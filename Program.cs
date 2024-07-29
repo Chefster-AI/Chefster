@@ -37,7 +37,6 @@ builder.Services.AddAuth0WebAppAuthentication(options =>
 
 var isProd = Environment.GetEnvironmentVariable("IS_PROD");
 var prodConnString = Environment.GetEnvironmentVariable("SQL_CONN_STR");
-var testConnString = Environment.GetEnvironmentVariable("TEST_CONN_STR");
 
 builder.Services.AddDbContext<ChefsterDbContext>(options =>
 {
@@ -50,7 +49,7 @@ builder.Services.AddDbContext<ChefsterDbContext>(options =>
     }
     else
     {
-        options.UseSqlite(testConnString)
+        options.UseSqlite("Data Source=ChefsterTestDB.db")
             .EnableSensitiveDataLogging()
             .LogTo(Console.WriteLine);
     }
