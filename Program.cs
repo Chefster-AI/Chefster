@@ -49,9 +49,7 @@ builder.Services.AddDbContext<ChefsterDbContext>(options =>
     }
     else
     {
-        options.UseSqlite("Data Source=ChefsterTestDB.db")
-            .EnableSensitiveDataLogging()
-            .LogTo(Console.WriteLine);
+        options.UseSqlite("Data Source=ChefsterTestDB.db");
     }
 });
 
