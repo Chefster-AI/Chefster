@@ -72,7 +72,8 @@ public class IndexController(
         }
         else
         {
-            return View("Profile");
+            // Redirect so that we make the call to get the profile
+            return Redirect("Profile");
         }
     }
 
