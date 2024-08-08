@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Chefster.Controllers;
 
+#if DEBUG
 [Authorize]
 [Route("api/consideration")]
 [ApiController]
@@ -24,7 +25,7 @@ public class ConsiderationController(ConsiderationsService considerationsService
         return Ok(consideration.Data);
     }
 
-        [HttpGet("api/id/{ConsiderationId}")]
+    [HttpGet("api/id/{ConsiderationId}")]
     public ActionResult<ConsiderationsModel> GetConsiderationById(string ConsiderationId)
     {
         var consideration = _considerationsService.GetConsiderationById(ConsiderationId);
@@ -32,7 +33,7 @@ public class ConsiderationController(ConsiderationsService considerationsService
         {
             return BadRequest($"no considerations for family with Id {ConsiderationId}");
         }
- 
+
         return Ok(consideration.Data);
     }
 
@@ -78,7 +79,10 @@ public class ConsiderationController(ConsiderationsService considerationsService
     }
 
     [HttpPut("{ConsiderationId}")]
-    public ActionResult<ConsiderationsModel> UpdateConsideration(ConsiderationsUpdateDto consideration, string ConsiderationId)
+    public ActionResult<ConsiderationsModel> UpdateConsideration(
+        ConsiderationsUpdateDto consideration,
+        string ConsiderationId
+    )
     {
         var updated = _considerationsService.UpdateConsideration(ConsiderationId, consideration);
 
@@ -90,3 +94,4 @@ public class ConsiderationController(ConsiderationsService considerationsService
         return Ok(updated.Data);
     }
 }
+#endif
