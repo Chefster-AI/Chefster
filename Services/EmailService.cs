@@ -3,13 +3,15 @@ using System.Net.Mail;
 
 namespace Chefster.Services;
 
-public class EmailService()
+public class EmailService(IConfiguration configuration)
 {
+    private readonly IConfiguration _configuration = configuration;
+
     public void SendEmail(string email, string subject, string body)
     {
         // The credentials for the sending email
-        var fromEmail = Environment.GetEnvironmentVariable("FROM_EMAIL")!;
-        var pwd = Environment.GetEnvironmentVariable("FROM_PASS")!;
+        var fromEmail = _configuration["FROM_EMAIL"]!;
+        var pwd = _configuration["FROM_PASS"]!;
 
         var client = new SmtpClient
         {
