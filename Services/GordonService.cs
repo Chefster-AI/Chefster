@@ -9,11 +9,10 @@ using Newtonsoft.Json.Linq;
 
 namespace Chefster.Services;
 
-public class GordonService(IHttpClientFactory httpClientFactory)
+public class GordonService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
 {
-    public readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
-    public readonly string API_KEY = Environment.GetEnvironmentVariable("API_KEY")!;
-    public readonly string ASSIST_ID = Environment.GetEnvironmentVariable("ASSIST_ID")!;
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly IConfiguration _configuration = configuration;
 
     /*
         Handles the communication with OpenAI and our assistant, Gordon
@@ -79,6 +78,7 @@ public class GordonService(IHttpClientFactory httpClientFactory)
     public async Task<string?> CreateRun(string threadId)
     {
         var httpClient = SetupHttpClient();
+        var ASSIST_ID = _configuration["ASSIST_ID"];
 
         var jsonBody = new { assistant_id = ASSIST_ID };
         var strContent = new StringContent(
@@ -221,6 +221,7 @@ public class GordonService(IHttpClientFactory httpClientFactory)
     private HttpClient SetupHttpClient()
     {
         var httpClient = _httpClientFactory.CreateClient();
+        var API_KEY = _configuration["API_KEY"];
 
         httpClient.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v2");
         httpClient.DefaultRequestHeaders.Add(HeaderNames.Authorization, $"Bearer {API_KEY}");
