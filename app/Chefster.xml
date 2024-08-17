@@ -4,6 +4,26 @@
         <name>Chefster</name>
     </assembly>
     <members>
+        <member name="M:Chefster.Controllers.ConsiderationController.GetPreviousWeekNotes(System.String)">
+            <summary>
+            Gets Family Notes from the last 7 days
+            </summary>
+        </member>
+        <member name="M:Chefster.Controllers.GordonController.CreatedGordonResponse(System.String)">
+            <summary>
+            FOR TESTING ONLY. Send consideration in body
+            </summary>
+        </member>
+        <member name="M:Chefster.Controllers.GordonController.CreatedGordonResponseForFamily(System.String)">
+            <summary>
+            FOR TESTING ONLY. Create a response based on a families considerations and send an email.
+            </summary>
+        </member>
+        <member name="M:Chefster.Controllers.MemberController.GetByFamilyId(System.String)">
+            <summary>
+            Get all members assocatied with a family
+            </summary>
+        </member>
         <member name="T:Chefster.Migrations.InitialCreate">
             <inheritdoc />
         </member>
@@ -14,18 +34,6 @@
             <inheritdoc />
         </member>
         <member name="M:Chefster.Migrations.InitialCreate.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
-            <inheritdoc />
-        </member>
-        <member name="T:Chefster.Migrations.CreatingLocal">
-            <inheritdoc />
-        </member>
-        <member name="M:Chefster.Migrations.CreatingLocal.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
-            <inheritdoc />
-        </member>
-        <member name="M:Chefster.Migrations.CreatingLocal.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
-            <inheritdoc />
-        </member>
-        <member name="M:Chefster.Migrations.CreatingLocal.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
     </members>

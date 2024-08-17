@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: app
-  - destination: /var/www
+    destination: /var/www
   - source: deploy-scripts/chefster.service
     destination: /etc/systemd/system
 hooks:
