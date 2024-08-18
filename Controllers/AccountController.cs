@@ -8,9 +8,24 @@ namespace Chefster.Controllers;
 
 public class AccountController : Controller
 {
+    private static string GetProtocol()
+    {
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+        {
+            Console.WriteLine("http");
+            return "http";
+        }
+        Console.WriteLine("https");
+        return "https";
+    }
+
     public async Task LogIn()
     {
         var authenticationProperties = new LoginAuthenticationPropertiesBuilder()
+            .WithParameter(
+                "redirect_uri",
+                $"{Url.Action("Index", "Index", null, GetProtocol())}callback"
+            )
             .WithRedirectUri(Url.Action("Profile", "Index")!)
             .Build();
 
@@ -24,7 +39,7 @@ public class AccountController : Controller
     public async Task LogOut()
     {
         var authenticationProperties = new LogoutAuthenticationPropertiesBuilder()
-            .WithRedirectUri(Url.Action("Index", "Index")!)
+            .WithRedirectUri(Url.Action("Index", "Index", null, GetProtocol())!)
             .Build();
 
         await HttpContext.SignOutAsync(
@@ -38,6 +53,10 @@ public class AccountController : Controller
     {
         var authenticationProperties = new LoginAuthenticationPropertiesBuilder()
             .WithParameter("screen_hint", "signup")
+            .WithParameter(
+                "redirect_uri",
+                $"{Url.Action("Index", "Index", null, GetProtocol())}callback"
+            )
             .WithRedirectUri(Url.Action("Profile", "Index")!)
             .Build();
 
