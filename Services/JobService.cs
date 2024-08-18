@@ -56,7 +56,7 @@ public class JobService(
             }
 
             string queueName = "default";
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Development")
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             {
                 queueName = Environment.GetEnvironmentVariable("QUEUE_NAME")!;
             }
