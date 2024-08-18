@@ -52,12 +52,15 @@ else
     isProd = builder.Configuration["IS_PROD"];
 }
 
-var prodConnString = builder.Configuration["SQL_CONN_STR"];
 builder.Services.AddDbContext<ChefsterDbContext>(options =>
 {
     if (isProd == "true")
     {
-        options.UseSqlServer(prodConnString);
+        string? endpoint = builder.Configuration["MYSQL_ENDPOINT"];
+        string? db = builder.Configuration["MYSQL_DB"];
+        string? username = builder.Configuration["MYSQL_USERNAME"];
+        string? password = builder.Configuration["MYSQL_PASSWORD"];
+        options.UseMySql($"Server={endpoint};Database={db};User={username};Password={password}", new MySqlServerVersion(new Version(8, 0, 35)));
         options.UseLoggerFactory(
             LoggerFactory.Create(builder => builder.AddFilter((category, level) => false))
         );
