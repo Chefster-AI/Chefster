@@ -52,14 +52,14 @@ jobs:
         HOST_NAME: ${{ secrets.EC2_HOST_NAME }}
         USER_NAME: ${{ secrets.EC2_USER_NAME }}
       run: |
-        echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-        ssh -i private_key -o StrictHostKeyChecking=no ${USER_NAME}@${HOST_NAME} `
+        echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
+        ssh -i private_key ${USER_NAME}@${HOST_NAME} `
           rm -rf /var/www/*
           rm -rf /etc/systemd/system/chefster.service
         `
-        scp -i private_key -o StrictHostKeyChecking=no chefster.service ${USER_NAME}@${HOST_NAME}:/etc/systemd/system
-        scp -i private_key -o StrictHostKeyChecking=no -r app/* ${USER_NAME}@${HOST_NAME}:/var/www
-        ssh -i private_key -o StrictHostKeyChecking=no ${USER_NAME}@${HOST_NAME} '
+        scp -i private_key chefster.service ${USER_NAME}@${HOST_NAME}:/etc/systemd/system
+        scp -i private_key -r app/* ${USER_NAME}@${HOST_NAME}:/var/www
+        ssh -i private_key ${USER_NAME}@${HOST_NAME} '
           sudo systemctl stop chefster.service
           sudo systemctl start chefster.service
         '
