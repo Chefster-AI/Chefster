@@ -10,11 +10,13 @@ public class AccountController : Controller
 {
     private static string GetProtocol()
     {
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Development")
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
         {
-            return "https";
+            Console.WriteLine("http");
+            return "http";
         }
-        return "http";
+        Console.WriteLine("https");
+        return "https";
     }
 
     public async Task LogIn()

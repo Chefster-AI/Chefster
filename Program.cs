@@ -162,7 +162,10 @@ if (isProd == "false")
 app.UseHangfireDashboard();
 app.MapHangfireDashboard();
 
-app.UseHttpsRedirection();
+if (isProd == "true")
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseStaticFiles();
 
