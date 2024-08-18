@@ -56,17 +56,7 @@ public class JobService(
             }
 
             string queueName = "default";
-            string? isProd;
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-            {
-                isProd = Environment.GetEnvironmentVariable("IS_PROD");
-            }
-            else
-            {
-                isProd = _configuration["IS_PROD"];
-            }
-
-            if (isProd == "false")
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Development")
             {
                 queueName = Environment.GetEnvironmentVariable("QUEUE_NAME")!;
             }
