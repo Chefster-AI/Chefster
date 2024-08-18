@@ -8,20 +8,23 @@ namespace Chefster.Controllers;
 
 public class AccountController : Controller
 {
-    private static string GetRedirectUri()
+    private static string GetProtocol()
     {
         if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Development")
         {
-            return "https://chefster.net/callback";
+            return "https";
         }
-        return "http://chefster.net/callback";
+        return "http";
     }
 
     public async Task LogIn()
     {
         var authenticationProperties = new LoginAuthenticationPropertiesBuilder()
+            .WithParameter(
+                "redirect_uri",
+                $"{Url.Action("Index", "Index", null, GetProtocol())}callback"
+            )
             .WithRedirectUri(Url.Action("Profile", "Index")!)
-            .WithParameter("redirect_uri", GetRedirectUri())
             .Build();
 
         await HttpContext.ChallengeAsync(
@@ -34,8 +37,7 @@ public class AccountController : Controller
     public async Task LogOut()
     {
         var authenticationProperties = new LogoutAuthenticationPropertiesBuilder()
-            .WithRedirectUri(Url.Action("Index", "Index")!)
-            .WithParameter("redirect_uri", GetRedirectUri())
+            .WithRedirectUri(Url.Action("Index", "Index", null, GetProtocol())!)
             .Build();
 
         await HttpContext.SignOutAsync(
@@ -49,8 +51,11 @@ public class AccountController : Controller
     {
         var authenticationProperties = new LoginAuthenticationPropertiesBuilder()
             .WithParameter("screen_hint", "signup")
+            .WithParameter(
+                "redirect_uri",
+                $"{Url.Action("Index", "Index", null, GetProtocol())}callback"
+            )
             .WithRedirectUri(Url.Action("Profile", "Index")!)
-            .WithParameter("redirect_uri", GetRedirectUri())
             .Build();
 
         await HttpContext.ChallengeAsync(
