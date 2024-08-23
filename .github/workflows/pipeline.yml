@@ -27,7 +27,7 @@ jobs:
 
       - name: Run tests
         run: |
-          dotnet test Chefster.Tests/Chefster.Tests.csproj
+          dotnet test Tests/Tests.csproj
 
   deploy_to_ec2:
     needs: run_unit_tests
