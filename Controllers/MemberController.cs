@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Chefster.Controllers;
 
+#if DEBUG
 [Authorize]
 [Route("api/member")]
 [ApiController]
@@ -85,3 +86,4 @@ public class MemberController(MemberService memberService) : ControllerBase
         return Ok(updated.Data);
     }
 }
+#endif

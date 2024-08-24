@@ -28,9 +28,9 @@ public class FamilyController(
     private readonly MemberService _memberService = memberService;
     private readonly JobService _jobService = jobService;
     private readonly ViewToStringService _viewToStringService = viewToStringService;
-
     private readonly UpdateProfileService _updateProfileService = updateProfileService;
 
+#if DEBUG
     [HttpGet("{Id}")]
     public ActionResult<FamilyModel> GetFamily(string Id)
     {
@@ -50,6 +50,7 @@ public class FamilyController(
         var families = _familyService.GetAll();
         return Ok(families.Data);
     }
+#endif
 
     [HttpPost]
     public async Task<ActionResult> CreateFamily([FromForm] FamilyViewModel Family)
@@ -113,6 +114,7 @@ public class FamilyController(
         return RedirectToAction("ThankYou", "Index", model);
     }
 
+#if DEBUG
     [HttpDelete("{Id}")]
     public ActionResult DeleteFamily(string Id)
     {
@@ -141,6 +143,7 @@ public class FamilyController(
 
         return Ok(updated.Data);
     }
+#endif
 
     // this function is specificly for updating through a form since forms only support POST and PUT
     [HttpPost("/api/update/family")]

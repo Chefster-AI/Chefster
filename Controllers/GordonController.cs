@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Chefster.Controllers;
 
+#if DEBUG
 [Authorize]
 [Route("api/gordon")]
 [ApiController]
@@ -57,3 +58,5 @@ public class GordonController(GordonService gordonService, JobService jobService
         //return Ok();
     }
 }
+
+#endif
