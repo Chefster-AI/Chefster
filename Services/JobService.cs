@@ -12,7 +12,8 @@ public class JobService(
     GordonService gordonService,
     MemberService memberService,
     PreviousRecipesService previousRecipesService,
-    ViewToStringService viewToStringService
+    ViewToStringService viewToStringService,
+    IConfiguration configuration
 )
 {
     private readonly ConsiderationsService _considerationService = considerationsService;
@@ -22,6 +23,7 @@ public class JobService(
     private readonly MemberService _memberService = memberService;
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
     private readonly ViewToStringService _viewToStringService = viewToStringService;
+    private readonly IConfiguration _configuration = configuration;
 
     /*
         The service is responsible for created, updating and executing jobs that will
@@ -54,8 +56,7 @@ public class JobService(
             }
 
             string queueName = "default";
-            var isProd = Environment.GetEnvironmentVariable("IS_PROD");
-            if (isProd == "false")
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             {
                 queueName = Environment.GetEnvironmentVariable("QUEUE_NAME")!;
             }

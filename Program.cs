@@ -23,8 +23,15 @@ catch (Exception ex)
     Console.WriteLine($"Error loading .env file: {ex.Message}");
 }
 
-var domain = Environment.GetEnvironmentVariable("AUTH_DOMAIN");
-var clientId = Environment.GetEnvironmentVariable("AUTH_CLIENT_ID");
+builder.Configuration.AddSystemsManager(c =>
+{
+    c.Path = "/Chefster/Development";
+    c.Optional = true;
+    c.ReloadAfter = TimeSpan.FromMinutes(10);
+});
+
+var domain = builder.Configuration["AUTH_DOMAIN"];
+var clientId = builder.Configuration["AUTH_CLIENT_ID"];
 builder.Services.AddAuth0WebAppAuthentication(options =>
 {
     if (domain != null && clientId != null)
@@ -35,20 +42,37 @@ builder.Services.AddAuth0WebAppAuthentication(options =>
     }
 });
 
-var isProd = Environment.GetEnvironmentVariable("IS_PROD");
-var prodConnString = Environment.GetEnvironmentVariable("SQL_CONN_STR");
+string? isProd;
+if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+{
+    isProd = "false";
+}
+else
+{
+    isProd = "true";
+}
 
+// Configure database connection here.
+// Definition in DBContext can cause a double reference to the database being used
 builder.Services.AddDbContext<ChefsterDbContext>(options =>
 {
     if (isProd == "true")
     {
-        options.UseSqlServer(prodConnString);
+        string? endpoint = builder.Configuration["MYSQL_ENDPOINT"];
+        string? db = builder.Configuration["MYSQL_DB"];
+        string? username = builder.Configuration["MYSQL_USERNAME"];
+        string? password = builder.Configuration["MYSQL_PASSWORD"];
+        options.UseMySql(
+            $"Server={endpoint};Database={db};User={username};Password={password}",
+            new MySqlServerVersion(new Version(8, 0, 35))
+        );
         options.UseLoggerFactory(
             LoggerFactory.Create(builder => builder.AddFilter((category, level) => false))
         );
     }
     else
     {
+        Console.WriteLine("********** Using Test Database **********");
         options.UseSqlite("Data Source=ChefsterTestDB.db");
     }
 });
@@ -67,7 +91,7 @@ builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 
 // Hangfire stuff
-var mongoConnection = Environment.GetEnvironmentVariable("MONGO_CONN");
+var mongoConnection = builder.Configuration["MONGO_CONN"];
 var mongoUrlBuilder = new MongoUrlBuilder(mongoConnection);
 var mongoClient = new MongoClient(mongoConnection);
 var migrationOptions = new MongoMigrationOptions
@@ -95,7 +119,7 @@ builder.Services.AddHangfire(
             );
     }
 );
-var queueName = Environment.GetEnvironmentVariable("QUEUE_NAME");
+var queueName = builder.Configuration["QUEUE_NAME"];
 if (isProd == "false")
 {
     // create a queue for testing purposes
@@ -147,7 +171,10 @@ if (isProd == "false")
 app.UseHangfireDashboard();
 app.MapHangfireDashboard();
 
-app.UseHttpsRedirection();
+if (isProd == "true")
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseStaticFiles();
 
