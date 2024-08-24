@@ -1,6 +1,5 @@
 using System.Reflection;
 using Auth0.AspNetCore.Authentication;
-using Chefster;
 using Chefster.Context;
 using Chefster.Services;
 using Hangfire;
@@ -13,15 +12,7 @@ using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
-try
-{
-    var path = Path.Combine(builder.Environment.ContentRootPath, ".env");
-    DotEnv.Load(path);
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Error loading .env file: {ex.Message}");
-}
+builder.Configuration.AddUserSecrets("d70ac473-6c10-438a-a3ba-2a154bdf5946");
 
 builder.Configuration.AddSystemsManager(c =>
 {
