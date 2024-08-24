@@ -45,25 +45,34 @@ builder.Services.AddAuth0WebAppAuthentication(options =>
 string? isProd;
 if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
 {
-    isProd = Environment.GetEnvironmentVariable("IS_PROD");
+    isProd = "false";
 }
 else
 {
-    isProd = builder.Configuration["IS_PROD"];
+    isProd = "true";
 }
 
-var prodConnString = builder.Configuration["SQL_CONN_STR"];
+// Configure database connection here.
+// Definition in DBContext can cause a double reference to the database being used
 builder.Services.AddDbContext<ChefsterDbContext>(options =>
 {
     if (isProd == "true")
     {
-        options.UseSqlServer(prodConnString);
+        string? endpoint = builder.Configuration["MYSQL_ENDPOINT"];
+        string? db = builder.Configuration["MYSQL_DB"];
+        string? username = builder.Configuration["MYSQL_USERNAME"];
+        string? password = builder.Configuration["MYSQL_PASSWORD"];
+        options.UseMySql(
+            $"Server={endpoint};Database={db};User={username};Password={password}",
+            new MySqlServerVersion(new Version(8, 0, 35))
+        );
         options.UseLoggerFactory(
             LoggerFactory.Create(builder => builder.AddFilter((category, level) => false))
         );
     }
     else
     {
+        Console.WriteLine("********** Using Test Database **********");
         options.UseSqlite("Data Source=ChefsterTestDB.db");
     }
 });
