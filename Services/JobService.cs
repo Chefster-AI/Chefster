@@ -54,12 +54,8 @@ public class JobService(
                 // default to UTC if we can't get it
                 timeZone = TimeZoneInfo.Utc;
             }
-
-            string queueName = "default";
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-            {
-                queueName = Environment.GetEnvironmentVariable("QUEUE_NAME")!;
-            }
+            
+            string queueName = _configuration["ASPNETCORE_ENVIRONMENT"] == "Development" ? _configuration["QUEUE_NAME"]! : "default";
 
             // set time zone, queue name, and update/create job
             var options = new RecurringJobOptions { TimeZone = timeZone, QueueName = queueName };

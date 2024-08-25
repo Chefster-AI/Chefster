@@ -1,6 +1,5 @@
 using System.Reflection;
 using Auth0.AspNetCore.Authentication;
-using Chefster;
 using Chefster.Context;
 using Chefster.Services;
 using Hangfire;
@@ -13,16 +12,10 @@ using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
-try
-{
-    var path = Path.Combine(builder.Environment.ContentRootPath, ".env");
-    DotEnv.Load(path);
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Error loading .env file: {ex.Message}");
-}
+// load local dotnet user-secrets
+builder.Configuration.AddUserSecrets("d70ac473-6c10-438a-a3ba-2a154bdf5946");
 
+// load secrets from aws parameter store
 builder.Configuration.AddSystemsManager(c =>
 {
     c.Path = "/Chefster/Development";
@@ -30,38 +23,29 @@ builder.Configuration.AddSystemsManager(c =>
     c.ReloadAfter = TimeSpan.FromMinutes(10);
 });
 
-var domain = builder.Configuration["AUTH_DOMAIN"];
-var clientId = builder.Configuration["AUTH_CLIENT_ID"];
+Console.WriteLine("Builder's Environment: " + builder.Environment.EnvironmentName);
+
+// set up auth0
 builder.Services.AddAuth0WebAppAuthentication(options =>
 {
-    if (domain != null && clientId != null)
-    {
-        options.Domain = domain;
-        options.ClientId = clientId;
-        options.Scope = "openid profile email";
-    }
+    options.Domain = builder.Configuration["AUTH_DOMAIN"]!;
+    options.ClientId = builder.Configuration["AUTH_CLIENT_ID"]!;
+    options.Scope = "openid profile email";
 });
 
-string? isProd;
-if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-{
-    isProd = "false";
-}
-else
-{
-    isProd = "true";
-}
-
-// Configure database connection here.
-// Definition in DBContext can cause a double reference to the database being used
+// set up db
 builder.Services.AddDbContext<ChefsterDbContext>(options =>
 {
-    if (isProd == "true")
+    if (builder.Environment.IsDevelopment())
     {
-        string? endpoint = builder.Configuration["MYSQL_ENDPOINT"];
-        string? db = builder.Configuration["MYSQL_DB"];
-        string? username = builder.Configuration["MYSQL_USERNAME"];
-        string? password = builder.Configuration["MYSQL_PASSWORD"];
+        options.UseSqlite("Data Source=ChefsterTestDB.db");
+    }
+    else if (builder.Environment.IsProduction())
+    {
+        var endpoint = builder.Configuration["MYSQL_ENDPOINT"];
+        var db = builder.Configuration["MYSQL_DB"];
+        var username = builder.Configuration["MYSQL_USERNAME"];
+        var password = builder.Configuration["MYSQL_PASSWORD"];
         options.UseMySql(
             $"Server={endpoint};Database={db};User={username};Password={password}",
             new MySqlServerVersion(new Version(8, 0, 35))
@@ -70,13 +54,9 @@ builder.Services.AddDbContext<ChefsterDbContext>(options =>
             LoggerFactory.Create(builder => builder.AddFilter((category, level) => false))
         );
     }
-    else
-    {
-        Console.WriteLine("********** Using Test Database **********");
-        options.UseSqlite("Data Source=ChefsterTestDB.db");
-    }
 });
 
+// add services
 builder.Services.AddScoped<FamilyService>();
 builder.Services.AddScoped<MemberService>();
 builder.Services.AddScoped<ConsiderationsService>();
@@ -87,13 +67,11 @@ builder.Services.AddScoped<ViewToStringService>();
 builder.Services.AddScoped<PreviousRecipesService>();
 builder.Services.AddScoped<UpdateProfileService>();
 builder.Services.AddControllers();
-
 builder.Services.AddControllersWithViews();
 
-// Hangfire stuff
-var mongoConnection = builder.Configuration["MONGO_CONN"];
-var mongoUrlBuilder = new MongoUrlBuilder(mongoConnection);
-var mongoClient = new MongoClient(mongoConnection);
+// add hangfire with mongo
+var mongoUrlBuilder = new MongoUrlBuilder(builder.Configuration["MONGO_CONN"]);
+var mongoClient = new MongoClient(builder.Configuration["MONGO_CONN"]);
 var migrationOptions = new MongoMigrationOptions
 {
     MigrationStrategy = new DropMongoMigrationStrategy(),
@@ -107,7 +85,6 @@ builder.Services.AddHangfire(
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
-            // .UseSqlServerStorage(connString);
             .UseMongoStorage(
                 mongoClient,
                 "chefster-hangfire",
@@ -119,13 +96,12 @@ builder.Services.AddHangfire(
             );
     }
 );
-var queueName = builder.Configuration["QUEUE_NAME"];
-if (isProd == "false")
+
+if (builder.Environment.IsDevelopment())
 {
-    // create a queue for testing purposes
-    builder.Services.AddHangfireServer(op => op.Queues = [queueName]);
+    builder.Services.AddHangfireServer(options => options.Queues = [builder.Configuration["QUEUE_NAME"]]);
 }
-else
+else if (builder.Environment.IsProduction())
 {
     builder.Services.AddHangfireServer();
 }
@@ -146,44 +122,33 @@ builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsProduction())
 {
     app.UseExceptionHandler("/error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-else
+else if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
 
-if (isProd == "false")
+if (app.Environment.IsDevelopment())
 {
-    Console.WriteLine("WE ARE IN DEVELOPMENT!");
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Chefster Backend");
-    });
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Chefster Backend"));
 }
 
 app.UseHangfireDashboard();
 app.MapHangfireDashboard();
 
-if (isProd == "true")
+if (app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
 }
 
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseAuthentication();
-
 app.UseAuthorization();
-
 app.MapControllerRoute(name: "default", pattern: "{controller=Index}/{action=Index}/{id?}");
-
 app.Run();
