@@ -28,9 +28,9 @@ public class FamilyController(
     private readonly MemberService _memberService = memberService;
     private readonly JobService _jobService = jobService;
     private readonly ViewToStringService _viewToStringService = viewToStringService;
-
     private readonly UpdateProfileService _updateProfileService = updateProfileService;
 
+#if DEBUG
     [HttpGet("{Id}")]
     public ActionResult<FamilyModel> GetFamily(string Id)
     {
@@ -50,24 +50,27 @@ public class FamilyController(
         var families = _familyService.GetAll();
         return Ok(families.Data);
     }
+#endif
 
     [HttpPost]
     public async Task<ActionResult> CreateFamily([FromForm] FamilyViewModel Family)
     {
         var familyId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value!;
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!;
         var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(Family.TimeZone);
+        var createdAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo);
 
-        if (familyId == null)
+        if (familyId == null || email == null)
         {
-            return BadRequest("FamilyId was null when creating family");
+            return RedirectToAction("Index", "error", new { route = "/profile" });
         }
+
         // create the new family
         var NewFamily = new FamilyModel
         {
-            // these shouldn't  be null so we added a "!"
             Id = familyId,
-            Email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!,
-            CreatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo),
+            Email = email,
+            CreatedAt = createdAt,
             PhoneNumber = Family.PhoneNumber,
             FamilySize = Family.FamilySize,
             NumberOfBreakfastMeals = Family.NumberOfBreakfastMeals,
@@ -78,15 +81,21 @@ public class FamilyController(
             TimeZone = Family.TimeZone,
         };
 
-        // create family and job
+        // create job
         var created = _familyService.CreateFamily(NewFamily);
-        if (created.Success)
+        if (!created.Success)
         {
-            _jobService.CreateorUpdateEmailJob(created.Data!.Id);
+            return RedirectToAction("Index", "error", new { route = "/profile" });
         }
 
         // create all members and considerations for family
-        await CreateMembersAndConsiderations(Family);
+        var memberSuccess = CreateMembersAndConsiderations(Family);
+        if (!memberSuccess.Success)
+        {
+            return RedirectToAction("Index", "error", new { route = "/profile" });
+        }
+
+        _jobService.CreateorUpdateEmailJob(created.Data!.Id);
 
         // TODO: send confirmation email
         var body = await _viewToStringService.ViewToStringAsync(
@@ -105,6 +114,7 @@ public class FamilyController(
         return RedirectToAction("ThankYou", "Index", model);
     }
 
+#if DEBUG
     [HttpDelete("{Id}")]
     public ActionResult DeleteFamily(string Id)
     {
@@ -133,6 +143,7 @@ public class FamilyController(
 
         return Ok(updated.Data);
     }
+#endif
 
     // this function is specificly for updating through a form since forms only support POST and PUT
     [HttpPost("/api/update/family")]
@@ -161,11 +172,9 @@ public class FamilyController(
 
         var updated = _familyService.UpdateFamily(familyId, updatedFamily);
 
-        Console.WriteLine("WE SHOULD HAVE UPDATED");
-
         if (!updated.Success)
         {
-            return BadRequest($"Error: {updated.Error}");
+            return RedirectToAction("Index", "error", new { route = "/profile" });
         }
 
         // once we updated successfully, not now update the job with new generation times
@@ -175,10 +184,10 @@ public class FamilyController(
         await _updateProfileService.UpdateOrCreateMembersAndCreateConsiderations(familyId, family);
 
         // probably redirect to summary page
-        return RedirectToAction("Index", "Profile");
+        return RedirectToAction("Index", "profile");
     }
 
-    private Task CreateMembersAndConsiderations(FamilyViewModel Family)
+    private ServiceResult<Task> CreateMembersAndConsiderations(FamilyViewModel Family)
     {
         foreach (MemberViewModel Member in Family.Members)
         {
@@ -192,7 +201,14 @@ public class FamilyController(
                 Notes = Member.Notes
             };
 
-            MemberModel CreatedMember = _memberService.CreateMember(NewMember).Data!;
+            var CreatedMember = _memberService.CreateMember(NewMember);
+
+            if (!CreatedMember.Success)
+            {
+                return ServiceResult<Task>.ErrorResult(
+                    $"Error creating restriction consideration. Error: {CreatedMember.Error}"
+                );
+            }
 
             // and their considerations
             foreach (SelectListItem r in Member.Restrictions)
@@ -203,12 +219,18 @@ public class FamilyController(
                     ConsiderationsCreateDto restriction =
                         new()
                         {
-                            MemberId = CreatedMember.MemberId,
+                            MemberId = CreatedMember.Data!.MemberId,
                             Type = ConsiderationsEnum.Restriction,
                             Value = r.Text
                         };
 
-                    _considerationsService.CreateConsideration(restriction);
+                    var isSuccess = _considerationsService.CreateConsideration(restriction);
+                    if (!isSuccess.Success)
+                    {
+                        return ServiceResult<Task>.ErrorResult(
+                            $"Error creating restriction consideration. Error: {isSuccess.Error}"
+                        );
+                    }
                 }
             }
 
@@ -219,12 +241,18 @@ public class FamilyController(
                     ConsiderationsCreateDto goal =
                         new()
                         {
-                            MemberId = CreatedMember.MemberId,
+                            MemberId = CreatedMember.Data!.MemberId,
                             Type = ConsiderationsEnum.Goal,
                             Value = g.Text
                         };
 
-                    _considerationsService.CreateConsideration(goal);
+                    var isSuccess = _considerationsService.CreateConsideration(goal);
+                    if (!isSuccess.Success)
+                    {
+                        return ServiceResult<Task>.ErrorResult(
+                            $"Error creating goal consideration. Error: {isSuccess.Error}"
+                        );
+                    }
                 }
             }
 
@@ -235,15 +263,21 @@ public class FamilyController(
                     ConsiderationsCreateDto cuisine =
                         new()
                         {
-                            MemberId = CreatedMember.MemberId,
+                            MemberId = CreatedMember.Data!.MemberId,
                             Type = ConsiderationsEnum.Cuisine,
                             Value = c.Text
                         };
 
-                    _considerationsService.CreateConsideration(cuisine);
+                    var isSuccess = _considerationsService.CreateConsideration(cuisine);
+                    if (!isSuccess.Success)
+                    {
+                        return ServiceResult<Task>.ErrorResult(
+                            $"Error creating cuisine consideration. Error: {isSuccess.Error}"
+                        );
+                    }
                 }
             }
         }
-        return Task.CompletedTask;
+        return ServiceResult<Task>.SuccessResult(Task.CompletedTask);
     }
 }

@@ -7,14 +7,12 @@ using static Chefster.Common.Constants;
 
 namespace Chefster.Services;
 
-public class MemberService(ChefsterDbContext context, FamilyService familyService) : IMember
+public class MemberService(ChefsterDbContext context) : IMember
 {
     private readonly ChefsterDbContext _context = context;
-    private readonly FamilyService _familyService = familyService;
 
     public ServiceResult<MemberModel> CreateMember(MemberCreateDto member)
     {
-        // is this too resource intensive? Since queried values are saved in context it shouldn't be too bad
         var members = _context.Members.Where(m => m.FamilyId == member.FamilyId).ToList();
         if (members.Count == MAX_MEMBERS)
         {
@@ -25,7 +23,7 @@ public class MemberService(ChefsterDbContext context, FamilyService familyServic
 
         var mem = new MemberModel
         {
-            MemberId = Guid.NewGuid().ToString("N"), // make a random unique id for now
+            MemberId = Guid.NewGuid().ToString("N"), // make a random unique id
             FamilyId = member.FamilyId,
             Name = member.Name,
             Notes = member.Notes
@@ -67,7 +65,6 @@ public class MemberService(ChefsterDbContext context, FamilyService familyServic
     {
         try
         {
-            var fam = _familyService.GetById(id);
             var members = _context.Members.Where(e => e.FamilyId == id).ToList();
             return ServiceResult<List<MemberModel>>.SuccessResult(members);
         }
@@ -83,12 +80,13 @@ public class MemberService(ChefsterDbContext context, FamilyService familyServic
     {
         try
         {
-            return ServiceResult<MemberModel?>.SuccessResult(_context.Members.Find(id));
+            var member = _context.Members.Find(id);
+            return ServiceResult<MemberModel?>.SuccessResult(member);
         }
         catch (SqlException e)
         {
             return ServiceResult<MemberModel?>.ErrorResult(
-                $"Failed to retrieve all Member with ID: {id}. Error: {e}"
+                $"Failed to retrieve Member with ID: {id}. Error: {e}"
             );
         }
     }
@@ -114,7 +112,7 @@ public class MemberService(ChefsterDbContext context, FamilyService familyServic
         }
         catch (Exception e)
         {
-            return ServiceResult<MemberModel>.ErrorResult($"Failed to update Memeber. Error: {e}");
+            return ServiceResult<MemberModel>.ErrorResult($"Failed to update Member. Error: {e}");
         }
     }
 }

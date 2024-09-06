@@ -2,4 +2,4 @@
 
 Recipe generation automation
 
-Visit [chefster.azurewebsites.net](https://chefster.azurewebsites.net/)
+Visit [chefster.net](https://chefster.net/)

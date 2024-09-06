@@ -5,18 +5,14 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Chefster.Controllers;
 
+#if DEBUG
 [Authorize]
 [Route("api/gordon")]
 [ApiController]
-public class GordonController(
-    GordonService gordonService,
-    JobService jobService,
-    EmailService emailService
-) : ControllerBase
+public class GordonController(GordonService gordonService, JobService jobService) : ControllerBase
 {
     private readonly GordonService _gordonService = gordonService;
     private readonly JobService _jobService = jobService;
-    private readonly EmailService _emailService = emailService;
 
     /// <summary>
     /// FOR TESTING ONLY. Send consideration in body
@@ -62,3 +58,5 @@ public class GordonController(
         //return Ok();
     }
 }
+
+#endif

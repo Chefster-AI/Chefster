@@ -103,13 +103,15 @@
                     enjoyed: enjoyed
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+                .then(response => response.json())
+                .then(data => {
+                    // needs logging
+                    console.log('Success:', data);
+                })
+                .catch((error) => {
+                    // needs logging
+                    console.error('Error:', error);
+                });
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -123,21 +125,21 @@
                 let daysUntilTarget = (targetDay - now.getDay() + 7) % 7;
                 let nextTarget = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilTarget);
                 nextTarget.setHours(targetTime.hours, targetTime.minutes, targetTime.seconds);
-                
+
                 if (nextTarget <= now) {
                     nextTarget.setDate(nextTarget.getDate() + 7);
                 }
-                
+
                 return nextTarget;
             }
 
             function updateCountdown() {
                 const targetDay = @((int)Model.GenerationDay);
-                const targetTime = { 
-                    hours: @Model.GenerationTime.Hours, 
-                    minutes: @Model.GenerationTime.Minutes, 
+                const targetTime = {
+                    hours: @Model.GenerationTime.Hours,
+                    minutes: @Model.GenerationTime.Minutes,
                     seconds: @Model.GenerationTime.Seconds 
-                };
+                    };
 
                 const nextTarget = getNextTargetDate(targetDay, targetTime);
                 const now = new Date();

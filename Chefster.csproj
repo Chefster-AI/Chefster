@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,13 +8,12 @@
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <NoWarn>$(NoWarn);1591</NoWarn>
+    <UserSecretsId>d70ac473-6c10-438a-a3ba-2a154bdf5946</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Amazon.Extensions.Configuration.SystemsManager" Version="6.2.1" />
     <PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.4.1" />
-      <Content Include=".env" Condition="Exists('.env')">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <PackageReference Include="Hangfire.Console" Version="1.4.3" />
       <PackageReference Include="Hangfire.Core" Version="1.8.*" />
       <PackageReference Include="Hangfire.Mongo" Version="1.10.6" />
@@ -27,6 +26,7 @@
         <PrivateAssets>all</PrivateAssets>
       </PackageReference>
       <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.6" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.6" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6">
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -34,6 +34,7 @@
       </PackageReference>
       <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="17.10.0" />
       <PackageReference Include="MongoDB.Driver" Version="2.25.0" />
+      <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
       <PackageReference Include="xunit" Version="2.8.1" />
   </ItemGroup>
