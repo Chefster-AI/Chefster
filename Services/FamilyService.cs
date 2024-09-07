@@ -3,7 +3,6 @@ using Chefster.Context;
 using Chefster.Interfaces;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
-using MongoDB.Bson;
 
 namespace Chefster.Services;
 
@@ -219,7 +218,9 @@ public class FamilyService(ChefsterDbContext context) : IFamily
         }
         catch (Exception e)
         {
-            return ServiceResult<FamilyModel>.ErrorResult($"Failed to update Family Job Timestamp. Error: {e}");
+            return ServiceResult<FamilyModel>.ErrorResult(
+                $"Failed to update Family Job Timestamp. Error: {e}"
+            );
         }
     }
 }
