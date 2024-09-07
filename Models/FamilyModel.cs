@@ -10,7 +10,7 @@ public class FamilyModel
 {
     public required string Id { get; set; }
     public required string Email { get; set; }
-    public required SubscriptionStatus SubscriptionStatus { get; set; }
+    public required UserStatus UserStatus { get; set; }
     public required DateTime CreatedAt { get; set; }
     public required string PhoneNumber { get; set; }
     public required int FamilySize { get; set; }

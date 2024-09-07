@@ -54,7 +54,7 @@ public class LetterQueueService(FamilyService familyService, IConfiguration conf
             var letterFamily = new List<object>()
             {
                 AllMembers ?? "No Members..",
-                fam.SubscriptionStatus,
+                fam.UserStatus,
                 fam.PhoneNumber,
                 fam.Email,
                 fam.FamilySize,
@@ -76,7 +76,6 @@ public class LetterQueueService(FamilyService familyService, IConfiguration conf
                 .ValueInputOptionEnum
                 .USERENTERED;
             var appendResult = appendRequest.Execute();
-            Console.WriteLine(appendResult.UpdatedRows);
         }
     }
 

@@ -33,7 +33,7 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
             Id = "2",
             CreatedAt = DateTime.Now,
             Email = "test1@email.com",
-            SubscriptionStatus = SubscriptionStatus.Unknown,
+            UserStatus = UserStatus.Unknown,
             FamilySize = 5,
             NumberOfBreakfastMeals = 0,
             NumberOfLunchMeals = 0,
@@ -57,7 +57,7 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
         Assert.Equal(DayOfWeek.Sunday, family.Data.GenerationDay);
         Assert.Equal(new TimeSpan(1000), family.Data.GenerationTime);
         Assert.Equal("1112223333", family.Data.PhoneNumber);
-        Assert.Equal(SubscriptionStatus.Unknown, family.Data.SubscriptionStatus);
+        Assert.Equal(UserStatus.Unknown, family.Data.UserStatus);
 
         _fixture.Cleanup();
     }
@@ -71,7 +71,7 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
             Id = "3",
             CreatedAt = DateTime.Now,
             Email = "test3@email.com",
-            SubscriptionStatus = SubscriptionStatus.ExtendedFreeTier,
+            UserStatus = UserStatus.ExtendedFreeTrial,
             FamilySize = 4,
             NumberOfBreakfastMeals = 0,
             NumberOfLunchMeals = 0,

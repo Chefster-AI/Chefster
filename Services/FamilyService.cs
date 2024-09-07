@@ -163,12 +163,10 @@ public class FamilyService(ChefsterDbContext context) : IFamily
             var eligibleFamilies = _context
                 .Families.Where(f =>
                     // extended free trial or subscribed
-                    f.SubscriptionStatus == SubscriptionStatus.ExtendedFreeTier
-                    || f.SubscriptionStatus == SubscriptionStatus.Subscribed
+                    f.UserStatus == UserStatus.ExtendedFreeTrial
+                    || f.UserStatus == UserStatus.Subscribed
                 )
                 .ToList();
-
-            var all = _context.Families.ToList();
 
             if (eligibleFamilies == null)
             {
