@@ -3,6 +3,7 @@ using Chefster.Context;
 using Chefster.Interfaces;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
+using MongoDB.Bson;
 
 namespace Chefster.Services;
 
@@ -153,5 +154,51 @@ public class FamilyService(ChefsterDbContext context) : IFamily
         {
             return ServiceResult<FamilyModel>.ErrorResult($"Failed to update Family. Error: {e}");
         }
+    }
+
+    public ServiceResult<List<FamilyModel?>> GatherFamiliesForLetterQueue()
+    {
+        try
+        {
+            // gather families
+            var eligibleFamilies = _context
+                .Families.Where(f =>
+                    // extended free trial or subscribed
+                    f.SubscriptionStatus == SubscriptionStatus.ExtendedFreeTier
+                    || f.SubscriptionStatus == SubscriptionStatus.Subscribed
+                )
+                .ToList();
+
+            var all = _context.Families.ToList();
+
+            if (eligibleFamilies == null)
+            {
+                return ServiceResult<List<FamilyModel?>>.ErrorResult(
+                    "eligibleFamilies response was null"
+                );
+            }
+
+            return ServiceResult<List<FamilyModel?>>.SuccessResult(eligibleFamilies!);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<List<FamilyModel?>>.ErrorResult(
+                $"Failed to retreive families for Letter Queue. Error: {e}"
+            );
+        }
+    }
+
+    public ServiceResult<AddressModel> GetAddressForFamily(string familyId)
+    {
+        var address = _context.Addresses.Where(a => a.FamilyId == familyId).First();
+
+        if (address == null)
+        {
+            return ServiceResult<AddressModel>.ErrorResult(
+                $"Address was null when querying for familyId: {familyId}"
+            );
+        }
+
+        return ServiceResult<AddressModel>.SuccessResult(address);
     }
 }

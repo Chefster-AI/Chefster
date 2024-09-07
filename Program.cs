@@ -66,6 +66,7 @@ builder.Services.AddScoped<GordonService>();
 builder.Services.AddScoped<ViewToStringService>();
 builder.Services.AddScoped<PreviousRecipesService>();
 builder.Services.AddScoped<UpdateProfileService>();
+builder.Services.AddScoped<LetterQueueService>();
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 
@@ -99,7 +100,9 @@ builder.Services.AddHangfire(
 
 if (builder.Environment.IsDevelopment())
 {
-    builder.Services.AddHangfireServer(options => options.Queues = [builder.Configuration["QUEUE_NAME"]]);
+    builder.Services.AddHangfireServer(options =>
+        options.Queues = [builder.Configuration["QUEUE_NAME"]]
+    );
 }
 else if (builder.Environment.IsProduction())
 {
