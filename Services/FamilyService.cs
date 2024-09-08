@@ -6,15 +6,17 @@ using Microsoft.Data.SqlClient;
 
 namespace Chefster.Services;
 
-public class FamilyService(ChefsterDbContext context) : IFamily
+public class FamilyService(ChefsterDbContext context, LoggingService loggingService) : IFamily
 {
     private readonly ChefsterDbContext _context = context;
+    private readonly LoggingService _logger = loggingService;
 
     public ServiceResult<FamilyModel> CreateFamily(FamilyModel family)
     {
         var fam = _context.Families.Find(family.Id);
         if (fam != null)
         {
+            _logger.Log($"Family already exists for ID: {family.Id}", LogLevels.Warning);
             return ServiceResult<FamilyModel>.ErrorResult("Family Already Exists");
         }
 
@@ -26,6 +28,7 @@ public class FamilyService(ChefsterDbContext context) : IFamily
         }
         catch (SqlException e)
         {
+            _logger.Log($"Failed to save family. Error {e}", LogLevels.Error);
             return ServiceResult<FamilyModel>.ErrorResult(
                 $"Failed to insert Family into database. Error: {e}"
             );
@@ -107,6 +110,7 @@ public class FamilyService(ChefsterDbContext context) : IFamily
             var existingFam = _context.Families.Find(familyId);
             if (existingFam == null)
             {
+                _logger.Log($"Family does not exist for update. ID {familyId}", LogLevels.Error);
                 return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
             }
 
@@ -121,11 +125,14 @@ public class FamilyService(ChefsterDbContext context) : IFamily
             existingFam.TimeZone = family.TimeZone;
 
             _context.SaveChanges();
+
+            _logger.Log($"Successfully updated family with familyId: {familyId}", LogLevels.Info);
             // return updated family
             return ServiceResult<FamilyModel>.SuccessResult(existingFam);
         }
         catch (Exception e)
         {
+            _logger.Log($"Failed to update Family with Id {familyId}. Error: {e}", LogLevels.Error);
             return ServiceResult<FamilyModel>.ErrorResult(
                 $"Failed to update Family with Id {familyId}. Error: {e}"
             );

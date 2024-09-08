@@ -1,6 +1,7 @@
 using System.Reflection;
 using Auth0.AspNetCore.Authentication;
 using Chefster.Context;
+using Chefster.Models;
 using Chefster.Services;
 using Hangfire;
 using Hangfire.Mongo;
@@ -56,6 +57,22 @@ builder.Services.AddDbContext<ChefsterDbContext>(options =>
     }
 });
 
+builder.Services.AddSingleton<IMongoClient, MongoClient>(sp => new MongoClient(
+    builder.Configuration["MONGO_LOG_CONN"]
+));
+
+builder.Services.AddScoped(sp =>
+{
+    var client = sp.GetRequiredService<IMongoClient>();
+    return client.GetDatabase("chefster-logs");
+});
+
+builder.Services.AddScoped(sp =>
+{
+    var database = sp.GetRequiredService<IMongoDatabase>();
+    return database.GetCollection<LogModel>("logs");
+});
+
 // add services
 builder.Services.AddScoped<FamilyService>();
 builder.Services.AddScoped<MemberService>();
@@ -67,6 +84,7 @@ builder.Services.AddScoped<ViewToStringService>();
 builder.Services.AddScoped<PreviousRecipesService>();
 builder.Services.AddScoped<UpdateProfileService>();
 builder.Services.AddScoped<LetterQueueService>();
+builder.Services.AddScoped<LoggingService>();
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 

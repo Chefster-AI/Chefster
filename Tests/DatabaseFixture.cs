@@ -12,6 +12,7 @@ public class DatabaseFixture
     public FamilyService FamilyService { get; private set; }
     public MemberService MemberService { get; private set; }
     public ConsiderationsService ConsiderationsService { get; private set; }
+    public LoggingService? LoggingService { get; private set; }
 
     public DatabaseFixture()
     {
@@ -21,7 +22,7 @@ public class DatabaseFixture
 
         Context = new ChefsterDbContext(options);
 
-        FamilyService = new FamilyService(Context);
+        FamilyService = new FamilyService(Context, LoggingService!);
         MemberService = new MemberService(Context);
         ConsiderationsService = new ConsiderationsService(Context);
     }
