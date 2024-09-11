@@ -1,4 +1,5 @@
 using System.Text;
+using Chefster.Common;
 using Chefster.Models;
 using Hangfire;
 using static Chefster.Common.ConsiderationsEnum;
@@ -14,6 +15,7 @@ public class JobService(
     MemberService memberService,
     PreviousRecipesService previousRecipesService,
     ViewToStringService viewToStringService,
+    LoggingService loggingService,
     IConfiguration configuration
 )
 {
@@ -24,6 +26,7 @@ public class JobService(
     private readonly MemberService _memberService = memberService;
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
     private readonly ViewToStringService _viewToStringService = viewToStringService;
+    private readonly LoggingService _logger = loggingService;
     private readonly IConfiguration _configuration = configuration;
 
     /*
@@ -55,8 +58,11 @@ public class JobService(
                 // default to UTC if we can't get it
                 timeZone = TimeZoneInfo.Utc;
             }
-            
-            string queueName = _configuration["ASPNETCORE_ENVIRONMENT"] == "Development" ? _configuration["QUEUE_NAME"]! : "default";
+
+            string queueName =
+                _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+                    ? _configuration["QUEUE_NAME"]!
+                    : "default";
 
             // set time zone, queue name, and update/create job
             var options = new RecurringJobOptions { TimeZone = timeZone, QueueName = queueName };
@@ -70,6 +76,12 @@ public class JobService(
                 ),
                 options
             );
+            _logger.Log(
+                $"Created or updated job with Id: {family.Id}. Added to Queue: {queueName}. Generation Time: {family.GenerationDay} {family.GenerationTime.Hours}:{family.GenerationTime.Minutes}",
+                LogLevels.Info,
+                "CreateOrUpdateEmailJob"
+            );
+            return;
         }
     }
 
@@ -84,15 +96,23 @@ public class JobService(
             if (family!.JobTimestamp != null)
             {
                 TimeZoneInfo familyTimeZone = TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone);
-                DateTime familyCurrentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, familyTimeZone);
+                DateTime familyCurrentTime = TimeZoneInfo.ConvertTime(
+                    DateTime.UtcNow,
+                    familyTimeZone
+                );
                 double daysSinceLastRun = (familyCurrentTime - family.JobTimestamp).Value.TotalDays;
                 Console.WriteLine("Last Job Run Timestamp: " + family.JobTimestamp.ToString()!);
                 Console.WriteLine("Family's current time: " + familyCurrentTime.ToString());
                 Console.WriteLine("Days difference: " + daysSinceLastRun);
-                
+
                 if (daysSinceLastRun < JOB_COOLDOWN_DAYS)
                 {
                     Console.WriteLine("In Cooldown.");
+                    _logger.Log(
+                        $"Family with ID {family.Id} is now in a cooldown.  Days Difference: {daysSinceLastRun}",
+                        LogLevels.Info,
+                        "GenerateAndSendRecipe"
+                    );
                     return;
                 }
             }
@@ -107,9 +127,17 @@ public class JobService(
             if (body != null)
             {
                 _emailService.SendEmail(family.Email, "Your weekly meal plan has arrived!", body);
+                _logger.Log(
+                    $"Successfully send recipe email for family with ID: {family.Id} and Email: {family.Email}",
+                    LogLevels.Info
+                );
             }
             else
             {
+                _logger.Log(
+                    $"Body for email was NULL. Attempted to send email to family with ID: {family.Id} and Email: {family.Email}",
+                    LogLevels.Error
+                );
                 throw new Exception("Body for recipe email was null");
             }
 
@@ -125,19 +153,39 @@ public class JobService(
             );
             if (!holdSuccess.Success)
             {
-                // We realllly should log this stuff so we can track it
                 Console.WriteLine($"Failed to hold recipes. Error {holdSuccess.Error}");
+                _logger.Log(
+                    $"Error Holding recipes for family with ID: {family.Id} and Email: {family.Email}. Error: {holdSuccess.Error}",
+                    LogLevels.Error
+                );
             }
             var releaseSuccess = _previousRecipeService.RealeaseRecipes(familyId, mealCount);
             if (!releaseSuccess.Success)
             {
-                // We realllly should log this stuff so we can track it
                 Console.WriteLine($"Failed to release recipes. Error {releaseSuccess.Error}");
+                _logger.Log(
+                    $"Error releasing recipes for family with ID: {family.Id} and Email: {family.Email}. Error: {releaseSuccess.Error}",
+                    LogLevels.Error
+                );
             }
-            _familyService.UpdateFamilyJobTimestamp(familyId, TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)));
+            _familyService.UpdateFamilyJobTimestamp(
+                familyId,
+                TimeZoneInfo.ConvertTime(
+                    DateTime.UtcNow,
+                    TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)
+                )
+            );
+            _logger.Log(
+                $"Updated JobTimestamp for family with ID: {family.Id} and Email: {family.Email}",
+                LogLevels.Info
+            );
         }
         else
         {
+            _logger.Log(
+                $"Family was null when attempting to generate and send recipe email. ID: {familyId}",
+                LogLevels.Error
+            );
             throw new Exception(
                 "Family was null when attempting to generate and send recipe email"
             );

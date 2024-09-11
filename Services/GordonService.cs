@@ -8,9 +8,14 @@ using Newtonsoft.Json.Linq;
 
 namespace Chefster.Services;
 
-public class GordonService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+public class GordonService(
+    IHttpClientFactory httpClientFactory,
+    IConfiguration configuration,
+    LoggingService loggingService
+)
 {
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly LoggingService _logger = loggingService;
     private readonly IConfiguration _configuration = configuration;
 
     /*
@@ -38,8 +43,12 @@ public class GordonService(IHttpClientFactory httpClientFactory, IConfiguration 
         }
         catch (Exception ex)
         {
-            // should log this type of stuff
             Console.WriteLine($"Failure to obtain thread Id. Error: {ex}");
+            _logger.Log(
+                $"Failure to obtain thread Id.  Error: {ex}",
+                LogLevels.Error,
+                "CreateThread"
+            );
             return null;
         }
     }
@@ -70,6 +79,11 @@ public class GordonService(IHttpClientFactory httpClientFactory, IConfiguration 
         catch (Exception ex)
         {
             Console.WriteLine($"Failure to create message. Error: {ex}");
+            _logger.Log(
+                $"Failure to create message. Error: {ex}",
+                LogLevels.Error,
+                "CreateMessage"
+            );
             return false;
         }
     }
@@ -101,8 +115,8 @@ public class GordonService(IHttpClientFactory httpClientFactory, IConfiguration 
         }
         catch (Exception ex)
         {
-            // should log this type of stuff
             Console.WriteLine($"Failure to obtain run Id. Error: {ex}");
+            _logger.Log($"Failure to obtain run Id. Error: {ex}", LogLevels.Error, "CreateMessage");
             return null;
         }
     }
@@ -162,6 +176,11 @@ public class GordonService(IHttpClientFactory httpClientFactory, IConfiguration 
                 || status == "expired"
             )
             {
+                _logger.Log(
+                    $"Run loop object had the status code: {status}. Exiting",
+                    LogLevels.Error,
+                    "gordonStatusLoop"
+                );
                 return ServiceResult<GordonResponseModel>.ErrorResult(
                     $"Run loop object had the status code: {status}. Exiting"
                 );
@@ -170,6 +189,11 @@ public class GordonService(IHttpClientFactory httpClientFactory, IConfiguration 
             // if all is well exit the loop
             if (status == "completed")
             {
+                _logger.Log(
+                    $"Run loop success. Took {attempts} loops. Total duration: {attempts * 5}",
+                    LogLevels.Info,
+                    "gordonStatusLoop"
+                );
                 break;
             }
 
@@ -179,6 +203,11 @@ public class GordonService(IHttpClientFactory httpClientFactory, IConfiguration 
 
         if (attempts == Constants.MAX_ATTEMPTS)
         {
+            _logger.Log(
+                $"Run loop has reached max iterations for response. Exiting",
+                LogLevels.Error,
+                "gordonStatusLoop"
+            );
             Console.WriteLine("Reached the end with no result...");
             return ServiceResult<GordonResponseModel>.ErrorResult(
                 $"Run loop has reached max iterations for response. Exiting"
@@ -198,6 +227,11 @@ public class GordonService(IHttpClientFactory httpClientFactory, IConfiguration 
 
         if (jsonString == null)
         {
+            _logger.Log(
+                "Json Response was invalid and returned null when retreiving Gordon response",
+                LogLevels.Error,
+                "GetMessageResponse"
+            );
             return ServiceResult<GordonResponseModel>.ErrorResult(
                 "Json Response was invalid and returned null when retreiving Gordon response"
             );
@@ -211,6 +245,11 @@ public class GordonService(IHttpClientFactory httpClientFactory, IConfiguration 
         catch (Exception ex)
         {
             Console.WriteLine($"Failed to Deserialize json to GordonResponseModel. Error: {ex}");
+            _logger.Log(
+                $"Failed to retrieve Gordon response. Error: {ex}",
+                LogLevels.Error,
+                "GetMessageResponse"
+            );
             return ServiceResult<GordonResponseModel>.ErrorResult(
                 $"Failed to retrieve Gordon response. Error: {ex}"
             );

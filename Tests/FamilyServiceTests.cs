@@ -1,3 +1,4 @@
+using Chefster.Common;
 using Chefster.Models;
 using Xunit;
 
@@ -26,12 +27,12 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
     [Fact]
     public void CreateFamily_SavesFamilyToDatabase()
     {
-        _fixture.Initialize();
         var familyToAdd = new FamilyModel
         {
             Id = "2",
             CreatedAt = DateTime.Now,
             Email = "test1@email.com",
+            UserStatus = UserStatus.Unknown,
             FamilySize = 5,
             NumberOfBreakfastMeals = 0,
             NumberOfLunchMeals = 0,
@@ -55,6 +56,7 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
         Assert.Equal(DayOfWeek.Sunday, family.Data.GenerationDay);
         Assert.Equal(new TimeSpan(1000), family.Data.GenerationTime);
         Assert.Equal("1112223333", family.Data.PhoneNumber);
+        Assert.Equal(UserStatus.Unknown, family.Data.UserStatus);
 
         _fixture.Cleanup();
     }
@@ -63,22 +65,6 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
     public void UpdateFamily_UpdatesFamilyInDatabase()
     {
         _fixture.Initialize();
-        var familyToUpdate = new FamilyModel
-        {
-            Id = "3",
-            CreatedAt = DateTime.Now,
-            Email = "test3@email.com",
-            FamilySize = 4,
-            NumberOfBreakfastMeals = 0,
-            NumberOfLunchMeals = 0,
-            NumberOfDinnerMeals = 7,
-            GenerationDay = DayOfWeek.Wednesday,
-            GenerationTime = new TimeSpan(1000),
-            TimeZone = "America/Chicago",
-            PhoneNumber = "9998887777"
-        };
-
-        _fixture.FamilyService.CreateFamily(familyToUpdate);
 
         var updated = new FamilyUpdateDto
         {
@@ -92,15 +78,15 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
             TimeZone = "merica"
         };
 
-        _fixture.FamilyService.UpdateFamily("3", updated);
+        _fixture.FamilyService.UpdateFamily("1", updated);
 
         // family doesnt exist case
         var failed = _fixture.FamilyService.UpdateFamily("doesntExist", updated);
         Assert.False(failed.Success);
 
-        var family = _fixture.FamilyService.GetById("3");
+        var family = _fixture.FamilyService.GetById("1");
         Assert.NotNull(family.Data);
-        Assert.Equal("test3@email.com", family.Data.Email);
+        Assert.Equal("test@email.com", family.Data.Email);
         Assert.Equal(10, family.Data.FamilySize);
         Assert.Equal(2, family.Data.NumberOfBreakfastMeals);
         Assert.Equal(2, family.Data.NumberOfLunchMeals);
