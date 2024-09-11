@@ -16,6 +16,7 @@ public class FamilyController(
     ConsiderationsService considerationsService,
     EmailService emailService,
     FamilyService familyService,
+    HubSpotService hubSpotService,
     MemberService memberService,
     JobService jobService,
     ViewToStringService viewToStringService,
@@ -25,6 +26,7 @@ public class FamilyController(
     private readonly ConsiderationsService _considerationsService = considerationsService;
     private readonly EmailService _emailService = emailService;
     private readonly FamilyService _familyService = familyService;
+    private readonly HubSpotService _hubSpotService = hubSpotService;
     private readonly MemberService _memberService = memberService;
     private readonly JobService _jobService = jobService;
     private readonly ViewToStringService _viewToStringService = viewToStringService;
@@ -88,6 +90,9 @@ public class FamilyController(
         {
             return RedirectToAction("Index", "error", new { route = "/profile" });
         }
+        
+        // register as a contact in hub spot
+        _hubSpotService.CreateContact(created.Data!.Email, created.Data.PhoneNumber);
 
         // create all members and considerations for family
         var memberSuccess = CreateMembersAndConsiderations(Family);

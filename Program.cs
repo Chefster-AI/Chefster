@@ -83,6 +83,7 @@ builder.Services.AddScoped<GordonService>();
 builder.Services.AddScoped<ViewToStringService>();
 builder.Services.AddScoped<PreviousRecipesService>();
 builder.Services.AddScoped<UpdateProfileService>();
+builder.Services.AddScoped<HubSpotService>();
 builder.Services.AddScoped<LetterQueueService>();
 builder.Services.AddScoped<LoggingService>();
 builder.Services.AddControllers();
