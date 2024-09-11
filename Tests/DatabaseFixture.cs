@@ -3,6 +3,8 @@ using Chefster.Context;
 using Chefster.Models;
 using Chefster.Services;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
+using Moq;
 
 namespace Chefster.Tests;
 
@@ -12,6 +14,7 @@ public class DatabaseFixture
     public FamilyService FamilyService { get; private set; }
     public MemberService MemberService { get; private set; }
     public ConsiderationsService ConsiderationsService { get; private set; }
+    public required LoggingService LoggingService { get; set; }
 
     public DatabaseFixture()
     {
@@ -21,7 +24,24 @@ public class DatabaseFixture
 
         Context = new ChefsterDbContext(options);
 
-        FamilyService = new FamilyService(Context);
+        // Mock MongoClient for LoggingService
+        // prevents us from having to use a real mongo connection
+        var mockMongoClient = new Mock<IMongoClient>();
+        var mockDatabase = new Mock<IMongoDatabase>();
+        var mockCollection = new Mock<IMongoCollection<LogModel>>();
+
+        // define what the mockMongoClient and mockDatabase is going to return
+        mockMongoClient
+            .Setup(c => c.GetDatabase(It.IsAny<string>(), null))
+            .Returns(mockDatabase.Object);
+
+        mockDatabase
+            .Setup(db => db.GetCollection<LogModel>(It.IsAny<string>(), null))
+            .Returns(mockCollection.Object);
+
+        // Pass mock MongoClient to LoggingService
+        LoggingService = new LoggingService(mockMongoClient.Object);
+        FamilyService = new FamilyService(Context, LoggingService);
         MemberService = new MemberService(Context);
         ConsiderationsService = new ConsiderationsService(Context);
     }
@@ -50,7 +70,7 @@ public class DatabaseFixture
                 Id = "4",
                 CreatedAt = DateTime.Now,
                 Email = "test4@email.com",
-                UserStatus = UserStatus.Unknown,
+                UserStatus = UserStatus.FreeTrial,
                 FamilySize = 8,
                 GenerationDay = DayOfWeek.Monday,
                 GenerationTime = new TimeSpan(19000),
