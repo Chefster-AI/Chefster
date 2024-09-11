@@ -70,6 +70,7 @@ public class FamilyController(
         {
             Id = familyId,
             Email = email,
+            UserStatus = UserStatus.Unknown,
             CreatedAt = createdAt,
             PhoneNumber = Family.PhoneNumber,
             FamilySize = Family.FamilySize,
