@@ -30,6 +30,7 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
         var familyToAdd = new FamilyModel
         {
             Id = "2",
+            Name = "Jenny",
             CreatedAt = DateTime.Now,
             Email = "test1@email.com",
             UserStatus = UserStatus.Unknown,
@@ -51,6 +52,7 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
         Assert.False(failed.Success);
 
         Assert.NotNull(family.Data);
+        Assert.Equal("Jenny", family.Data.Name);
         Assert.Equal("test1@email.com", family.Data.Email);
         Assert.Equal(5, family.Data.FamilySize);
         Assert.Equal(DayOfWeek.Sunday, family.Data.GenerationDay);
@@ -68,6 +70,7 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
 
         var updated = new FamilyUpdateDto
         {
+            Name = "John",
             FamilySize = 10,
             GenerationDay = DayOfWeek.Tuesday,
             GenerationTime = new TimeSpan(100000),
@@ -87,6 +90,7 @@ public class FamilyServiceTests(DatabaseFixture fixture) : IClassFixture<Databas
         var family = _fixture.FamilyService.GetById("1");
         Assert.NotNull(family.Data);
         Assert.Equal("test@email.com", family.Data.Email);
+        Assert.Equal("John", family.Data.Name);
         Assert.Equal(10, family.Data.FamilySize);
         Assert.Equal(2, family.Data.NumberOfBreakfastMeals);
         Assert.Equal(2, family.Data.NumberOfLunchMeals);

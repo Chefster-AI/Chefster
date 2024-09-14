@@ -71,6 +71,7 @@ public class FamilyController(
         var NewFamily = new FamilyModel
         {
             Id = familyId,
+            Name = Family.Name,
             Email = email,
             UserStatus = UserStatus.Unknown,
             CreatedAt = createdAt,
@@ -92,7 +93,7 @@ public class FamilyController(
         }
         
         // register as a contact in hub spot
-        _hubSpotService.CreateContact(created.Data!.Email, created.Data.PhoneNumber);
+        _hubSpotService.CreateContact(created.Data!.Name, created.Data.Email, created.Data.UserStatus, created.Data.PhoneNumber);
 
         // create all members and considerations for family
         var memberSuccess = CreateMembersAndConsiderations(Family);
@@ -166,6 +167,7 @@ public class FamilyController(
 
         var updatedFamily = new FamilyUpdateDto
         {
+            Name = family.Name,
             PhoneNumber = family.PhoneNumber,
             FamilySize = family.FamilySize,
             NumberOfBreakfastMeals = family.NumberOfBreakfastMeals,
@@ -185,6 +187,9 @@ public class FamilyController(
 
         // once we updated successfully, not now update the job with new generation times
         _jobService.CreateorUpdateEmailJob(updated.Data!.Id);
+
+        // update hub spot contact
+        _hubSpotService.UpdateContact(updated.Data.Name, updated.Data.Email, updated.Data.UserStatus, updated.Data.PhoneNumber);
 
         // Update old members and create new considerations
         await _updateProfileService.UpdateOrCreateMembersAndCreateConsiderations(familyId, family);

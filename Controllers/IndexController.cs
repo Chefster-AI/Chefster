@@ -49,6 +49,7 @@ public class IndexController(
         {
             var model = new FamilyViewModel
             {
+                Name = "",
                 PhoneNumber = "",
                 FamilySize = 1,
                 NumberOfBreakfastMeals = 0,
@@ -191,6 +192,7 @@ public class IndexController(
 
             var populatedModel = new FamilyUpdateViewModel
             {
+                Name = family.Name,
                 PhoneNumber = family.PhoneNumber,
                 FamilySize = viewModelMembers.Count,
                 GenerationDay = family.GenerationDay,

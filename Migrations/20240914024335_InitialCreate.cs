@@ -12,6 +12,23 @@ namespace Chefster.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Addresses",
+                columns: table => new
+                {
+                    FamilyId = table.Column<string>(type: "TEXT", nullable: false),
+                    StreetAddress = table.Column<string>(type: "TEXT", nullable: false),
+                    AptOrUnitNumber = table.Column<string>(type: "TEXT", nullable: true),
+                    CityOrTown = table.Column<string>(type: "TEXT", nullable: false),
+                    StateProvinceRegion = table.Column<string>(type: "TEXT", nullable: false),
+                    PostalCode = table.Column<string>(type: "TEXT", nullable: false),
+                    Country = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Addresses", x => x.FamilyId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Considerations",
                 columns: table => new
                 {
@@ -32,6 +49,7 @@ namespace Chefster.Migrations
                 {
                     Id = table.Column<string>(type: "TEXT", nullable: false),
                     Email = table.Column<string>(type: "TEXT", nullable: false),
+                    UserStatus = table.Column<int>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     PhoneNumber = table.Column<string>(type: "TEXT", nullable: false),
                     FamilySize = table.Column<int>(type: "INTEGER", nullable: false),
@@ -40,7 +58,8 @@ namespace Chefster.Migrations
                     NumberOfDinnerMeals = table.Column<int>(type: "INTEGER", nullable: false),
                     GenerationDay = table.Column<int>(type: "INTEGER", nullable: false),
                     GenerationTime = table.Column<TimeSpan>(type: "TEXT", nullable: false),
-                    TimeZone = table.Column<string>(type: "TEXT", nullable: false)
+                    TimeZone = table.Column<string>(type: "TEXT", nullable: false),
+                    JobTimestamp = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -81,6 +100,9 @@ namespace Chefster.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Addresses");
+
             migrationBuilder.DropTable(
                 name: "Considerations");
 
