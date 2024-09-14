@@ -3,6 +3,7 @@ using Chefster.Context;
 using Chefster.Interfaces;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace Chefster.Services;
 
@@ -83,6 +84,27 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         {
             return ServiceResult<FamilyModel?>.ErrorResult(
                 $"Failed to retrieve all families. Error: {e}"
+            );
+        }
+    }
+
+    public ServiceResult<FamilyModel?> GetByEmail(string email)
+    {
+        try
+        {
+            var family = _context.Families.Where(f => f.Email == email).SingleOrDefault();
+            return ServiceResult<FamilyModel?>.SuccessResult(family);
+        }
+        catch (SqlException e)
+        {
+            return ServiceResult<FamilyModel?>.ErrorResult(
+                $"Failed to retrieve family by email: {email}. {e}"
+            );
+        }
+        catch (InvalidOperationException e)
+        {
+            return ServiceResult<FamilyModel?>.ErrorResult(
+                $"Failed to retrieve EXACTLY ONE family by email: {email}. {e}"
             );
         }
     }

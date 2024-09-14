@@ -42,8 +42,8 @@ public class IndexController(
     [Route("/createprofile")]
     public IActionResult CreateProfile()
     {
-        var id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value!;
-        var family = _familyService.GetById(id).Data;
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var family = _familyService.GetByEmail(email!).Data;
 
         if (family == null)
         {
@@ -83,8 +83,9 @@ public class IndexController(
     [Route("/profile")]
     public IActionResult Profile()
     {
-        var id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        var family = _familyService.GetById(id!).Data;
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var family = _familyService.GetByEmail(email!).Data;
+        Console.WriteLine(email);
         var viewModelMembers = new List<MemberUpdateViewModel>();
 
         if (family != null)
