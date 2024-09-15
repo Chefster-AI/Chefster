@@ -2,10 +2,10 @@ using System.Text;
 using Chefster.Common;
 namespace Chefster.Services;
 
-public class HubSpotService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+public class HubSpotService(IHttpClientFactory httpClientFactory, IConfiguration configuration, LoggingService loggingService)
 {
     private readonly HttpClient _client = httpClientFactory.CreateClient();
-
+    private readonly LoggingService _logger = loggingService;
     public async void CreateContact(string name, string emailAddress, UserStatus userStatus, string phoneNumber)
     {
         _client.DefaultRequestHeaders.Add("Authorization", "Bearer " + configuration["HUBSPOT_API_KEY"]);
@@ -28,7 +28,7 @@ public class HubSpotService(IHttpClientFactory httpClientFactory, IConfiguration
 
         if (!response.IsSuccessStatusCode)
         {
-            // log here
+            _logger.Log($"Failed to create contact for email: {emailAddress}", LogLevels.Warning, "HubSpot Service Create Contact");
         }
     }
 
@@ -73,7 +73,7 @@ public class HubSpotService(IHttpClientFactory httpClientFactory, IConfiguration
 
         if (!response.IsSuccessStatusCode)
         {
-            // log here
+            _logger.Log($"Failed to update contact for email: {emailAddress}", LogLevels.Warning, "HubSpot Service Update Contact");
         }
     }
 }
