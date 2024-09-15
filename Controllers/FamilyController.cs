@@ -72,7 +72,7 @@ public class FamilyController(
 
         // try to create a new address
         var address = Family.Address;
-        AddressModel newAddress;
+        AddressModel? newAddress = null;
         if (!string.IsNullOrWhiteSpace(address.StreetAddress) &&
             !string.IsNullOrWhiteSpace(address.CityOrTown) &&
             !string.IsNullOrWhiteSpace(address.StateProvinceRegion) &&
@@ -82,14 +82,27 @@ public class FamilyController(
             newAddress = new AddressModel
             {
                 FamilyId = familyId,
-                StreetAddress = address.StreetAddress!,
-                CityOrTown = address.CityOrTown!,
-                StateProvinceRegion = address.StateProvinceRegion!,
-                PostalCode = address.PostalCode!,
-                Country = address.Country!
+                StreetAddress = address.StreetAddress,
+                AptOrUnitNumber = !string.IsNullOrWhiteSpace(address.AptOrUnitNumber) ? address.AptOrUnitNumber : null,
+                CityOrTown = address.CityOrTown,
+                StateProvinceRegion = address.StateProvinceRegion,
+                PostalCode = address.PostalCode,
+                Country = address.Country
             };
+            var result = _addressService.CreateAddress(newAddress).Data;
+        }
 
-            _addressService.CreateAddress(newAddress);
+        // determine user status
+        UserStatus userStatus = UserStatus.Unknown;
+        // we only have free trial for now
+        // TODO: adjust logic to account for subscription vs free trial
+        if (newAddress == null)
+        {
+            userStatus = UserStatus.FreeTrial;
+        }
+        else
+        {
+            userStatus = UserStatus.ExtendedFreeTrial;
         }
 
         // create the new family
@@ -98,7 +111,7 @@ public class FamilyController(
             Id = familyId,
             Name = Family.Name,
             Email = email,
-            UserStatus = UserStatus.Unknown,
+            UserStatus = userStatus,
             CreatedAt = createdAt,
             PhoneNumber = Family.PhoneNumber,
             FamilySize = Family.FamilySize,
@@ -140,7 +153,8 @@ public class FamilyController(
         {
             EmailAddress = NewFamily.Email,
             GenerationDay = NewFamily.GenerationDay,
-            GenerationTime = NewFamily.GenerationTime
+            GenerationTime = NewFamily.GenerationTime,
+            UserStatus = userStatus
         };
 
         return RedirectToAction("ThankYou", "Index", model);
