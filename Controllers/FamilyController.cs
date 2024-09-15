@@ -6,6 +6,7 @@ using Chefster.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using MongoDB.Bson;
 
 namespace Chefster.Controllers;
 
@@ -13,6 +14,7 @@ namespace Chefster.Controllers;
 [Route("api/family")]
 [ApiController]
 public class FamilyController(
+    AddressService addressService,
     ConsiderationsService considerationsService,
     EmailService emailService,
     FamilyService familyService,
@@ -23,6 +25,7 @@ public class FamilyController(
     UpdateProfileService updateProfileService
 ) : ControllerBase
 {
+    private readonly AddressService _addressService = addressService;
     private readonly ConsiderationsService _considerationsService = considerationsService;
     private readonly EmailService _emailService = emailService;
     private readonly FamilyService _familyService = familyService;
@@ -65,6 +68,28 @@ public class FamilyController(
         if (familyId == null || email == null)
         {
             return RedirectToAction("Index", "error", new { route = "/profile" });
+        }
+
+        // try to create a new address
+        var address = Family.Address;
+        AddressModel newAddress;
+        if (!string.IsNullOrWhiteSpace(address.StreetAddress) &&
+            !string.IsNullOrWhiteSpace(address.CityOrTown) &&
+            !string.IsNullOrWhiteSpace(address.StateProvinceRegion) &&
+            !string.IsNullOrWhiteSpace(address.PostalCode) &&
+            !string.IsNullOrWhiteSpace(address.Country))
+        {
+            newAddress = new AddressModel
+            {
+                FamilyId = familyId,
+                StreetAddress = address.StreetAddress!,
+                CityOrTown = address.CityOrTown!,
+                StateProvinceRegion = address.StateProvinceRegion!,
+                PostalCode = address.PostalCode!,
+                Country = address.Country!
+            };
+
+            _addressService.CreateAddress(newAddress);
         }
 
         // create the new family

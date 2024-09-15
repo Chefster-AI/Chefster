@@ -85,7 +85,6 @@ public class IndexController(
     {
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
         var family = _familyService.GetByEmail(email!).Data;
-        Console.WriteLine(email);
         var viewModelMembers = new List<MemberUpdateViewModel>();
 
         if (family != null)
