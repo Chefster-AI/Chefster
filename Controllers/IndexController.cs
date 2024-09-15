@@ -16,13 +16,15 @@ public class IndexController(
     ConsiderationsService considerationsService,
     FamilyService familyService,
     MemberService memberService,
-    PreviousRecipesService previousRecipesService
+    PreviousRecipesService previousRecipesService,
+    UserStatusService userStatusService
 ) : Controller
 {
     private readonly ConsiderationsService _considerationService = considerationsService;
     private readonly FamilyService _familyService = familyService;
     private readonly MemberService _memberService = memberService;
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
+    private readonly UserStatusService _userStatusService = userStatusService;
 
     [Authorize]
     [Route("/chat")]
@@ -270,11 +272,16 @@ public class IndexController(
             };
         }
 
+        var firstJobRun = _userStatusService.CalculateFirstJobRun(family.CreatedAt, family.GenerationDay, family.GenerationTime);
+        var lastJobRun = _userStatusService.CalculateLastJobRun(family.UserStatus, family.CreatedAt, family.GenerationDay, family.GenerationTime, family.JobTimestamp);
         var model = new OverviewViewModel
         {
             GenerationDay = family!.GenerationDay,
             GenerationTime = family.GenerationTime,
-            Recipes = groupedRecipes
+            Recipes = groupedRecipes,
+            UserStatus = family.UserStatus,
+            FirstJobRun = firstJobRun,
+            LastJobRun = lastJobRun ?? DateTime.Now
         };
 
         return View(model);
