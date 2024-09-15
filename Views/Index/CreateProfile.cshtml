@@ -105,14 +105,20 @@
                 <hr class="border border-primary border-1 opacity-100">
                 <div class="row">
                     <div class="col">
-                        <button id="freeTrialButton" class="btn btn-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="true" aria-controls="freeTrialBlock subscribeBlock" disabled>
-                            Free Trial
-                        </button>
-                    </div>
-                    <div class="col">
-                        <button id="subscribeButton" class="btn btn-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false" aria-controls="freeTrialBlock subscribeBlock">
-                            Subscribe
-                        </button>
+                        <div class="vstack">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="options" id="freeTrialRadio" checked>
+                                <label class="form-check-label" for="freeTrialRadio">
+                                    Free Trial
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="options" id="subscribeRadio">
+                                <label class="form-check-label" for="subscribeRadio">
+                                    Subscribe
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div id="freeTrialBlock" class="collapse multi-collapse show">
@@ -130,11 +136,9 @@
                             </div>
                         </div>
                         <div class="col-12">
-                            <div class="form-group mb-2">
-                                <label>
-                                    <input type="checkbox" id="optInAddress" />
-                                    I'd like to provide my address
-                                </label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="optInAddress">
+                                <label class="form-check-label" for="optInAddress">I would like to provide my address</label>
                             </div>
                         </div>
                         <div id="addressFields" style="display: none;">
@@ -148,7 +152,7 @@
                                 <div class="col-md-12">
                                     <div class="form-group mt-1">
                                         <label asp-for="Address.AptOrUnitNumber">Apartment or Unit Number (optional)</label>
-                                        <input asp-for="Address.AptOrUnitNumber" type="text" class="form-control">
+                                        <input id="AptOrUnitNumber" asp-for="Address.AptOrUnitNumber" type="text" class="form-control">
                                     </div>
                                 </div>
                                 <div class="col-md-5">
@@ -188,7 +192,7 @@
                 </div>
                 <input type="hidden" id="TimeZone" asp-for="TimeZone" value="" required />
                 <div class="form-group">
-                    <button type="submit" class="btn btn-primary w-100">Create Profile</button>
+                    <button id="createProfileButton" type="submit" class="btn btn-primary w-100">Create Profile</button>
                 </div>
             </form>
         </div>
@@ -199,10 +203,13 @@
     <script>
         document.getElementById('optInAddress').addEventListener('change', function() {
             var addressFields = document.getElementById('addressFields');
+            var addressInputs = addressFields.querySelectorAll('input:not(#AptOrUnitNumber)')
             if (this.checked) {
                 addressFields.style.display = 'block';
+                addressInputs.forEach(input => input.setAttribute('required', 'required'));
             } else {
                 addressFields.style.display = 'none';
+                addressInputs.forEach(input => input.removeAttribute('required'));
             }
         });
 
@@ -267,18 +274,27 @@
                 increaseFamilySize();
             });
 
-            // free trial and subscribe button listeners
-            var freeTrialButton = document.getElementById('freeTrialButton');
-            var subscribeButton = document.getElementById('subscribeButton');
+            // free trial and subscribe radio listeners
+            var freeTrialRadio = document.getElementById('freeTrialRadio');
+            var subscribeRadio = document.getElementById('subscribeRadio');
+            var freeTrialBlock = document.getElementById('freeTrialBlock');
+            var subscribeBlock = document.getElementById('subscribeBlock');
+            var createProfileButton = document.getElementById('createProfileButton')
 
-            freeTrialButton.addEventListener('click', function() {
-                freeTrialButton.disabled = true;
-                subscribeButton.disabled = false;
+            freeTrialRadio.addEventListener('click', function() {
+                if (this.checked) {
+                    freeTrialBlock.classList.add('show');
+                    subscribeBlock.classList.remove('show');
+                    createProfileButton.disabled = false;
+                }
             });
 
-            subscribeButton.addEventListener('click', function() {
-                subscribeButton.disabled = true;
-                freeTrialButton.disabled = false;
+            subscribeRadio.addEventListener('click', function() {
+                if (this.checked) {
+                    freeTrialBlock.classList.remove('show');
+                    subscribeBlock.classList.add('show');
+                    createProfileButton.disabled = true;
+                }
             });
         });
 
