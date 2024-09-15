@@ -99,8 +99,95 @@
                         </div>
                     </div>
                 </div>
+                <div class="fs-3 pt-5">
+                    Select your plan
+                </div>
+                <hr class="border border-primary border-1 opacity-100">
+                <div class="row">
+                    <div class="col">
+                        <button id="freeTrialButton" class="btn btn-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="true" aria-controls="freeTrialBlock subscribeBlock" disabled>
+                            Free Trial
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button id="subscribeButton" class="btn btn-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false" aria-controls="freeTrialBlock subscribeBlock">
+                            Subscribe
+                        </button>
+                    </div>
+                </div>
+                <div id="freeTrialBlock" class="collapse multi-collapse show">
+                    <div class="row my-3">
+                        <div class="col-12">
+                            <div class="fs-5">
+                                Start your 2-week free trial today!
+                            </div>
+                        </div>
+                        <div class="col-12 my-4">
+                            <div class="fs-5">
+                                To receive a hand-written letter from the founders,
+                                as well as an additional 2 weeks on your free trial, consider
+                                providing your address.
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group mb-2">
+                                <label>
+                                    <input type="checkbox" id="optInAddress" />
+                                    I'd like to provide my address
+                                </label>
+                            </div>
+                        </div>
+                        <div id="addressFields" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group mt-1">
+                                        <label asp-for="Address.StreetAddress">Street Address</label>
+                                        <input asp-for="Address.StreetAddress" type="text" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-group mt-1">
+                                        <label asp-for="Address.AptOrUnitNumber">Apartment or Unit Number (optional)</label>
+                                        <input asp-for="Address.AptOrUnitNumber" type="text" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="form-group mt-1">
+                                        <label asp-for="Address.CityOrTown">City</label>
+                                        <input asp-for="Address.CityOrTown" type="text" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group mt-1">
+                                        <label asp-for="Address.StateProvinceRegion">State</label>
+                                        <input asp-for="Address.StateProvinceRegion" type="text" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group mt-1">
+                                        <label asp-for="Address.PostalCode">Postal Code</label>
+                                        <input asp-for="Address.PostalCode" type="text" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-group mt-1">
+                                        <label asp-for="Address.Country">Country</label>
+                                        <input asp-for="Address.Country" type="text" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="subscribeBlock" class="collapse multi-collapse">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="fs-4 text-center my-3">Coming soon...</div>
+                        </div>
+                    </div>
+                </div>
                 <input type="hidden" id="TimeZone" asp-for="TimeZone" value="" required />
-                <div class="form-group pt-5 pb-3">
+                <div class="form-group">
                     <button type="submit" class="btn btn-primary w-100">Create Profile</button>
                 </div>
             </form>
@@ -110,6 +197,15 @@
 
 @section Scripts {
     <script>
+        document.getElementById('optInAddress').addEventListener('change', function() {
+            var addressFields = document.getElementById('addressFields');
+            if (this.checked) {
+                addressFields.style.display = 'block';
+            } else {
+                addressFields.style.display = 'none';
+            }
+        });
+
         document.getElementById('createform').addEventListener('submit', function (event) {
             event.preventDefault();
 
@@ -169,6 +265,20 @@
             var addMemberButton = document.getElementById('addMemberButton')
             addMemberButton.addEventListener('click', function () {
                 increaseFamilySize();
+            });
+
+            // free trial and subscribe button listeners
+            var freeTrialButton = document.getElementById('freeTrialButton');
+            var subscribeButton = document.getElementById('subscribeButton');
+
+            freeTrialButton.addEventListener('click', function() {
+                freeTrialButton.disabled = true;
+                subscribeButton.disabled = false;
+            });
+
+            subscribeButton.addEventListener('click', function() {
+                subscribeButton.disabled = true;
+                freeTrialButton.disabled = false;
             });
         });
 
