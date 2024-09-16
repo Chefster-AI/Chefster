@@ -16,7 +16,8 @@ public class JobService(
     PreviousRecipesService previousRecipesService,
     ViewToStringService viewToStringService,
     LoggingService loggingService,
-    IConfiguration configuration
+    IConfiguration configuration,
+    UserStatusService userStatusService
 )
 {
     private readonly ConsiderationsService _considerationService = considerationsService;
@@ -28,6 +29,7 @@ public class JobService(
     private readonly ViewToStringService _viewToStringService = viewToStringService;
     private readonly LoggingService _logger = loggingService;
     private readonly IConfiguration _configuration = configuration;
+    private readonly UserStatusService _userStatusService = userStatusService;
 
     /*
         The service is responsible for created, updating and executing jobs that will
@@ -168,17 +170,18 @@ public class JobService(
                     LogLevels.Error
                 );
             }
-            _familyService.UpdateFamilyJobTimestamp(
+            family = _familyService.UpdateFamilyJobTimestamp(
                 familyId,
                 TimeZoneInfo.ConvertTime(
                     DateTime.UtcNow,
                     TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)
                 )
-            );
+            ).Data;
             _logger.Log(
                 $"Updated JobTimestamp for family with ID: {family.Id} and Email: {family.Email}",
                 LogLevels.Info
             );
+            _userStatusService.CheckFamilyUserStatus(family);
         }
         else
         {
