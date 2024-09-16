@@ -1,13 +1,10 @@
-using Chefster.Common;
-using MongoDB.Driver.Linq;
+using Chefster.Services;
 
-namespace Chefster.Services;
+namespace Chefster.Common;
 
-public class UserStatusService(LoggingService loggingService)
+public static class UserStatusHelpers
 {
-    private readonly LoggingService _logger = loggingService;
-
-    public bool IsExpired(UserStatus userStatus, DateTime createdAt, DayOfWeek generationDay, TimeSpan generationTime, DateTime? jobTimestamp, string timeZone)
+    public static bool IsExpired(UserStatus userStatus, DateTime createdAt, DayOfWeek generationDay, TimeSpan generationTime, DateTime? jobTimestamp, string timeZone)
     {
         // get the current time in the user's time zone
         var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(timeZone);
@@ -18,7 +15,7 @@ public class UserStatusService(LoggingService loggingService)
         return userLastJobRunTime < userCurrentTime;
     }
 
-    public DateTime? CalculateLastJobRun(UserStatus userStatus, DateTime createdAt, DayOfWeek generationDay, TimeSpan generationTime, DateTime? jobTimestamp)
+    public static DateTime? CalculateLastJobRun(UserStatus userStatus, DateTime createdAt, DayOfWeek generationDay, TimeSpan generationTime, DateTime? jobTimestamp)
     {
         switch (userStatus)
         {
@@ -33,14 +30,13 @@ public class UserStatusService(LoggingService loggingService)
             case UserStatus.PreviouslySubscribed:
                 return jobTimestamp;
             case UserStatus.Unknown:
-                _logger.Log($"User status unknown for account created at: {createdAt}", LogLevels.Warning, "Get expiration date in user status service");
                 return null;
             default:
                 return null;
         }
     }
 
-    public DateTime CalculateFirstJobRun(DateTime signUpDate, DayOfWeek generationDay, TimeSpan generationTime)
+    public static DateTime CalculateFirstJobRun(DateTime signUpDate, DayOfWeek generationDay, TimeSpan generationTime)
     {
         // Calculate the difference in days between the sign up day and the generation day
         int daysUntilGenerationDay = ((int)generationDay - (int)signUpDate.DayOfWeek + 7) % 7;

@@ -87,7 +87,6 @@ builder.Services.AddScoped<HubSpotService>();
 builder.Services.AddScoped<LetterQueueService>();
 builder.Services.AddScoped<LoggingService>();
 builder.Services.AddScoped<AddressService>();
-builder.Services.AddScoped<UserStatusService>();
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 
