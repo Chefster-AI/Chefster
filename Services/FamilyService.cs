@@ -251,4 +251,27 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
             );
         }
     }
+
+    public ServiceResult<FamilyModel> SetFamilyUserStatus(string familyId, UserStatus userStatus)
+    {
+        try
+        {
+            var family = _context.Families.Find(familyId);
+            if (family == null)
+            {
+                 return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
+            }
+
+            family.UserStatus = userStatus;
+            _context.SaveChanges();
+
+            return ServiceResult<FamilyModel>.SuccessResult(family);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<FamilyModel>.ErrorResult(
+                $"Failed to set user status to {userStatus} for family {familyId}. Error: {e}"
+            );
+        }
+    }
 }
