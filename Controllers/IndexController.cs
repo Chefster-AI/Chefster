@@ -271,7 +271,7 @@ public class IndexController(
         }
 
         var firstJobRun = UserStatusHelpers.CalculateFirstJobRun(family.CreatedAt, family.GenerationDay, family.GenerationTime);
-        var lastJobRun = UserStatusHelpers.CalculateLastJobRun(family.UserStatus, family.CreatedAt, family.GenerationDay, family.GenerationTime, family.JobTimestamp);
+        var lastJobRun = UserStatusHelpers.CalculateFinalJobRun(family.UserStatus, family.CreatedAt, family.GenerationDay, family.GenerationTime, family.JobTimestamp);
         var model = new OverviewViewModel
         {
             GenerationDay = family!.GenerationDay,

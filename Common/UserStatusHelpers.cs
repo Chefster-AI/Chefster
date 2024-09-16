@@ -1,28 +1,28 @@
-using Chefster.Services;
+using static Chefster.Common.Constants;
 
 namespace Chefster.Common;
 
 public static class UserStatusHelpers
 {
-    public static bool IsExpired(UserStatus userStatus, DateTime createdAt, DayOfWeek generationDay, TimeSpan generationTime, DateTime? jobTimestamp, string timeZone)
+    public static bool IsExpired(UserStatus userStatus, DateTime signUpDate, DayOfWeek generationDay, TimeSpan generationTime, DateTime? jobTimestamp, string timeZone)
     {
         // get the current time in the user's time zone
         var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(timeZone);
         var userCurrentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo);
 
-        // compare it to their calcualted last job run
-        var userLastJobRunTime = CalculateLastJobRun(userStatus, createdAt, generationDay, generationTime, jobTimestamp);
-        return userLastJobRunTime < userCurrentTime;
+        // compare it to their calcualted final job run
+        var userFinalJobRunTime = CalculateFinalJobRun(userStatus, signUpDate, generationDay, generationTime, jobTimestamp);
+        return userFinalJobRunTime < userCurrentTime;
     }
 
-    public static DateTime? CalculateLastJobRun(UserStatus userStatus, DateTime createdAt, DayOfWeek generationDay, TimeSpan generationTime, DateTime? jobTimestamp)
+    public static DateTime? CalculateFinalJobRun(UserStatus userStatus, DateTime signUpDate, DayOfWeek generationDay, TimeSpan generationTime, DateTime? jobTimestamp)
     {
         switch (userStatus)
         {
             case UserStatus.FreeTrial:
-                return CalculateFirstJobRun(createdAt, generationDay, generationTime).AddDays(14);
+                return CalculateFirstJobRun(signUpDate, generationDay, generationTime).AddDays(NUM_DAYS_FREE_TRIAL);
             case UserStatus.ExtendedFreeTrial:
-                return CalculateFirstJobRun(createdAt, generationDay, generationTime).AddDays(28);
+                return CalculateFirstJobRun(signUpDate, generationDay, generationTime).AddDays(NUM_DAYS_EXTENDED_FREE_TRIAL);
             case UserStatus.Subscribed:
                 return null;
             case UserStatus.FreeTrialExpired:
@@ -47,8 +47,8 @@ public static class UserStatusHelpers
             daysUntilGenerationDay = 7; // If it's the same day but the time has passed, jump to next week
         }
 
-        // Calculate the first generation day and time
-        DateTime firstJobRun = signUpDate.AddDays(daysUntilGenerationDay).Date + generationTime;
+        // Calculate the date time of the first job run
+        DateTime firstJobRun = signUpDate.AddDays(daysUntilGenerationDay).Add(generationTime);
 
         return firstJobRun;
     }
