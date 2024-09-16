@@ -81,18 +81,16 @@ public class UserStatusService(FamilyService familyService, LoggingService _logg
 
     public DateTime CalculateFirstJobRun(DateTime signUpDate, DayOfWeek generationDay, TimeSpan generationTime)
     {
-        // Calculate the difference in days between the sign up day and the generation day
-        int daysUntilGenerationDay = ((int)generationDay - (int)signUpDate.DayOfWeek + 7) % 7;
-        
-        // If the sign up day and generation day are the same, check if the generation time is still ahead
-        if (daysUntilGenerationDay == 0 && signUpDate.TimeOfDay >= generationTime)
+        DateTime result = signUpDate.Date + generationTime;
+
+        if (result <= signUpDate)
         {
-            daysUntilGenerationDay = 7; // If it's the same day but the time has passed, jump to next week
+            result = result.AddDays(1);
         }
 
-        // Calculate the date time of the first job run
-        DateTime firstJobRun = signUpDate.AddDays(daysUntilGenerationDay) + generationTime;
+        int daysUntilGenerationDay = ((int)generationDay - (int)result.DayOfWeek + 7) % 7;
+        result = result.AddDays(daysUntilGenerationDay);
 
-        return firstJobRun;
+        return result;
     }
 }
