@@ -8,8 +8,8 @@ public class Constants
     public const int MAX_NOTES = 10;
     public const int MAX_ATTEMPTS = 25;
     public const int JOB_COOLDOWN_DAYS = 3;
-    public const int NUM_DAYS_FREE_TRIAL = 14;
-    public const int NUM_DAYS_EXTENDED_FREE_TRIAL = 28;
+    public const int NUM_DAYS_FREE_TRIAL = 7;
+    public const int NUM_DAYS_EXTENDED_FREE_TRIAL = 21;
     public static GordonResponseModel GORDON_RESPONSE_EXAMPLE =
         new()
         {
