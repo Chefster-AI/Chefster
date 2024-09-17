@@ -115,6 +115,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
             }
 
             // update attributes
+            existingFam.Name = family.Name;
             existingFam.PhoneNumber = family.PhoneNumber;
             existingFam.FamilySize = family.FamilySize;
             existingFam.GenerationDay = family.GenerationDay;

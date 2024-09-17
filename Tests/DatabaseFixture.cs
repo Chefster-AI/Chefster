@@ -53,6 +53,7 @@ public class DatabaseFixture
             new FamilyModel
             {
                 Id = "1",
+                Name = "Bert",
                 CreatedAt = DateTime.Now,
                 Email = "test@email.com",
                 UserStatus = UserStatus.Unknown,
@@ -68,6 +69,7 @@ public class DatabaseFixture
             new FamilyModel
             {
                 Id = "4",
+                Name = "Kurt",
                 CreatedAt = DateTime.Now,
                 Email = "test4@email.com",
                 UserStatus = UserStatus.FreeTrial,

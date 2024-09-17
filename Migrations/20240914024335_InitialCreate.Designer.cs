@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Chefster.Migrations
 {
     [DbContext(typeof(ChefsterDbContext))]
-    [Migration("20240724220745_InitialCreate")]
+    [Migration("20240914024335_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -19,6 +19,39 @@ namespace Chefster.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
+
+            modelBuilder.Entity("Chefster.Models.AddressModel", b =>
+                {
+                    b.Property<string>("FamilyId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AptOrUnitNumber")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CityOrTown")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StateProvinceRegion")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StreetAddress")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("FamilyId");
+
+                    b.ToTable("Addresses", (string)null);
+                });
 
             modelBuilder.Entity("Chefster.Models.ConsiderationsModel", b =>
                 {
@@ -65,6 +98,9 @@ namespace Chefster.Migrations
                     b.Property<TimeSpan>("GenerationTime")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("JobTimestamp")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("NumberOfBreakfastMeals")
                         .HasColumnType("INTEGER");
 
@@ -81,6 +117,9 @@ namespace Chefster.Migrations
                     b.Property<string>("TimeZone")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("UserStatus")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 

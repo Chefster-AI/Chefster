@@ -15,6 +15,12 @@
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
+                            <label asp-for="Name">Name of Email Recipient</label>
+                            <input asp-for="Name" type="text" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
                             <label asp-for="PhoneNumber">Phone Number</label>
                             <input asp-for="PhoneNumber" type="tel" pattern="^\+?\d{0,13}" class="form-control"
                                 required />
