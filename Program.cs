@@ -13,6 +13,9 @@ using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Limit local db logging
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.None);
+
 // load local dotnet user-secrets
 builder.Configuration.AddUserSecrets("d70ac473-6c10-438a-a3ba-2a154bdf5946");
 

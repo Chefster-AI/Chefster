@@ -43,7 +43,6 @@ public class GordonService(
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failure to obtain thread Id. Error: {ex}");
             _logger.Log(
                 $"Failure to obtain thread Id.  Error: {ex}",
                 LogLevels.Error,
@@ -78,7 +77,6 @@ public class GordonService(
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failure to create message. Error: {ex}");
             _logger.Log(
                 $"Failure to create message. Error: {ex}",
                 LogLevels.Error,
@@ -115,7 +113,6 @@ public class GordonService(
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failure to obtain run Id. Error: {ex}");
             _logger.Log($"Failure to obtain run Id. Error: {ex}", LogLevels.Error, "CreateMessage");
             return null;
         }
@@ -208,7 +205,6 @@ public class GordonService(
                 LogLevels.Error,
                 "gordonStatusLoop"
             );
-            Console.WriteLine("Reached the end with no result...");
             return ServiceResult<GordonResponseModel>.ErrorResult(
                 $"Run loop has reached max iterations for response. Exiting"
             );
@@ -244,9 +240,8 @@ public class GordonService(
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to Deserialize json to GordonResponseModel. Error: {ex}");
             _logger.Log(
-                $"Failed to retrieve Gordon response. Error: {ex}",
+                $"Failed to Deserialize json to GordonResponseModel. Error: {ex}",
                 LogLevels.Error,
                 "GetMessageResponse"
             );

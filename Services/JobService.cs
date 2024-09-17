@@ -153,7 +153,6 @@ public class JobService(
             );
             if (!holdSuccess.Success)
             {
-                Console.WriteLine($"Failed to hold recipes. Error {holdSuccess.Error}");
                 _logger.Log(
                     $"Error Holding recipes for family with ID: {family.Id} and Email: {family.Email}. Error: {holdSuccess.Error}",
                     LogLevels.Error
@@ -162,7 +161,6 @@ public class JobService(
             var releaseSuccess = _previousRecipeService.RealeaseRecipes(familyId, mealCount);
             if (!releaseSuccess.Success)
             {
-                Console.WriteLine($"Failed to release recipes. Error {releaseSuccess.Error}");
                 _logger.Log(
                     $"Error releasing recipes for family with ID: {family.Id} and Email: {family.Email}. Error: {releaseSuccess.Error}",
                     LogLevels.Error
