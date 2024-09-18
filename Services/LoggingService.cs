@@ -43,7 +43,7 @@ public class LoggingService(IMongoClient mongoClient, IConfiguration configurati
         try
         {
             // Print the log to console so we can use it for debugging
-            Console.WriteLine(log.Message);
+            Console.WriteLine($"[LOG:{log.LogLevel}] {log.Message}");
             // don't save logs from development
             if (_configuration["ASPNETCORE_ENVIRONMENT"] != "Development")
             {
