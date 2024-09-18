@@ -69,8 +69,6 @@ public class HubSpotService(IHttpClientFactory httpClientFactory, IConfiguration
 
         var response = await _client.PatchAsync($"https://api.hubapi.com/crm/v3/objects/contacts/{emailAddress}?idProperty=email", content);
 
-        Console.WriteLine(response.RequestMessage);
-
         if (!response.IsSuccessStatusCode)
         {
             _logger.Log($"Failed to update contact for email: {emailAddress}", LogLevels.Warning, "HubSpot Service Update Contact");

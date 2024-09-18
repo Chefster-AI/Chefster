@@ -1,3 +1,4 @@
+using static Chefster.Common.Helpers;
 using System.Security.Claims;
 using Chefster.Common;
 using Chefster.Models;
@@ -6,7 +7,6 @@ using Chefster.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using MongoDB.Bson;
 
 namespace Chefster.Controllers;
 
@@ -62,9 +62,7 @@ public class FamilyController(
     {
         var familyId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value!;
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!;
-        var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(Family.TimeZone);
-        var createdAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo);
-
+        var createdAt = GetUserCurrentTime(Family.TimeZone);
         if (familyId == null || email == null)
         {
             return RedirectToAction("Index", "error", new { route = "/profile" });

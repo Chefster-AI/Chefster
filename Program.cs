@@ -88,6 +88,7 @@ builder.Services.AddScoped<LetterQueueService>();
 builder.Services.AddScoped<LoggingService>();
 builder.Services.AddScoped<AddressService>();
 builder.Services.AddScoped<UserStatusService>();
+builder.Services.AddScoped<JobRecordService>();
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 

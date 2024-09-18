@@ -26,6 +26,7 @@ public class JobRecordService(ChefsterDbContext context, LoggingService loggingS
             };
 
             var result = _context.JobRecords.Add(newJobRecord);
+            _context.SaveChanges();
             
             return ServiceResult<JobRecordModel>.SuccessResult(result.Entity);
         }

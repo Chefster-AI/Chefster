@@ -1,61 +1,68 @@
 using static Chefster.Common.Constants;
 using Chefster.Common;
-using Chefster.Models;
 using Hangfire;
-using System.Formats.Tar;
 
 namespace Chefster.Services;
 
-public class UserStatusService(FamilyService familyService, LoggingService _loggingService)
+public class UserStatusService(FamilyService familyService, JobRecordService jobRecordService, LoggingService _loggingService)
 {
-    private readonly LoggingService _logger = _loggingService;
     private readonly FamilyService _familyService = familyService;
+    private readonly JobRecordService _jobRecordService = jobRecordService;
+    private readonly LoggingService _logger = _loggingService;
 
     // checks if the user's service has expired and assigned appropriate status to family
-    public void CheckFamilyUserStatus(FamilyModel family)
+    public void CheckFamilyUserStatus(string familyId, UserStatus userStatus)
     {
-        if (IsExpired(
-            family.UserStatus,
-            family.CreatedAt,
-            family.GenerationDay,
-            family.GenerationTime,
-            family.JobTimestamp,
-            family.TimeZone))
+        if (IsExpired(familyId, userStatus))
         {
-            RecurringJob.RemoveIfExists(family.Id);
-            switch (family.UserStatus)
+            RecurringJob.RemoveIfExists(familyId);
+            switch (userStatus)
             {
                 case UserStatus.FreeTrial:
-                    _logger.Log($"Changing family user status from FreeTrial to FreeTrialExpired for {family.Id}", LogLevels.Info);
-                    _familyService.SetFamilyUserStatus(family.Id, UserStatus.FreeTrialExpired);
+                    _logger.Log($"Changing family user status from FreeTrial to FreeTrialExpired for {familyId}", LogLevels.Info);
+                    _familyService.SetFamilyUserStatus(familyId, UserStatus.FreeTrialExpired);
                     break;
                 case UserStatus.ExtendedFreeTrial:
-                    _logger.Log($"Changing family user status from ExtendedFreeTrial to FreeTrialExpired for {family.Id}", LogLevels.Info);
-                    _familyService.SetFamilyUserStatus(family.Id, UserStatus.FreeTrialExpired);
+                    _logger.Log($"Changing family user status from ExtendedFreeTrial to FreeTrialExpired for {familyId}", LogLevels.Info);
+                    _familyService.SetFamilyUserStatus(familyId, UserStatus.FreeTrialExpired);
                     break;
                 case UserStatus.Subscribed:
-                    _logger.Log($"Changing family user status from Subscribed to PreviouslySubscribed for {family.Id}", LogLevels.Info);
-                    _familyService.SetFamilyUserStatus(family.Id, UserStatus.PreviouslySubscribed);
+                    _logger.Log($"Changing family user status from Subscribed to PreviouslySubscribed for {familyId}", LogLevels.Info);
+                    _familyService.SetFamilyUserStatus(familyId, UserStatus.PreviouslySubscribed);
                     break;
                 case UserStatus.Unknown:
                     break;
                 default:
-                    _logger.Log($"Family {family.Id} didn't have a valid UserStatus after expiration, setting UserStatus to Unknown", LogLevels.Error);
-                    _familyService.SetFamilyUserStatus(family.Id, UserStatus.Unknown);
+                    _logger.Log($"Family {familyId} didn't have a valid UserStatus after expiration, setting UserStatus to Unknown", LogLevels.Error);
+                    _familyService.SetFamilyUserStatus(familyId, UserStatus.Unknown);
                     break;
             }
         }
     }
 
-    public bool IsExpired(UserStatus userStatus, DateTime signUpDate, DayOfWeek generationDay, TimeSpan generationTime, DateTime? jobTimestamp, string timeZone)
+    public bool IsExpired(string familyId, UserStatus userStatus)
     {
-        // get the current time in the user's time zone
-        var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(timeZone);
-        var userCurrentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo);
-
-        // compare it to their calcualted final job run
-        var userFinalJobRunTime = CalculateFinalJobRun(userStatus, signUpDate, generationDay, generationTime, jobTimestamp);
-        return userFinalJobRunTime < userCurrentTime;
+        var result = _jobRecordService.GetNumberOfJobsRan(familyId);
+        if (result.Success)
+        {
+            var numberOfJobsRan = result.Data;
+            switch (userStatus)
+            {
+                case UserStatus.FreeTrial:
+                    return NUMBER_OF_JOBS_IN_FREE_TRIAL <= numberOfJobsRan;
+                case UserStatus.ExtendedFreeTrial:
+                    return NUMBER_OF_JOBS_IN_EXTENDED_FREE_TRIAL <= numberOfJobsRan;
+                case UserStatus.Subscribed:
+                    return false;
+                case UserStatus.FreeTrialExpired:
+                    return true;
+                case UserStatus.PreviouslySubscribed:
+                    return true;
+                default:
+                    return true;
+            }
+        }
+        return true;
     }
 
     public DateTime? CalculateFinalJobRun(UserStatus userStatus, DateTime signUpDate, DayOfWeek generationDay, TimeSpan generationTime, DateTime? jobTimestamp)
@@ -63,9 +70,9 @@ public class UserStatusService(FamilyService familyService, LoggingService _logg
         switch (userStatus)
         {
             case UserStatus.FreeTrial:
-                return CalculateFirstJobRun(signUpDate, generationDay, generationTime).AddDays(NUM_DAYS_FREE_TRIAL);
+                return CalculateFirstJobRun(signUpDate, generationDay, generationTime).AddDays(7);
             case UserStatus.ExtendedFreeTrial:
-                return CalculateFirstJobRun(signUpDate, generationDay, generationTime).AddDays(NUM_DAYS_EXTENDED_FREE_TRIAL);
+                return CalculateFirstJobRun(signUpDate, generationDay, generationTime).AddDays(21);
             case UserStatus.Subscribed:
                 return null;
             case UserStatus.FreeTrialExpired:
