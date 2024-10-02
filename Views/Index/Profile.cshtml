@@ -6,20 +6,20 @@
 
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-12 col-lg-8">
+        <div class="col-md-10 col-lg-8">
             <form id="updateform" class="row g-3" action="/api/update/family" method="post" disabled>
                 <div class="fs-3">
                     Your Profile
                 </div>
                 <hr class="border border-primary border-1 opacity-100">
-                <div class="row">
-                    <div class="col">
+                <div class="d-inline-flex row">
+                    <div class="col-sm-4">
                         <div class="form-group">
                             <label asp-for="Name">Name of Email Recipient</label>
                             <input asp-for="Name" type="text" class="form-control" required />
                         </div>
                     </div>
-                    <div class="col">
+                    <div class="col-sm-4">
                         <div class="form-group">
                             <label asp-for="PhoneNumber">Phone Number</label>
                             <input asp-for="PhoneNumber" type="tel" pattern="^\+?\d{0,13}" class="form-control"
@@ -27,13 +27,12 @@
                             <small>Format: +1234567890</small>
                         </div>
                     </div>
-                    <div class="col pe-0">
+                    <div class="col-sm-4 pe-0">
                         <label asp-for="FamilySize">Number of Family Members</label>
                         <div class="row g-0 input-group pe-0 me-0">
                             <div class="col-3 pe-0">
                                 <input asp-for="FamilySize" type="number" id="FamilySize" style="border-radius: 0;"
-                                    class="form-control text-center rounded-start ps-4" min="1" max="10" readonly
-                                    required />
+                                    class="form-control text-center rounded-start" min="1" max="10" readonly required />
                             </div>
                             <div class="col-9">
                                 <button id="addMemberButton" type="button" style="border-radius: 0;"
@@ -266,7 +265,7 @@
                 // Create main container div
                 const memberDiv = document.createElement('div');
                 memberDiv.id = "memberDiv" + (member + 1);
-                memberDiv.className = 'p-3 mt-4 rounded border border-primary border-2 opacity-100';
+                memberDiv.className = 'p-3 mt-2 rounded border border-primary border-2 opacity-100';
 
                 // wrapper for top row of member tile
                 const memberNameDeleteRow = document.createElement("div")
@@ -281,19 +280,19 @@
 
                 // Create row div for inputs
                 const rowDiv = document.createElement('div');
-                rowDiv.className = 'row my-3';
+                rowDiv.className = 'row d-flex me-0 form-group';
 
                 // Create name label and input
                 const nameLabel = document.createElement('label');
                 nameLabel.setAttribute('name', `Members[${member}].Name`);
-                nameLabel.className = 'col-1 col-form-label';
+                nameLabel.className = 'col-sm-1 col-form-label';
                 nameLabel.textContent = 'Name';
                 nameLabel.id = `Members[${member}].NameLabel`
 
                 const nameInput = document.createElement('input');
                 nameInput.setAttribute('type', 'text');
                 nameInput.setAttribute('name', `Members[${member}].Name`);
-                nameInput.className = 'form-control';
+                nameInput.className = 'col-sm-10 form-control';
                 nameInput.value = name;
                 nameInput.setAttribute('required', '');
                 nameInput.id = `Members[${member}].Name`
@@ -301,41 +300,39 @@
                 // create note label and input
                 const notesLabel = document.createElement('label');
                 notesLabel.setAttribute('name', `Members[${member}].Notes`);
-                notesLabel.className = 'col-1 col-form-label mt-3';
+                notesLabel.className = 'col-sm-1 col-form-label';
                 notesLabel.textContent = 'Notes'
                 notesLabel.id = `Members[${member}].NotesLabel`
 
                 const notesTextarea = document.createElement('textarea');
                 notesTextarea.setAttribute('name', `Members[${member}].Notes`);
-                notesTextarea.className = 'form-control mt-3 col-11';
+                notesTextarea.className = 'form-control col-sm-8';
                 notesTextarea.type = "text"
                 notesTextarea.value = note;
                 notesTextarea.id = `Members[${member}].Notes`
 
                 const textwrapper = document.createElement('div')
-                textwrapper.className = 'col-11'
+                textwrapper.className = 'col'
                 textwrapper.appendChild(notesTextarea);
 
                 const inputwrapper = document.createElement('div')
-                inputwrapper.className = 'col-8'
+                inputwrapper.className = 'col'
                 inputwrapper.appendChild(nameInput);
 
                 const deleteWrapper = document.createElement('div');
-                deleteWrapper.className = 'col-3 form-check d-flex align-items-center justify-content-center';
+                deleteWrapper.className = 'd-inline-flex col-sm-4 mt-2';
 
                 const deleteCheck = document.createElement("input")
                 deleteCheck.type = "checkbox"
                 deleteCheck.name = `Members[${member}].ShouldDelete`
                 deleteCheck.value = true
                 deleteCheck.className = "form-check-input"
-                deleteCheck.style.marginRight = '10px'
                 deleteCheck.id = `shouldDelete${member}`
                 deleteCheck.addEventListener('click', () => toggleDisable(member + 1))
 
                 const deleteLabel = document.createElement("label");
                 deleteLabel.className = "form-check-label ms-1"
-                deleteLabel.innerHTML = " Delete Member"
-                deleteLabel.style.marginRight = '10px'
+                deleteLabel.innerHTML = "Delete Member"
                 deleteLabel.id = `shouldDelete${member}label`
                 deleteLabel.setAttribute('for', `shouldDelete${member}`);
 

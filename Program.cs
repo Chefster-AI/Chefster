@@ -119,9 +119,10 @@ builder.Services.AddHangfire(
             );
     }
 );
-
 if (builder.Environment.IsDevelopment())
 {
+    var mvc = builder.Services.AddRazorPages();
+    mvc.AddRazorRuntimeCompilation();
     builder.Services.AddHangfireServer(options =>
         options.Queues = [builder.Configuration["QUEUE_NAME"]]
     );
