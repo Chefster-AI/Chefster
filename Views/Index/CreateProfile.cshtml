@@ -6,20 +6,20 @@
 
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-12 col-lg-8">
+        <div class="col-lg-8">
             <form id="createform" class="row g-3" action="/api/family" method="post">
                 <div class="fs-3">
                     Tell us a bit about yourself...
                 </div>
                 <hr class="border border-primary border-1 opacity-100">
                 <div class="row">
-                    <div class="col">
+                    <div class="col-sm-4 pe-0 mb-2">
                         <div class="form-group">
                             <label asp-for="Name">Name of Email Recipient</label>
                             <input asp-for="Name" type="text" class="form-control" required />
                         </div>
                     </div>
-                    <div class="col">
+                    <div class="col-sm-4 pe-0 mb-2">
                         <div class="form-group">
                             <label asp-for="PhoneNumber">Phone Number</label>
                             <input asp-for="PhoneNumber" type="tel" pattern="^\+?\d{0,13}" class="form-control"
@@ -27,13 +27,12 @@
                             <small>Format: +1234567890</small>
                         </div>
                     </div>
-                    <div class="col pe-0">
+                    <div class="col-sm-4 pe-0">
                         <label asp-for="FamilySize">Number of Family Members</label>
                         <div class="row g-0 input-group pe-0 me-0">
                             <div class="col-3 pe-0">
                                 <input asp-for="FamilySize" type="number" id="FamilySize" style="border-radius: 0;"
-                                    class="form-control text-center rounded-start ps-4" min="1" max="10" readonly
-                                    required />
+                                    class="form-control text-center rounded-start" min="1" max="10" readonly required />
                             </div>
                             <div class="col-9">
                                 <button id="addMemberButton" type="button" style="border-radius: 0;"
@@ -305,33 +304,31 @@
 
             function renderRemove(index) {
                 if (index > 0) {
-                    return `<div class="col-3 form-check d-flex align-items-center justify-content-center" style="padding-left: 36px; padding-right: 12px">
-                                <button class="btn btn-danger w-100" type="button" onclick="removeUnusedMember(document.getElementById('member${index}'));">Remove</button>
-                            </div>`;
+                    return `<div class="col-3 form-check d-flex align-items-center justify-content-center" style="padding-left: 36px; padding-right: 12px"> 
+                                            <button class="btn btn-danger w-100" type="button" onclick="removeUnusedMember(document.getElementById('member${index}'));">Remove</button>
+                                        </div>`;
                 } else {
-                    return ``
+                    return ``;
                 }
             }
 
             for (let i = 0; i < numMembers; i++) {
                 // add a new member with index as number of members
-                familyMembersContainer.innerHTML += `
-        <div id="member${i}" class="p-3 mt-4 rounded border border-primary border-2 opacity-100">
+                familyMembersContainer.innerHTML +=
+                    `<div id="member${i}" class="p-3 mt-2 rounded border border-primary border-2 opacity-100">
             <div class="py-1 fs-5">
                 Member ${i + 1}
             </div>
-            <div class="row my-3">
-                <div class="row" style="padding-right: 0">
-                    <label name="Members[${i}].Name" class="col-1 col-form-label" id="Members[${i}].NameLabel">Name</label>
-                    <div class="col" style="padding-right: 0px;">
-                        <input type="text" name="Members[${i}].Name" class="form-control" required id="Members[${i}].Name">
+            <div class="row">
+            <div class="form-group">
+                    <label name="Members[${i}].Name" class="col-sm-1 col-form-label" id="Members[${i}].NameLabel">Name</label>
+                    <input type="text" name="Members[${i}].Name" class="col-sm-10 form-control" required id="Members[${i}].Name">
                     </div>
                     ${renderRemove(i)}
-                </div>
-                <label name="Members[${i}].Notes" class="col-1 col-form-label mt-3">Notes</label>
-            <div class="col-11">
-                <textarea name="Members[${i}].Notes" type="text" class="form-control mt-3"></textarea>
-            </div>
+                    <div class="form-group">
+                    <label name="Members[${i}].Notes" class="col-sm-1 col-form-label">Notes</label>
+                    <textarea name="Members[${i}].Notes" type="text" class="col-sm-10 form-control"></textarea>
+                    </div>
         </div>
         <div id="considerationRow" class="row my-3 ms-5">
             <div id="ConsiderationCol" class="col-md-4">
@@ -458,8 +455,7 @@
                     </div>
             </div>
         </div>
-        </div>
-        `
+        </div>`;
             }
         }
     </script>

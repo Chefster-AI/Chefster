@@ -3,6 +3,7 @@ using Chefster.Context;
 using Chefster.Models;
 using Chefster.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 using Moq;
 
@@ -24,6 +25,10 @@ public class DatabaseFixture
 
         Context = new ChefsterDbContext(options);
 
+        //setup mock configuration
+        var mockConfiguration = new Mock<IConfiguration>();
+        mockConfiguration.Setup(c => c["key"]).Returns("val");
+
         // Mock MongoClient for LoggingService
         // prevents us from having to use a real mongo connection
         var mockMongoClient = new Mock<IMongoClient>();
@@ -40,7 +45,7 @@ public class DatabaseFixture
             .Returns(mockCollection.Object);
 
         // Pass mock MongoClient to LoggingService
-        LoggingService = new LoggingService(mockMongoClient.Object);
+        LoggingService = new LoggingService(mockMongoClient.Object, mockConfiguration.Object);
         FamilyService = new FamilyService(Context, LoggingService);
         MemberService = new MemberService(Context);
         ConsiderationsService = new ConsiderationsService(Context);
