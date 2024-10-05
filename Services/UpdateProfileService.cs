@@ -9,12 +9,14 @@ namespace Chefster.Services;
 public class UpdateProfileService(
     FamilyService familyService,
     MemberService memberService,
-    ConsiderationsService considerationsService
+    ConsiderationsService considerationsService,
+    LoggingService loggingService
 )
 {
     private readonly FamilyService _familyService = familyService;
     private readonly MemberService _memberService = memberService;
     private readonly ConsiderationsService _considerationsService = considerationsService;
+    private readonly LoggingService _logger = loggingService;
 
     // Handles the deletion of considerations if a member was to update theirs
     public Task DeleteOldConsiderations(string memberId, DateTime timeAdded)
@@ -36,10 +38,10 @@ public class UpdateProfileService(
 
                     if (!deleted.Success)
                     {
-                        // We reallly need to log this stuff as well.
                         // Throwing exceptions is not good because we want to continue trying to delete others
-                        Console.WriteLine(
-                            $"Failed to delete consideration with Id: {deleted.Data!.ConsiderationId}"
+                        _logger.Log(
+                            $"Failed to delete consideration with Id: {deleted.Data!.ConsiderationId}",
+                            LogLevels.Error
                         );
                     }
                 }
@@ -71,9 +73,9 @@ public class UpdateProfileService(
                 var updated = _memberService.UpdateMember(Member.MemberId, UpdatedMember);
                 if (!updated.Success)
                 {
-                    // needs logging
-                    Console.WriteLine(
-                        $"Failed to update member {UpdatedMember.ToJson()}. Error: {updated.Error}"
+                    _logger.Log(
+                        $"Failed to update member {UpdatedMember.ToJson()}. Error: {updated.Error}",
+                        LogLevels.Error
                     );
                 }
                 else
@@ -95,10 +97,10 @@ public class UpdateProfileService(
 
                 if (!created.Success)
                 {
-                    // needs logging
                     // We need some way of propgating this to the frontend if it does fail
-                    Console.WriteLine(
-                        $"Failed to create member. Member: {NewMember.ToJson()}. Error: {created.Error}"
+                    _logger.Log(
+                        $"Failed to create member. Member: {NewMember.ToJson()}. Error: {created.Error}",
+                        LogLevels.Error
                     );
                 }
                 else
@@ -125,7 +127,10 @@ public class UpdateProfileService(
                     var created = _considerationsService.CreateConsideration(restriction);
                     if (!created.Success)
                     {
-                        // We should log this stuff
+                        _logger.Log(
+                            $"Error creating consideration. Error: {created.Error}",
+                            LogLevels.Error
+                        );
                         return Task.FromException(
                             new Exception($"Error creating consideration. Error: {created.Error}")
                         );
@@ -147,7 +152,10 @@ public class UpdateProfileService(
                     var created = _considerationsService.CreateConsideration(goal);
                     if (!created.Success)
                     {
-                        // We should log this stuff
+                        _logger.Log(
+                            $"Error creating consideration. Error: {created.Error}",
+                            LogLevels.Error
+                        );
                         return Task.FromException(
                             new Exception($"Error creating consideration. Error: {created.Error}")
                         );
@@ -169,7 +177,10 @@ public class UpdateProfileService(
                     var created = _considerationsService.CreateConsideration(cuisine);
                     if (!created.Success)
                     {
-                        // We should log this stuff
+                        _logger.Log(
+                            $"Error creating consideration. Error: {created.Error}",
+                            LogLevels.Error
+                        );
                         return Task.FromException(
                             new Exception($"Error creating consideration. Error: {created.Error}")
                         );

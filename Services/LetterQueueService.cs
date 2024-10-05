@@ -29,8 +29,6 @@ public class LetterQueueService(FamilyService familyService, IConfiguration conf
             var address = _familyService.GetAddressForFamily(fam!.Id).Data;
             var members = _familyService.GetMembers(fam!.Id).Data;
 
-            // Console.WriteLine(address.ToJson());
-
             if (members != null && members.Count != 0)
             {
                 AllMembers = string.Join(", ", members.Select(m => m.Name));

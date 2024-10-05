@@ -24,6 +24,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         {
             _context.Families.Add(family);
             _context.SaveChanges(); // Save changes to database
+            _logger.Log($"Created Family with Id: {family.Id}.", LogLevels.Info);
             return ServiceResult<FamilyModel>.SuccessResult(family);
         }
         catch (SqlException e)
