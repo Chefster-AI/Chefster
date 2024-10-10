@@ -320,7 +320,7 @@
                 inputwrapper.appendChild(nameInput);
 
                 const deleteWrapper = document.createElement('div');
-                deleteWrapper.className = 'd-inline-flex col-sm-4 mt-2';
+                deleteWrapper.className = 'd-inline-flex col-sm-4';
 
                 const deleteCheck = document.createElement("input")
                 deleteCheck.type = "checkbox"
@@ -344,7 +344,7 @@
                 } else {
                     if (member > fSize - 1) {
                         const removedUnused = document.createElement('button');
-                        removedUnused.className = 'btn btn-danger w-100 me-3';
+                        removedUnused.className = 'btn btn-danger w-100';
                         removedUnused.innerHTML = 'Remove';
                         removedUnused.type = 'button';
 
