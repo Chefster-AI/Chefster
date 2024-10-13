@@ -124,6 +124,7 @@ builder.Services.AddHangfire(
 );
 if (builder.Environment.IsDevelopment())
 {
+    // handy when developing frontend stuff. Can cause wonkiness when server side rendering pages
     // var mvc = builder.Services.AddRazorPages();
     // mvc.AddRazorRuntimeCompilation();
     builder.Services.AddHangfireServer(options =>
