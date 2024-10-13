@@ -3,6 +3,7 @@ using Chefster.Common;
 using Chefster.Models;
 using Hangfire;
 using static Chefster.Common.ConsiderationsEnum;
+using static Chefster.Common.Helpers;
 using static Chefster.Common.Constants;
 
 namespace Chefster.Services;
@@ -12,22 +13,26 @@ public class JobService(
     EmailService emailService,
     FamilyService familyService,
     GordonService gordonService,
+    JobRecordService jobRecordService,
     MemberService memberService,
     PreviousRecipesService previousRecipesService,
     ViewToStringService viewToStringService,
     LoggingService loggingService,
-    IConfiguration configuration
+    IConfiguration configuration,
+    UserStatusService userStatusService
 )
 {
     private readonly ConsiderationsService _considerationService = considerationsService;
     private readonly EmailService _emailService = emailService;
     private readonly FamilyService _familyService = familyService;
     private readonly GordonService _gordonService = gordonService;
+    private readonly JobRecordService _jobRecordService = jobRecordService;
     private readonly MemberService _memberService = memberService;
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
     private readonly ViewToStringService _viewToStringService = viewToStringService;
     private readonly LoggingService _logger = loggingService;
     private readonly IConfiguration _configuration = configuration;
+    private readonly UserStatusService _userStatusService = userStatusService;
 
     /*
         The service is responsible for created, updating and executing jobs that will
@@ -89,17 +94,14 @@ public class JobService(
     {
         // grab family, get gordon's prompt, create the email, then send it
         var family = _familyService.GetById(familyId).Data;
+        DateTime startTime = GetUserCurrentTime(family!.TimeZone);
 
         if (family != null)
         {
             // ensure job run meets cooldown period
             if (family!.JobTimestamp != null)
             {
-                TimeZoneInfo familyTimeZone = TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone);
-                DateTime familyCurrentTime = TimeZoneInfo.ConvertTime(
-                    DateTime.UtcNow,
-                    familyTimeZone
-                );
+                DateTime familyCurrentTime = GetUserCurrentTime(family.TimeZone);
                 double daysSinceLastRun = (familyCurrentTime - family.JobTimestamp).Value.TotalDays;
                 Console.WriteLine("Last Job Run Timestamp: " + family.JobTimestamp.ToString()!);
                 Console.WriteLine("Family's current time: " + familyCurrentTime.ToString());
@@ -166,17 +168,27 @@ public class JobService(
                     LogLevels.Error
                 );
             }
-            _familyService.UpdateFamilyJobTimestamp(
+            family = _familyService.UpdateFamilyJobTimestamp(
                 familyId,
                 TimeZoneInfo.ConvertTime(
                     DateTime.UtcNow,
                     TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)
                 )
-            );
+            ).Data;
             _logger.Log(
                 $"Updated JobTimestamp for family with ID: {family.Id} and Email: {family.Email}",
                 LogLevels.Info
             );
+            var jobRecord = new JobRecordCreateDto
+            {
+                FamilyId = family.Id,
+                StartTime = startTime,
+                EndTime = GetUserCurrentTime(family.TimeZone),
+                JobStatus = JobStatus.Completed,
+                JobType = JobType.RecipeGeneration
+            };
+            _jobRecordService.CreateJobRecord(jobRecord);
+            _userStatusService.CheckFamilyUserStatus(family.Id, family.UserStatus);
         }
         else
         {
@@ -184,6 +196,15 @@ public class JobService(
                 $"Family was null when attempting to generate and send recipe email. ID: {familyId}",
                 LogLevels.Error
             );
+            var jobRecord = new JobRecordCreateDto
+            {
+                FamilyId = family.Id,
+                StartTime = startTime,
+                EndTime = GetUserCurrentTime(family.TimeZone),
+                JobStatus = JobStatus.Failed,
+                JobType = JobType.RecipeGeneration
+            };
+            _jobRecordService.CreateJobRecord(jobRecord);
             throw new Exception(
                 "Family was null when attempting to generate and send recipe email"
             );

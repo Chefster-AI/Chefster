@@ -1,3 +1,4 @@
+using static Chefster.Common.Helpers;
 using System.Security.Claims;
 using Chefster.Common;
 using Chefster.Models;
@@ -13,6 +14,7 @@ namespace Chefster.Controllers;
 [Route("api/family")]
 [ApiController]
 public class FamilyController(
+    AddressService addressService,
     ConsiderationsService considerationsService,
     EmailService emailService,
     FamilyService familyService,
@@ -23,6 +25,7 @@ public class FamilyController(
     UpdateProfileService updateProfileService
 ) : ControllerBase
 {
+    private readonly AddressService _addressService = addressService;
     private readonly ConsiderationsService _considerationsService = considerationsService;
     private readonly EmailService _emailService = emailService;
     private readonly FamilyService _familyService = familyService;
@@ -59,12 +62,45 @@ public class FamilyController(
     {
         var familyId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value!;
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!;
-        var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(Family.TimeZone);
-        var createdAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo);
-
+        var createdAt = GetUserCurrentTime(Family.TimeZone);
         if (familyId == null || email == null)
         {
             return RedirectToAction("Index", "error", new { route = "/profile" });
+        }
+
+        // try to create a new address
+        var address = Family.Address;
+        AddressModel? newAddress = null;
+        if (!string.IsNullOrWhiteSpace(address.StreetAddress) &&
+            !string.IsNullOrWhiteSpace(address.CityOrTown) &&
+            !string.IsNullOrWhiteSpace(address.StateProvinceRegion) &&
+            !string.IsNullOrWhiteSpace(address.PostalCode) &&
+            !string.IsNullOrWhiteSpace(address.Country))
+        {
+            newAddress = new AddressModel
+            {
+                FamilyId = familyId,
+                StreetAddress = address.StreetAddress,
+                AptOrUnitNumber = !string.IsNullOrWhiteSpace(address.AptOrUnitNumber) ? address.AptOrUnitNumber : null,
+                CityOrTown = address.CityOrTown,
+                StateProvinceRegion = address.StateProvinceRegion,
+                PostalCode = address.PostalCode,
+                Country = address.Country
+            };
+            var result = _addressService.CreateAddress(newAddress).Data;
+        }
+
+        // determine user status
+        UserStatus userStatus = UserStatus.Unknown;
+        // we only have free trial for now
+        // TODO: adjust logic to account for subscription vs free trial
+        if (newAddress == null)
+        {
+            userStatus = UserStatus.FreeTrial;
+        }
+        else
+        {
+            userStatus = UserStatus.ExtendedFreeTrial;
         }
 
         // create the new family
@@ -73,7 +109,7 @@ public class FamilyController(
             Id = familyId,
             Name = Family.Name,
             Email = email,
-            UserStatus = UserStatus.Unknown,
+            UserStatus = userStatus,
             CreatedAt = createdAt,
             PhoneNumber = Family.PhoneNumber,
             FamilySize = Family.FamilySize,
@@ -115,7 +151,8 @@ public class FamilyController(
         {
             EmailAddress = NewFamily.Email,
             GenerationDay = NewFamily.GenerationDay,
-            GenerationTime = NewFamily.GenerationTime
+            GenerationTime = NewFamily.GenerationTime,
+            UserStatus = userStatus
         };
 
         return RedirectToAction("ThankYou", "Index", model);
