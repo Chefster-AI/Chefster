@@ -178,9 +178,9 @@
 
             function renderRemove(index) {
                 if (index > 0) {
-                    return `<div class="col-3 form-check d-flex align-items-center justify-content-center" style="padding-left: 36px; padding-right: 12px"> 
-                                            <button class="btn btn-danger w-100" type="button" onclick="removeUnusedMember(document.getElementById('member${index}'));">Remove</button>
-                                        </div>`;
+                    return `<div class="col-sm-4 d-inline-flex pe-0"> 
+                                <button class="btn btn-danger w-100" type="button" onclick="removeUnusedMember(document.getElementById('member${index}'));">Remove</button>
+                            </div>`;
                 } else {
                     return ``;
                 }
@@ -194,15 +194,21 @@
                 Member ${i + 1}
             </div>
             <div class="row">
-            <div class="form-group">
+            <div class="row me-0 ms-0 pe-0 ps-0 form-group">
+                <div class="row d-flex pe-0"> 
                     <label name="Members[${i}].Name" class="col-sm-1 col-form-label" id="Members[${i}].NameLabel">Name</label>
-                    <input type="text" name="Members[${i}].Name" class="col-sm-10 form-control" required id="Members[${i}].Name">
+                    <div class="col pe-0">
+                        <input type="text" name="Members[${i}].Name" class="col-sm-10 form-control" required id="Members[${i}].Name">
                     </div>
                     ${renderRemove(i)}
-                    <div class="form-group">
+                </div>
+                <div class="row d-flex mt-3 pe-0"> 
                     <label name="Members[${i}].Notes" class="col-sm-1 col-form-label">Notes</label>
-                    <textarea name="Members[${i}].Notes" type="text" class="col-sm-10 form-control"></textarea>
+                    <div class="col pe-0">
+                        <textarea name="Members[${i}].Notes" type="text" class="form-control col-sm-10"></textarea>
                     </div>
+                </div>
+            </div>
         </div>
         <div id="considerationRow" class="row my-3 ms-5">
             <div id="ConsiderationCol" class="col-md-4">
