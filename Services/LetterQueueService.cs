@@ -1,34 +1,28 @@
 using Chefster.Common;
+using Chefster.Models;
+using Chefster.ViewModels;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 
 namespace Chefster.Services;
 
-public class LetterQueueService(
-    FamilyService familyService,
-    IConfiguration configuration,
-    LoggingService loggingService
-)
+public class LetterQueueService(IConfiguration configuration, LoggingService loggingService)
 {
-    private readonly FamilyService _familyService = familyService;
     private readonly IConfiguration _configuration = configuration;
     private readonly LoggingService _logger = loggingService;
     private readonly string _sheetId = "1QSu9sJtQ6aKs_vHzMxPxwONpi8J6SkJ5bg3z08g1zoI";
 
-    public void PopulateLetterQueue(string familyId)
+    public void PopulateLetterQueue(
+        FamilyViewModel family,
+        string familyId,
+        UserStatus userStatus,
+        string email
+    )
     {
-        var family = _familyService.GetById(familyId).Data;
-        var familyAddress = _familyService.GetAddressForFamily(familyId).Data;
-        var members = _familyService.GetMembers(familyId).Data;
-
         if (family == null)
         {
-            _logger.Log(
-                $"Familed to get family with Id: {familyId}. Exiting...",
-                LogLevels.Warning,
-                "PopulateLetterQueue"
-            );
+            _logger.Log($"family was null", LogLevels.Error);
             return;
         }
 
@@ -36,48 +30,38 @@ public class LetterQueueService(
 
         // make a list of members.
         var allMembers = "";
-        if (members != null && members.Count != 0)
+        if (family.Members != null && family.Members.Count != 0)
         {
-            allMembers = string.Join(", ", members.Select(m => m.Name));
+            allMembers = string.Join(", ", family.Members.Select(m => m.Name));
         }
 
         // Construct address in correct form
-        var fullAddress = "";
-        if (familyAddress != null)
+        string? fullAddress = null;
+        if (family.Address != null)
         {
             fullAddress =
-                familyAddress.StreetAddress
+                family.Address.StreetAddress
                 + ", "
-                + familyAddress.AptOrUnitNumber
+                + family.Address.AptOrUnitNumber
                 + " "
-                + familyAddress.CityOrTown
+                + family.Address.CityOrTown
                 + ", "
-                + familyAddress.StateProvinceRegion
+                + family.Address.StateProvinceRegion
                 + " "
-                + familyAddress.PostalCode
+                + family.Address.PostalCode
                 + " "
-                + familyAddress.Country;
-        }
-
-        if (string.IsNullOrEmpty(fullAddress) || string.IsNullOrEmpty(allMembers))
-        {
-            _logger.Log(
-                $"Attempted to add family with Id: {family.Id} to letter Queue without address or members",
-                LogLevels.Error,
-                "PopulateLetterQueue"
-            );
-            return;
+                + family.Address.Country;
         }
 
         var letterFamily = new List<object>()
         {
             family.Name,
             allMembers,
-            family.UserStatus,
+            userStatus.ToString(),
             family.PhoneNumber,
-            family.Email,
+            email,
             family.FamilySize,
-            fullAddress
+            fullAddress ?? "No Address"
         };
 
         var valueRange = new ValueRange() { Values = [letterFamily] };
@@ -92,7 +76,7 @@ public class LetterQueueService(
         if (appendResult == null || appendResult.Updates.UpdatedRows == 0)
         {
             _logger.Log(
-                $"Request to update sheet failed, appendResult was null or number of updated rows was 0. FamilyId: {family.Id}",
+                $"Request to update sheet failed, appendResult was null or number of updated rows was 0. FamilyId: {familyId}",
                 LogLevels.Error
             );
         }

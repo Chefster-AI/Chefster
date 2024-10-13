@@ -153,11 +153,14 @@ public class FamilyController(
 
         // if they are eligible, add them to the letter queue
         if (
-            NewFamily.UserStatus == UserStatus.ExtendedFreeTrial
-            || NewFamily.UserStatus == UserStatus.Subscribed
+            created.Success
+            && (
+                NewFamily.UserStatus == UserStatus.ExtendedFreeTrial
+                || NewFamily.UserStatus == UserStatus.Subscribed
+            )
         )
         {
-            _letterQueueService.PopulateLetterQueue(familyId);
+            _letterQueueService.PopulateLetterQueue(Family, familyId, userStatus, email);
         }
 
         // TODO: send confirmation email
