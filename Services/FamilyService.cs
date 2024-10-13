@@ -186,36 +186,6 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         }
     }
 
-    public ServiceResult<List<FamilyModel?>> GatherFamiliesForLetterQueue()
-    {
-        try
-        {
-            // gather families
-            var eligibleFamilies = _context
-                .Families.Where(f =>
-                    // extended free trial or subscribed
-                    f.UserStatus == UserStatus.ExtendedFreeTrial
-                    || f.UserStatus == UserStatus.Subscribed
-                )
-                .ToList();
-
-            if (eligibleFamilies == null)
-            {
-                return ServiceResult<List<FamilyModel?>>.ErrorResult(
-                    "eligibleFamilies response was null"
-                );
-            }
-
-            return ServiceResult<List<FamilyModel?>>.SuccessResult(eligibleFamilies!);
-        }
-        catch (Exception e)
-        {
-            return ServiceResult<List<FamilyModel?>>.ErrorResult(
-                $"Failed to retreive families for Letter Queue. Error: {e}"
-            );
-        }
-    }
-
     public ServiceResult<AddressModel> GetAddressForFamily(string familyId)
     {
         var address = _context.Addresses.Where(a => a.FamilyId == familyId).First();
@@ -260,7 +230,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
             var family = _context.Families.Find(familyId);
             if (family == null)
             {
-                 return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
+                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
             }
 
             family.UserStatus = userStatus;
