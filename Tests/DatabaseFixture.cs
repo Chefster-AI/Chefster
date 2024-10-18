@@ -48,7 +48,7 @@ public class DatabaseFixture
         LoggingService = new LoggingService(mockMongoClient.Object, mockConfiguration.Object);
         FamilyService = new FamilyService(Context, LoggingService);
         MemberService = new MemberService(Context);
-        ConsiderationsService = new ConsiderationsService(Context);
+        ConsiderationsService = new ConsiderationsService(Context, LoggingService);
     }
 
     // Add items to database for testing
