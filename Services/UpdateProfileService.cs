@@ -18,45 +18,11 @@ public class UpdateProfileService(
     private readonly ConsiderationsService _considerationsService = considerationsService;
     private readonly LoggingService _logger = loggingService;
 
-    // Handles the deletion of considerations if a member was to update theirs
-    public Task DeleteOldConsiderations(string memberId, DateTime timeAdded)
-    {
-        var considerations = _considerationsService.GetMemberConsiderations(memberId).Data;
-
-        if (considerations != null)
-        {
-            foreach (var consideration in considerations)
-            {
-                if (consideration.CreatedAt <= timeAdded)
-                {
-                    Console.WriteLine(
-                        $"Deleting consideration with Id: {consideration.ConsiderationId}"
-                    );
-                    var deleted = _considerationsService.DeleteConsideration(
-                        consideration.ConsiderationId
-                    );
-
-                    if (!deleted.Success)
-                    {
-                        // Throwing exceptions is not good because we want to continue trying to delete others
-                        _logger.Log(
-                            $"Failed to delete consideration with Id: {deleted.Data!.ConsiderationId}",
-                            LogLevels.Error
-                        );
-                    }
-                }
-            }
-        }
-
-        return Task.CompletedTask;
-    }
-
     public Task UpdateOrCreateMembersAndCreateConsiderations(
         string familyId,
         FamilyUpdateViewModel Family
     )
     {
-        var memberTotal = 0;
         foreach (MemberUpdateViewModel Member in Family.Members)
         {
             MemberModel? contextMember = null;
@@ -109,13 +75,19 @@ public class UpdateProfileService(
                 }
             }
 
-            // any considerations made before this time will be deleted
-            var deleteAfter = DateTime.UtcNow;
+            List<string> originalConsiderations = [];
+            if (contextMember != null)
+            {
+                originalConsiderations = _considerationsService
+                    .GetMemberConsiderations(contextMember.MemberId)
+                    .Data!.Select(c => c.Value)
+                    .ToList();
+            }
 
             // Create all new considerations for update
             foreach (SelectListItem r in Member.Restrictions)
             {
-                if (r.Selected && contextMember != null)
+                if (r.Selected && contextMember != null && !originalConsiderations.Contains(r.Text))
                 {
                     ConsiderationsCreateDto restriction =
                         new()
@@ -140,7 +112,7 @@ public class UpdateProfileService(
 
             foreach (SelectListItem g in Member.Goals)
             {
-                if (g.Selected && contextMember != null)
+                if (g.Selected && contextMember != null && !originalConsiderations.Contains(g.Text))
                 {
                     ConsiderationsCreateDto goal =
                         new()
@@ -165,7 +137,7 @@ public class UpdateProfileService(
 
             foreach (SelectListItem c in Member.Cuisines)
             {
-                if (c.Selected && contextMember != null)
+                if (c.Selected && contextMember != null && !originalConsiderations.Contains(c.Text))
                 {
                     ConsiderationsCreateDto cuisine =
                         new()
@@ -188,19 +160,32 @@ public class UpdateProfileService(
                 }
             }
 
-            if (Member.MemberId != null)
-            {
-                DeleteOldConsiderations(Member.MemberId, deleteAfter);
+            // if we aren't deleting the member grab a list of remaining considerations
+            var remainingConsiderations = !Member.ShouldDelete
+                ? Member
+                    .Cuisines.Concat(Member.Restrictions)
+                    .Concat(Member.Goals)
+                    .Where(c => c.Selected)
+                    .Select(c => c.Text)
+                    .ToList()
+                : [];
 
-                // delete the member if it was checked to delete
-                if (Member.ShouldDelete)
-                {
-                    _memberService.DeleteMember(Member.MemberId);
-                    memberTotal += 1;
-                    _familyService.UpdateFamilySize(familyId, Family.Members.Count - memberTotal);
-                }
+            if (Member.ShouldDelete && Member.MemberId != null)
+            {
+                _memberService.DeleteMember(Member.MemberId);
             }
+
+            // delete considerations for deleted and updated members
+            _considerationsService.DeleteOldConsiderations(
+                Member.MemberId!,
+                remainingConsiderations
+            );
         }
+
+        // Update Family Size
+        var deletedMembers = Family.Members.Where(m => m.ShouldDelete).ToList().Count;
+        _familyService.UpdateFamilySize(familyId, Family.Members.Count - deletedMembers);
+
         return Task.CompletedTask;
     }
 }

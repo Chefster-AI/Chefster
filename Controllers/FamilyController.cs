@@ -74,7 +74,8 @@ public class FamilyController(
         var address = Family.Address;
         AddressModel? newAddress = null;
         if (
-            !string.IsNullOrWhiteSpace(address.StreetAddress)
+            address != null
+            && !string.IsNullOrWhiteSpace(address.StreetAddress)
             && !string.IsNullOrWhiteSpace(address.CityOrTown)
             && !string.IsNullOrWhiteSpace(address.StateProvinceRegion)
             && !string.IsNullOrWhiteSpace(address.PostalCode)
