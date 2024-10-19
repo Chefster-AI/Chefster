@@ -47,7 +47,7 @@ public class DatabaseFixture
         // Pass mock MongoClient to LoggingService
         LoggingService = new LoggingService(mockMongoClient.Object, mockConfiguration.Object);
         FamilyService = new FamilyService(Context, LoggingService);
-        MemberService = new MemberService(Context);
+        MemberService = new MemberService(Context, LoggingService);
         ConsiderationsService = new ConsiderationsService(Context, LoggingService);
     }
 

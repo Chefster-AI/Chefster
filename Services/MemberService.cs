@@ -7,9 +7,10 @@ using static Chefster.Common.Constants;
 
 namespace Chefster.Services;
 
-public class MemberService(ChefsterDbContext context) : IMember
+public class MemberService(ChefsterDbContext context, LoggingService loggingService) : IMember
 {
     private readonly ChefsterDbContext _context = context;
+    private readonly LoggingService _logger = loggingService;
 
     public ServiceResult<MemberModel> CreateMember(MemberCreateDto member)
     {
@@ -17,7 +18,8 @@ public class MemberService(ChefsterDbContext context) : IMember
         if (members.Count == MAX_MEMBERS)
         {
             return ServiceResult<MemberModel>.ErrorResult(
-                $"Member limit reached of {MAX_MEMBERS}."
+                $"Member limit reached of {MAX_MEMBERS}.",
+                _logger
             );
         }
 
@@ -37,7 +39,10 @@ public class MemberService(ChefsterDbContext context) : IMember
         }
         catch (SqlException e)
         {
-            return ServiceResult<MemberModel>.ErrorResult($"Failed to create Memeber. Error: {e}");
+            return ServiceResult<MemberModel>.ErrorResult(
+                $"Failed to create Memeber. Error: {e}",
+                _logger
+            );
         }
     }
 
@@ -46,7 +51,7 @@ public class MemberService(ChefsterDbContext context) : IMember
         var mem = _context.Members.Find(memberId);
         if (mem == null)
         {
-            return ServiceResult<MemberModel>.ErrorResult("Member does not exist");
+            return ServiceResult<MemberModel>.ErrorResult("Member does not exist", _logger);
         }
 
         try
@@ -57,7 +62,10 @@ public class MemberService(ChefsterDbContext context) : IMember
         }
         catch (SqlException e)
         {
-            return ServiceResult<MemberModel>.ErrorResult($"Failed to delete memeber. Error: {e}");
+            return ServiceResult<MemberModel>.ErrorResult(
+                $"Failed to delete memeber. Error: {e}",
+                _logger
+            );
         }
     }
 
@@ -71,7 +79,8 @@ public class MemberService(ChefsterDbContext context) : IMember
         catch (SqlException e)
         {
             return ServiceResult<List<MemberModel>>.ErrorResult(
-                $"Failed to retrieve all Members for family with ID: {id}. Error: {e}"
+                $"Failed to retrieve all Members for family with ID: {id}. Error: {e}",
+                _logger
             );
         }
     }
@@ -86,7 +95,8 @@ public class MemberService(ChefsterDbContext context) : IMember
         catch (SqlException e)
         {
             return ServiceResult<MemberModel?>.ErrorResult(
-                $"Failed to retrieve Member with ID: {id}. Error: {e}"
+                $"Failed to retrieve Member with ID: {id}. Error: {e}",
+                _logger
             );
         }
     }
@@ -100,7 +110,8 @@ public class MemberService(ChefsterDbContext context) : IMember
             if (existingMem == null)
             {
                 return ServiceResult<MemberModel>.ErrorResult(
-                    $"Member does not exist with ID: {memberId}"
+                    $"Member does not exist with ID: {memberId}",
+                    _logger
                 );
             }
 
@@ -112,7 +123,10 @@ public class MemberService(ChefsterDbContext context) : IMember
         }
         catch (Exception e)
         {
-            return ServiceResult<MemberModel>.ErrorResult($"Failed to update Member. Error: {e}");
+            return ServiceResult<MemberModel>.ErrorResult(
+                $"Failed to update Member. Error: {e}",
+                _logger
+            );
         }
     }
 }

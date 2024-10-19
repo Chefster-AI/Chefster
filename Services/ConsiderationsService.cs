@@ -35,7 +35,8 @@ public class ConsiderationsService(ChefsterDbContext context, LoggingService log
         catch (SqlException e)
         {
             return ServiceResult<ConsiderationsModel>.ErrorResult(
-                $"Failed to insert consideration into database. Error: {e}"
+                $"Failed to insert consideration into database. Error: {e}",
+                _logger
             );
         }
     }
@@ -48,7 +49,8 @@ public class ConsiderationsService(ChefsterDbContext context, LoggingService log
             if (con == null)
             {
                 return ServiceResult<ConsiderationsModel>.ErrorResult(
-                    "Consideration doesn't exist"
+                    "Consideration doesn't exist",
+                    _logger
                 );
             }
             _context.Remove(con);
@@ -58,7 +60,8 @@ public class ConsiderationsService(ChefsterDbContext context, LoggingService log
         catch (Exception e)
         {
             return ServiceResult<ConsiderationsModel>.ErrorResult(
-                $"Failed to remove consideration from database. Error: {e}"
+                $"Failed to remove consideration from database. Error: {e}",
+                _logger
             );
         }
     }
@@ -91,11 +94,15 @@ public class ConsiderationsService(ChefsterDbContext context, LoggingService log
             catch (SqlException e)
             {
                 return ServiceResult<List<ConsiderationsModel>>.ErrorResult(
-                    $"Failed to delete list of considerations. Error: {e}. {considerations.ToJson()}"
+                    $"Failed to delete list of considerations. Error: {e}. {considerations.ToJson()}",
+                    _logger
                 );
             }
         }
-        return ServiceResult<List<ConsiderationsModel>>.ErrorResult("considerations was null");
+        return ServiceResult<List<ConsiderationsModel>>.ErrorResult(
+            "considerations was null",
+            _logger
+        );
     }
 
     public ServiceResult<ConsiderationsModel> GetConsiderationById(string considerationId)
@@ -106,7 +113,10 @@ public class ConsiderationsService(ChefsterDbContext context, LoggingService log
 
             if (consideration == null)
             {
-                return ServiceResult<ConsiderationsModel>.ErrorResult($"Consideration was null");
+                return ServiceResult<ConsiderationsModel>.ErrorResult(
+                    $"Consideration was null",
+                    _logger
+                );
             }
 
             return ServiceResult<ConsiderationsModel>.SuccessResult(consideration);
@@ -114,7 +124,8 @@ public class ConsiderationsService(ChefsterDbContext context, LoggingService log
         catch (SqlException e)
         {
             return ServiceResult<ConsiderationsModel>.ErrorResult(
-                $"Failed to find consideration with id {considerationId}. Error: {e}"
+                $"Failed to find consideration with id {considerationId}. Error: {e}",
+                _logger
             );
         }
     }
@@ -133,7 +144,8 @@ public class ConsiderationsService(ChefsterDbContext context, LoggingService log
         catch (SqlException e)
         {
             return ServiceResult<List<ConsiderationsModel>>.ErrorResult(
-                $"Failed to get considerations for member with id {memberId}. Error: {e}"
+                $"Failed to get considerations for member with id {memberId}. Error: {e}",
+                _logger
             );
         }
     }
@@ -154,7 +166,8 @@ public class ConsiderationsService(ChefsterDbContext context, LoggingService log
         catch (SqlException e)
         {
             return ServiceResult<List<ConsiderationsModel>>.ErrorResult(
-                $"Failed to get all notes for family with Id {familyId}. Error: {e}"
+                $"Failed to get all notes for family with Id {familyId}. Error: {e}",
+                _logger
             );
         }
     }
@@ -187,7 +200,8 @@ public class ConsiderationsService(ChefsterDbContext context, LoggingService log
             if (existingConsideration == null)
             {
                 return ServiceResult<ConsiderationsModel>.ErrorResult(
-                    "consideration does not exist"
+                    "consideration does not exist",
+                    _logger
                 );
             }
 
@@ -200,7 +214,8 @@ public class ConsiderationsService(ChefsterDbContext context, LoggingService log
         catch (SqlException e)
         {
             return ServiceResult<ConsiderationsModel>.ErrorResult(
-                $"Failed to update consideration with Id {considerationId}. Error: {e}"
+                $"Failed to update consideration with Id {considerationId}. Error: {e}",
+                _logger
             );
         }
     }

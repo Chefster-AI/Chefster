@@ -129,21 +129,26 @@ public class GordonService(
         if (threadId == null)
         {
             return ServiceResult<GordonResponseModel>.ErrorResult(
-                "Failed to create threadId. threadId was null"
+                "Failed to create threadId. threadId was null",
+                _logger
             );
         }
 
         var message = await CreateMessage(threadId!, considerations);
         if (!message)
         {
-            return ServiceResult<GordonResponseModel>.ErrorResult("Failed to create message");
+            return ServiceResult<GordonResponseModel>.ErrorResult(
+                "Failed to create message",
+                _logger
+            );
         }
 
         var runId = await CreateRun(threadId);
         if (runId == null)
         {
             return ServiceResult<GordonResponseModel>.ErrorResult(
-                "Failed to create run. runId was null"
+                "Failed to create run. runId was null",
+                _logger
             );
         }
 
@@ -173,13 +178,9 @@ public class GordonService(
                 || status == "expired"
             )
             {
-                _logger.Log(
-                    $"Run loop object had the status code: {status}. Exiting",
-                    LogLevels.Error,
-                    "gordonStatusLoop"
-                );
                 return ServiceResult<GordonResponseModel>.ErrorResult(
-                    $"Run loop object had the status code: {status}. Exiting"
+                    $"Run loop object had the status code: {status}. Exiting",
+                    _logger
                 );
             }
 
@@ -200,13 +201,9 @@ public class GordonService(
 
         if (attempts == Constants.MAX_ATTEMPTS)
         {
-            _logger.Log(
-                $"Run loop has reached max iterations for response. Exiting",
-                LogLevels.Error,
-                "gordonStatusLoop"
-            );
             return ServiceResult<GordonResponseModel>.ErrorResult(
-                $"Run loop has reached max iterations for response. Exiting"
+                $"Run loop has reached max iterations for response. Exiting",
+                _logger
             );
         }
 
@@ -223,13 +220,9 @@ public class GordonService(
 
         if (jsonString == null)
         {
-            _logger.Log(
-                "Json Response was invalid and returned null when retreiving Gordon response",
-                LogLevels.Error,
-                "GetMessageResponse"
-            );
             return ServiceResult<GordonResponseModel>.ErrorResult(
-                "Json Response was invalid and returned null when retreiving Gordon response"
+                "Json Response was invalid and returned null when retreiving Gordon response",
+                _logger
             );
         }
 
@@ -240,13 +233,9 @@ public class GordonService(
         }
         catch (Exception ex)
         {
-            _logger.Log(
-                $"Failed to Deserialize json to GordonResponseModel. Error: {ex}",
-                LogLevels.Error,
-                "GetMessageResponse"
-            );
             return ServiceResult<GordonResponseModel>.ErrorResult(
-                $"Failed to retrieve Gordon response. Error: {ex}"
+                $"Failed to Deserialize json to GordonResponseModel. Error: {ex}",
+                _logger
             );
         }
     }

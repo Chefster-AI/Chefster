@@ -8,7 +8,7 @@ namespace Chefster.Services;
 public class JobRecordService(ChefsterDbContext context, LoggingService loggingService)
 {
     private readonly ChefsterDbContext _context = context;
-    private readonly LoggingService _logginService = loggingService;
+    private readonly LoggingService _logger = loggingService;
 
     public ServiceResult<JobRecordModel> CreateJobRecord(JobRecordCreateDto jobRecord)
     {
@@ -27,13 +27,15 @@ public class JobRecordService(ChefsterDbContext context, LoggingService loggingS
 
             var result = _context.JobRecords.Add(newJobRecord);
             _context.SaveChanges();
-            
+
             return ServiceResult<JobRecordModel>.SuccessResult(result.Entity);
         }
         catch (Exception e)
         {
-            _logginService.Log($"Failed to create job record: {jobRecord.ToJson()}. Error: {e}", LogLevels.Error);
-            return ServiceResult<JobRecordModel>.ErrorResult($"Failed to create job record: {jobRecord.ToJson()}. Error: {e}");
+            return ServiceResult<JobRecordModel>.ErrorResult(
+                $"Failed to create job record: {jobRecord.ToJson()}. Error: {e}",
+                _logger
+            );
         }
     }
 
@@ -42,13 +44,15 @@ public class JobRecordService(ChefsterDbContext context, LoggingService loggingS
         try
         {
             var numberOfJobsRan = _context.JobRecords.Where(j => j.FamilyId == familyId).Count();
-            
+
             return ServiceResult<int>.SuccessResult(numberOfJobsRan);
         }
         catch (Exception e)
         {
-            _logginService.Log($"Failed to get number of jobs for family: {familyId}. Error: {e}", LogLevels.Error);
-            return ServiceResult<int>.ErrorResult($"Failed to get number of jobs for family: {familyId}. Error: {e}");
+            return ServiceResult<int>.ErrorResult(
+                $"Failed to get number of jobs for family: {familyId}. Error: {e}",
+                _logger
+            );
         }
     }
 }

@@ -84,69 +84,35 @@ public class UpdateProfileService(
                     .ToList();
             }
 
-            // Create all new considerations for update
-            foreach (SelectListItem r in Member.Restrictions)
-            {
-                if (r.Selected && contextMember != null && !originalConsiderations.Contains(r.Text))
-                {
-                    ConsiderationsCreateDto restriction =
-                        new()
-                        {
-                            MemberId = contextMember.MemberId,
-                            Type = ConsiderationsEnum.Restriction,
-                            Value = r.Text
-                        };
-                    var created = _considerationsService.CreateConsideration(restriction);
-                    if (!created.Success)
-                    {
-                        _logger.Log(
-                            $"Error creating consideration. Error: {created.Error}",
-                            LogLevels.Error
-                        );
-                        return Task.FromException(
-                            new Exception($"Error creating consideration. Error: {created.Error}")
-                        );
-                    }
-                }
-            }
+            var allConsiderations = Member
+                .Restrictions.Concat(Member.Goals)
+                .Concat(Member.Cuisines);
 
-            foreach (SelectListItem g in Member.Goals)
-            {
-                if (g.Selected && contextMember != null && !originalConsiderations.Contains(g.Text))
-                {
-                    ConsiderationsCreateDto goal =
-                        new()
-                        {
-                            MemberId = contextMember.MemberId,
-                            Type = ConsiderationsEnum.Goal,
-                            Value = g.Text
-                        };
-                    var created = _considerationsService.CreateConsideration(goal);
-                    if (!created.Success)
-                    {
-                        _logger.Log(
-                            $"Error creating consideration. Error: {created.Error}",
-                            LogLevels.Error
-                        );
-                        return Task.FromException(
-                            new Exception($"Error creating consideration. Error: {created.Error}")
-                        );
-                    }
-                }
-            }
-
-            foreach (SelectListItem c in Member.Cuisines)
+            foreach (SelectListItem c in allConsiderations)
             {
                 if (c.Selected && contextMember != null && !originalConsiderations.Contains(c.Text))
                 {
-                    ConsiderationsCreateDto cuisine =
-                        new()
-                        {
-                            MemberId = contextMember.MemberId,
-                            Type = ConsiderationsEnum.Cuisine,
-                            Value = c.Text
-                        };
-                    var created = _considerationsService.CreateConsideration(cuisine);
+                    var consideration = new ConsiderationsCreateDto
+                    {
+                        MemberId = contextMember.MemberId,
+                        Type = ConsiderationsEnum.Cuisine, // default
+                        Value = c.Text
+                    };
+
+                    if (Member.Restrictions.Contains(c))
+                    {
+                        consideration.Type = ConsiderationsEnum.Restriction;
+                    }
+                    else if (Member.Goals.Contains(c))
+                    {
+                        consideration.Type = ConsiderationsEnum.Goal;
+                    }
+                    else
+                    {
+                        consideration.Type = ConsiderationsEnum.Cuisine;
+                    }
+
+                    var created = _considerationsService.CreateConsideration(consideration);
                     if (!created.Success)
                     {
                         _logger.Log(

@@ -1,3 +1,5 @@
+using Chefster.Services;
+
 namespace Chefster.Common;
 
 /*
@@ -19,8 +21,9 @@ public class ServiceResult<T>
         };
     }
 
-    public static ServiceResult<T> ErrorResult(string error)
+    public static ServiceResult<T> ErrorResult(string error, LoggingService logger)
     {
+        logger.Log(error, LogLevels.Error);
         return new ServiceResult<T>
         {
             Success = false,
