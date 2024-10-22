@@ -33,8 +33,7 @@ public class JobRecordService(ChefsterDbContext context, LoggingService loggingS
         catch (Exception e)
         {
             return ServiceResult<JobRecordModel>.ErrorResult(
-                $"Failed to create job record: {jobRecord.ToJson()}. Error: {e}",
-                _logger
+                $"Failed to create job record: {jobRecord.ToJson()}. Error: {e}"
             );
         }
     }
@@ -50,8 +49,7 @@ public class JobRecordService(ChefsterDbContext context, LoggingService loggingS
         catch (Exception e)
         {
             return ServiceResult<int>.ErrorResult(
-                $"Failed to get number of jobs for family: {familyId}. Error: {e}",
-                _logger
+                $"Failed to get number of jobs for family: {familyId}. Error: {e}"
             );
         }
     }

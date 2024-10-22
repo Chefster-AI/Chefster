@@ -1,14 +1,18 @@
-using static Chefster.Common.Constants;
 using Chefster.Common;
 using Hangfire;
+using static Chefster.Common.Constants;
 
 namespace Chefster.Services;
 
-public class UserStatusService(FamilyService familyService, JobRecordService jobRecordService, LoggingService _loggingService)
+public class UserStatusService(
+    FamilyService familyService,
+    JobRecordService jobRecordService,
+    LoggingService loggingService
+)
 {
     private readonly FamilyService _familyService = familyService;
     private readonly JobRecordService _jobRecordService = jobRecordService;
-    private readonly LoggingService _logger = _loggingService;
+    private readonly LoggingService _logger = loggingService;
 
     // checks if the user's service has expired and assigned appropriate status to family
     public void CheckFamilyUserStatus(string familyId, UserStatus userStatus)
@@ -19,21 +23,33 @@ public class UserStatusService(FamilyService familyService, JobRecordService job
             switch (userStatus)
             {
                 case UserStatus.FreeTrial:
-                    _logger.Log($"Changing family user status from FreeTrial to FreeTrialExpired for {familyId}", LogLevels.Info);
+                    _logger.Log(
+                        $"Changing family user status from FreeTrial to FreeTrialExpired for {familyId}",
+                        LogLevels.Info
+                    );
                     _familyService.SetFamilyUserStatus(familyId, UserStatus.FreeTrialExpired);
                     break;
                 case UserStatus.ExtendedFreeTrial:
-                    _logger.Log($"Changing family user status from ExtendedFreeTrial to FreeTrialExpired for {familyId}", LogLevels.Info);
+                    _logger.Log(
+                        $"Changing family user status from ExtendedFreeTrial to FreeTrialExpired for {familyId}",
+                        LogLevels.Info
+                    );
                     _familyService.SetFamilyUserStatus(familyId, UserStatus.FreeTrialExpired);
                     break;
                 case UserStatus.Subscribed:
-                    _logger.Log($"Changing family user status from Subscribed to PreviouslySubscribed for {familyId}", LogLevels.Info);
+                    _logger.Log(
+                        $"Changing family user status from Subscribed to PreviouslySubscribed for {familyId}",
+                        LogLevels.Info
+                    );
                     _familyService.SetFamilyUserStatus(familyId, UserStatus.PreviouslySubscribed);
                     break;
                 case UserStatus.Unknown:
                     break;
                 default:
-                    _logger.Log($"Family {familyId} didn't have a valid UserStatus after expiration, setting UserStatus to Unknown", LogLevels.Error);
+                    _logger.Log(
+                        $"Family {familyId} didn't have a valid UserStatus after expiration, setting UserStatus to Unknown",
+                        LogLevels.Error
+                    );
                     _familyService.SetFamilyUserStatus(familyId, UserStatus.Unknown);
                     break;
             }
@@ -65,7 +81,13 @@ public class UserStatusService(FamilyService familyService, JobRecordService job
         return true;
     }
 
-    public DateTime? CalculateFinalJobRun(UserStatus userStatus, DateTime signUpDate, DayOfWeek generationDay, TimeSpan generationTime, DateTime? jobTimestamp)
+    public DateTime? CalculateFinalJobRun(
+        UserStatus userStatus,
+        DateTime signUpDate,
+        DayOfWeek generationDay,
+        TimeSpan generationTime,
+        DateTime? jobTimestamp
+    )
     {
         switch (userStatus)
         {
@@ -86,7 +108,11 @@ public class UserStatusService(FamilyService familyService, JobRecordService job
         }
     }
 
-    public DateTime CalculateFirstJobRun(DateTime signUpDate, DayOfWeek generationDay, TimeSpan generationTime)
+    public DateTime CalculateFirstJobRun(
+        DateTime signUpDate,
+        DayOfWeek generationDay,
+        TimeSpan generationTime
+    )
     {
         DateTime result = signUpDate.Date + generationTime;
 

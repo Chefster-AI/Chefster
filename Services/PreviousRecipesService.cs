@@ -21,8 +21,7 @@ public class PreviousRecipesService(ChefsterDbContext context, LoggingService lo
         catch (SqlException e)
         {
             return ServiceResult<List<PreviousRecipeModel>>.ErrorResult(
-                $"Failed to get previous recipes for family {familyId}. Error: {e}",
-                _logger
+                $"Failed to get previous recipes for family {familyId}. Error: {e}"
             );
         }
     }
@@ -37,8 +36,7 @@ public class PreviousRecipesService(ChefsterDbContext context, LoggingService lo
             if (existingPreviousRecipe == null)
             {
                 return ServiceResult<PreviousRecipeModel>.ErrorResult(
-                    $"Failed to find previous recipe with Id: {previousRecipe.RecipeId}",
-                    _logger
+                    $"Failed to find previous recipe with Id: {previousRecipe.RecipeId}"
                 );
             }
 
@@ -50,8 +48,7 @@ public class PreviousRecipesService(ChefsterDbContext context, LoggingService lo
         catch (SqlException e)
         {
             return ServiceResult<PreviousRecipeModel>.ErrorResult(
-                $"Failed to update previous recipe with Id: {previousRecipe.RecipeId}. Error: {e}",
-                _logger
+                $"Failed to update previous recipe with Id: {previousRecipe.RecipeId}. Error: {e}"
             );
         }
     }
@@ -87,8 +84,7 @@ public class PreviousRecipesService(ChefsterDbContext context, LoggingService lo
         catch (SqlException e)
         {
             return ServiceResult<Task>.ErrorResult(
-                $"Failed to hold previous recipes for family {familyId}. Error: {e}",
-                _logger
+                $"Failed to hold previous recipes for family {familyId}. Error: {e}"
             );
         }
     }
@@ -118,8 +114,7 @@ public class PreviousRecipesService(ChefsterDbContext context, LoggingService lo
         catch (SqlException e)
         {
             return ServiceResult<Task>.ErrorResult(
-                $"Failed to release previous recipes for family {familyId}. Error: {e}",
-                _logger
+                $"Failed to release previous recipes for family {familyId}. Error: {e}"
             );
         }
     }

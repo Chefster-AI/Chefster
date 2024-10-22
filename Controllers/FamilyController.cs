@@ -301,8 +301,7 @@ public class FamilyController(
             if (!CreatedMember.Success)
             {
                 return ServiceResult<Task>.ErrorResult(
-                    $"Error creating member. Error: {CreatedMember.Error}",
-                    _logger
+                    $"Error creating member. Error: {CreatedMember.Error}"
                 );
             }
 
@@ -338,8 +337,7 @@ public class FamilyController(
                     if (!created.Success)
                     {
                         return ServiceResult<Task>.ErrorResult(
-                            $"Error creating consideration. Error: {created.Error}",
-                            _logger
+                            $"Error creating consideration. Error: {created.Error}"
                         );
                     }
                 }

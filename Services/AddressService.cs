@@ -22,8 +22,7 @@ public class AddressService(ChefsterDbContext context, LoggingService loggingSer
         catch (SqlException e)
         {
             return ServiceResult<AddressModel>.ErrorResult(
-                $"Failed to create address {address.ToJson()}. Error {e}",
-                _logger
+                $"Failed to create address {address.ToJson()}. Error {e}"
             );
         }
     }

@@ -3,7 +3,6 @@ using Chefster.Context;
 using Chefster.Interfaces;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
 
 namespace Chefster.Services;
 
@@ -18,8 +17,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         if (fam != null)
         {
             return ServiceResult<FamilyModel>.ErrorResult(
-                $"Family already exists for ID: {family.Id}",
-                _logger
+                $"Family already exists for ID: {family.Id}"
             );
         }
 
@@ -33,8 +31,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         catch (SqlException e)
         {
             return ServiceResult<FamilyModel>.ErrorResult(
-                $"Failed to insert Family into database. Error: {e}",
-                _logger
+                $"Failed to insert Family into database. Error: {e}"
             );
         }
     }
@@ -46,7 +43,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
             var fam = _context.Families.Find(familyId);
             if (fam == null)
             {
-                return ServiceResult<FamilyModel>.ErrorResult("Family doesn't exist", _logger);
+                return ServiceResult<FamilyModel>.ErrorResult("Family doesn't exist");
             }
 
             _context.Remove(fam);
@@ -56,8 +53,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         catch (Exception e)
         {
             return ServiceResult<FamilyModel>.ErrorResult(
-                $"Failed to remove family from database with Id {familyId}. Error: {e}",
-                _logger
+                $"Failed to remove family from database with Id {familyId}. Error: {e}"
             );
         }
     }
@@ -72,8 +68,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         catch (SqlException e)
         {
             return ServiceResult<List<FamilyModel>>.ErrorResult(
-                $"Failed to retrieve all families. Error: {e}",
-                _logger
+                $"Failed to retrieve all families. Error: {e}"
             );
         }
     }
@@ -88,8 +83,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         catch (SqlException e)
         {
             return ServiceResult<FamilyModel?>.ErrorResult(
-                $"Failed to retrieve all families. Error: {e}",
-                _logger
+                $"Failed to retrieve all families. Error: {e}"
             );
         }
     }
@@ -104,15 +98,13 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         catch (SqlException e)
         {
             return ServiceResult<FamilyModel?>.ErrorResult(
-                $"Failed to retrieve family by email: {email}. {e}",
-                _logger
+                $"Failed to retrieve family by email: {email}. {e}"
             );
         }
         catch (InvalidOperationException e)
         {
             return ServiceResult<FamilyModel?>.ErrorResult(
-                $"Failed to retrieve EXACTLY ONE family by email: {email}. {e}",
-                _logger
+                $"Failed to retrieve EXACTLY ONE family by email: {email}. {e}"
             );
         }
     }
@@ -127,8 +119,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         catch (SqlException e)
         {
             return ServiceResult<List<MemberModel>>.ErrorResult(
-                $"Failed to retrieve all members for family with id {familyId}. Error: {e}",
-                _logger
+                $"Failed to retrieve all members for family with id {familyId}. Error: {e}"
             );
         }
     }
@@ -142,8 +133,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
             if (existingFam == null)
             {
                 return ServiceResult<FamilyModel>.ErrorResult(
-                    $"Family does not exist for update. ID {familyId}",
-                    _logger
+                    $"Family does not exist for update. ID {familyId}"
                 );
             }
 
@@ -167,8 +157,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         catch (Exception e)
         {
             return ServiceResult<FamilyModel>.ErrorResult(
-                $"Failed to update Family with Id {familyId}. Error: {e}",
-                _logger
+                $"Failed to update Family with Id {familyId}. Error: {e}"
             );
         }
     }
@@ -182,7 +171,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
             var existingFam = _context.Families.Find(familyId);
             if (existingFam == null)
             {
-                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist", _logger);
+                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
             }
 
             existingFam.FamilySize = size;
@@ -192,10 +181,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         }
         catch (Exception e)
         {
-            return ServiceResult<FamilyModel>.ErrorResult(
-                $"Failed to update Family. Error: {e}",
-                _logger
-            );
+            return ServiceResult<FamilyModel>.ErrorResult($"Failed to update Family. Error: {e}");
         }
     }
 
@@ -206,8 +192,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         if (address == null)
         {
             return ServiceResult<AddressModel>.ErrorResult(
-                $"Address was null when querying for familyId: {familyId}",
-                _logger
+                $"Address was null when querying for familyId: {familyId}"
             );
         }
 
@@ -221,7 +206,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
             var family = _context.Families.Find(familyId);
             if (family == null)
             {
-                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist", _logger);
+                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
             }
 
             family.JobTimestamp = timestamp;
@@ -232,8 +217,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         catch (Exception e)
         {
             return ServiceResult<FamilyModel>.ErrorResult(
-                $"Failed to update Family Job Timestamp. Error: {e}",
-                _logger
+                $"Failed to update Family Job Timestamp. Error: {e}"
             );
         }
     }
@@ -245,7 +229,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
             var family = _context.Families.Find(familyId);
             if (family == null)
             {
-                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist", _logger);
+                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
             }
 
             family.UserStatus = userStatus;
@@ -256,8 +240,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         catch (Exception e)
         {
             return ServiceResult<FamilyModel>.ErrorResult(
-                $"Failed to set user status to {userStatus} for family {familyId}. Error: {e}",
-                _logger
+                $"Failed to set user status to {userStatus} for family {familyId}. Error: {e}"
             );
         }
     }

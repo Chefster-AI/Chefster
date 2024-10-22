@@ -129,26 +129,21 @@ public class GordonService(
         if (threadId == null)
         {
             return ServiceResult<GordonResponseModel>.ErrorResult(
-                "Failed to create threadId. threadId was null",
-                _logger
+                "Failed to create threadId. threadId was null"
             );
         }
 
         var message = await CreateMessage(threadId!, considerations);
         if (!message)
         {
-            return ServiceResult<GordonResponseModel>.ErrorResult(
-                "Failed to create message",
-                _logger
-            );
+            return ServiceResult<GordonResponseModel>.ErrorResult("Failed to create message");
         }
 
         var runId = await CreateRun(threadId);
         if (runId == null)
         {
             return ServiceResult<GordonResponseModel>.ErrorResult(
-                "Failed to create run. runId was null",
-                _logger
+                "Failed to create run. runId was null"
             );
         }
 
@@ -179,8 +174,7 @@ public class GordonService(
             )
             {
                 return ServiceResult<GordonResponseModel>.ErrorResult(
-                    $"Run loop object had the status code: {status}. Exiting",
-                    _logger
+                    $"Run loop object had the status code: {status}. Exiting"
                 );
             }
 
@@ -202,8 +196,7 @@ public class GordonService(
         if (attempts == Constants.MAX_ATTEMPTS)
         {
             return ServiceResult<GordonResponseModel>.ErrorResult(
-                $"Run loop has reached max iterations for response. Exiting",
-                _logger
+                $"Run loop has reached max iterations for response. Exiting"
             );
         }
 
@@ -221,8 +214,7 @@ public class GordonService(
         if (jsonString == null)
         {
             return ServiceResult<GordonResponseModel>.ErrorResult(
-                "Json Response was invalid and returned null when retreiving Gordon response",
-                _logger
+                "Json Response was invalid and returned null when retreiving Gordon response"
             );
         }
 
@@ -234,8 +226,7 @@ public class GordonService(
         catch (Exception ex)
         {
             return ServiceResult<GordonResponseModel>.ErrorResult(
-                $"Failed to Deserialize json to GordonResponseModel. Error: {ex}",
-                _logger
+                $"Failed to Deserialize json to GordonResponseModel. Error: {ex}"
             );
         }
     }
