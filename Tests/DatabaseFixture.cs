@@ -4,6 +4,7 @@ using Chefster.Models;
 using Chefster.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using Moq;
 
@@ -25,9 +26,9 @@ public class DatabaseFixture
 
         Context = new ChefsterDbContext(options);
 
-        //setup mock configuration
+        //setup mock configuration for Development
         var mockConfiguration = new Mock<IConfiguration>();
-        mockConfiguration.Setup(c => c["key"]).Returns("val");
+        mockConfiguration.Setup(c => c["ASPNETCORE_ENVIRONMENT"]).Returns("Development");
 
         // Mock MongoClient for LoggingService
         // prevents us from having to use a real mongo connection
@@ -44,8 +45,16 @@ public class DatabaseFixture
             .Setup(db => db.GetCollection<LogModel>(It.IsAny<string>(), null))
             .Returns(mockCollection.Object);
 
-        // Pass mock MongoClient to LoggingService
-        LoggingService = new LoggingService(mockMongoClient.Object, mockConfiguration.Object);
+        // setup the logger like we do in program.cs
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton(
+            new LoggingService(mockMongoClient.Object, mockConfiguration.Object)
+        );
+        var serviceProvider = serviceCollection.BuildServiceProvider();
+        ServiceProviderFactory.ServiceProvider = serviceProvider;
+
+        // Initialize services
+        LoggingService = serviceProvider.GetRequiredService<LoggingService>();
         FamilyService = new FamilyService(Context, LoggingService);
         MemberService = new MemberService(Context, LoggingService);
         ConsiderationsService = new ConsiderationsService(Context, LoggingService);
@@ -153,5 +162,6 @@ public class DatabaseFixture
         {
             entity.State = EntityState.Detached;
         }
+        ServiceProviderFactory.ServiceProvider = null;
     }
 }

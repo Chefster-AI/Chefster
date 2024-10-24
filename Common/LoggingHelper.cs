@@ -30,6 +30,11 @@ public static class LoggingHelper
     {
         // Grab the service scope so that we can grab the instance of LoggingService
         using var scope = ServiceProviderFactory.ServiceProvider!.CreateScope();
-        return scope.ServiceProvider.GetRequiredService<LoggingService>();
+        var service = scope.ServiceProvider.GetService<LoggingService>();
+        if (service == null)
+        {
+            throw new Exception("Logging Service was null in LoggingHelper");
+        }
+        return service;
     }
 }
