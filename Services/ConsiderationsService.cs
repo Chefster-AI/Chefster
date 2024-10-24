@@ -3,12 +3,15 @@ using Chefster.Context;
 using Chefster.Interfaces;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
+using MongoDB.Bson;
 
 namespace Chefster.Services;
 
-public class ConsiderationsService(ChefsterDbContext context) : IConsiderations
+public class ConsiderationsService(ChefsterDbContext context, LoggingService loggingService)
+    : IConsiderations
 {
     private readonly ChefsterDbContext _context = context;
+    private readonly LoggingService _logger = loggingService;
 
     public ServiceResult<ConsiderationsModel> CreateConsideration(
         ConsiderationsCreateDto consideration
@@ -58,6 +61,41 @@ public class ConsiderationsService(ChefsterDbContext context) : IConsiderations
                 $"Failed to remove consideration from database. Error: {e}"
             );
         }
+    }
+
+    public ServiceResult<List<ConsiderationsModel>> DeleteOldConsiderations(
+        string memberId,
+        List<string> remainingConsiderations
+    )
+    {
+        // grab considerations that are for the member and that are not within the remaining list
+        var considerations = _context.Considerations.Where(c =>
+            memberId == c.MemberId && !remainingConsiderations.Contains(c.Value)
+        );
+
+        if (considerations != null)
+        {
+            _logger.Log(
+                $"Deleting considerations: {considerations.Select(c => c.ConsiderationId).ToJson()}",
+                LogLevels.Info
+            );
+            try
+            {
+                // remove considerations
+                _context.RemoveRange(considerations);
+                _context.SaveChanges();
+                return ServiceResult<List<ConsiderationsModel>>.SuccessResult(
+                    considerations.ToList()
+                );
+            }
+            catch (SqlException e)
+            {
+                return ServiceResult<List<ConsiderationsModel>>.ErrorResult(
+                    $"Failed to delete list of considerations. Error: {e}. {considerations.ToJson()}"
+                );
+            }
+        }
+        return ServiceResult<List<ConsiderationsModel>>.ErrorResult("considerations was null");
     }
 
     public ServiceResult<ConsiderationsModel> GetConsiderationById(string considerationId)

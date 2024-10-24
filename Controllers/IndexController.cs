@@ -89,130 +89,127 @@ public class IndexController(
         var family = _familyService.GetByEmail(email!).Data;
         var viewModelMembers = new List<MemberUpdateViewModel>();
 
-        if (family != null)
+        // if family doesnt exist, redirect to create one
+        if (family == null)
         {
-            var members = _memberService.GetByFamilyId(family.Id).Data;
+            return Redirect("CreateProfile");
+        }
 
-            var count = 0;
-            foreach (var member in members!)
+        var members = _memberService.GetByFamilyId(family.Id).Data;
+
+        var count = 0;
+        foreach (var member in members!)
+        {
+            var considerations = _considerationService
+                .GetMemberConsiderations(member.MemberId)
+                .Data;
+            var goalSelectListsItems = new List<SelectListItem>();
+            goalSelectListsItems.AddRange(ConsiderationsLists.GoalsList);
+            var restrictionsSelectListsItems = new List<SelectListItem>();
+            restrictionsSelectListsItems.AddRange(ConsiderationsLists.RestrictionsList);
+            var cuisineSelectListsItems = new List<SelectListItem>();
+            cuisineSelectListsItems.AddRange(ConsiderationsLists.CuisinesList);
+
+            if (considerations != null)
             {
-                var considerations = _considerationService
-                    .GetMemberConsiderations(member.MemberId)
-                    .Data;
-                var goalSelectListsItems = new List<SelectListItem>();
-                goalSelectListsItems.AddRange(ConsiderationsLists.GoalsList);
-                var restrictionsSelectListsItems = new List<SelectListItem>();
-                restrictionsSelectListsItems.AddRange(ConsiderationsLists.RestrictionsList);
-                var cuisineSelectListsItems = new List<SelectListItem>();
-                cuisineSelectListsItems.AddRange(ConsiderationsLists.CuisinesList);
-
-                if (considerations != null)
+                foreach (var consideration in considerations)
                 {
-                    foreach (var consideration in considerations)
+                    if (consideration.Type == ConsiderationsEnum.Cuisine)
                     {
-                        if (consideration.Type == ConsiderationsEnum.Cuisine)
+                        foreach (var item in ConsiderationsLists.CuisinesList)
                         {
-                            foreach (var item in ConsiderationsLists.CuisinesList)
+                            if (item.Text == consideration.Value)
                             {
-                                if (item.Text == consideration.Value)
+                                cuisineSelectListsItems[count] = new SelectListItem
                                 {
-                                    cuisineSelectListsItems[count] = new SelectListItem
-                                    {
-                                        Selected = true,
-                                        Text = consideration.Value
-                                    };
-                                }
-                                count += 1;
+                                    Selected = true,
+                                    Text = consideration.Value
+                                };
                             }
-                            count = 0;
+                            count += 1;
                         }
-
-                        if (consideration.Type == ConsiderationsEnum.Goal)
-                        {
-                            foreach (var item in ConsiderationsLists.GoalsList)
-                            {
-                                if (item.Text == consideration.Value)
-                                {
-                                    goalSelectListsItems[count] = new SelectListItem
-                                    {
-                                        Selected = true,
-                                        Text = consideration.Value
-                                    };
-                                }
-                                count += 1;
-                            }
-                            count = 0;
-                        }
-
-                        if (consideration.Type == ConsiderationsEnum.Restriction)
-                        {
-                            foreach (var item in ConsiderationsLists.RestrictionsList)
-                            {
-                                if (item.Text == consideration.Value)
-                                {
-                                    restrictionsSelectListsItems[count] = new SelectListItem
-                                    {
-                                        Selected = true,
-                                        Text = consideration.Value
-                                    };
-                                }
-                                count += 1;
-                            }
-                            count = 0;
-                        }
+                        count = 0;
                     }
-                    var tooAdd = new MemberUpdateViewModel
+
+                    if (consideration.Type == ConsiderationsEnum.Goal)
                     {
-                        MemberId = member.MemberId,
-                        Name = member.Name,
-                        Notes = member.Notes,
-                        Restrictions = restrictionsSelectListsItems,
-                        Goals = goalSelectListsItems,
-                        Cuisines = cuisineSelectListsItems,
-                        ShouldDelete = false
-                    };
+                        foreach (var item in ConsiderationsLists.GoalsList)
+                        {
+                            if (item.Text == consideration.Value)
+                            {
+                                goalSelectListsItems[count] = new SelectListItem
+                                {
+                                    Selected = true,
+                                    Text = consideration.Value
+                                };
+                            }
+                            count += 1;
+                        }
+                        count = 0;
+                    }
 
-                    viewModelMembers.Add(tooAdd);
+                    if (consideration.Type == ConsiderationsEnum.Restriction)
+                    {
+                        foreach (var item in ConsiderationsLists.RestrictionsList)
+                        {
+                            if (item.Text == consideration.Value)
+                            {
+                                restrictionsSelectListsItems[count] = new SelectListItem
+                                {
+                                    Selected = true,
+                                    Text = consideration.Value
+                                };
+                            }
+                            count += 1;
+                        }
+                        count = 0;
+                    }
                 }
-            }
-
-            if (members.Count == 0)
-            {
-                var emptyMem = new MemberUpdateViewModel
+                var tooAdd = new MemberUpdateViewModel
                 {
-                    MemberId = null,
-                    Name = "",
-                    Notes = "",
-                    Restrictions = ConsiderationsLists.RestrictionsList,
-                    Goals = ConsiderationsLists.GoalsList,
-                    Cuisines = ConsiderationsLists.CuisinesList,
+                    MemberId = member.MemberId,
+                    Name = member.Name,
+                    Notes = member.Notes,
+                    Restrictions = restrictionsSelectListsItems,
+                    Goals = goalSelectListsItems,
+                    Cuisines = cuisineSelectListsItems,
                     ShouldDelete = false
                 };
 
-                viewModelMembers.Add(emptyMem);
+                viewModelMembers.Add(tooAdd);
             }
+        }
 
-            var populatedModel = new FamilyUpdateViewModel
-            {
-                Name = family.Name,
-                PhoneNumber = family.PhoneNumber,
-                FamilySize = viewModelMembers.Count,
-                GenerationDay = family.GenerationDay,
-                GenerationTime = family.GenerationTime,
-                TimeZone = family.TimeZone,
-                Members = viewModelMembers,
-                NumberOfBreakfastMeals = family.NumberOfBreakfastMeals,
-                NumberOfLunchMeals = family.NumberOfLunchMeals,
-                NumberOfDinnerMeals = family.NumberOfDinnerMeals
-            };
-            return View(populatedModel);
-        }
-        else
+        if (members.Count == 0)
         {
-            // if the family was null we redict to the create profile page
-            Console.WriteLine("Family was null");
-            return View("CreateProfile");
+            var emptyMem = new MemberUpdateViewModel
+            {
+                MemberId = null,
+                Name = "",
+                Notes = "",
+                Restrictions = ConsiderationsLists.RestrictionsList,
+                Goals = ConsiderationsLists.GoalsList,
+                Cuisines = ConsiderationsLists.CuisinesList,
+                ShouldDelete = false
+            };
+
+            viewModelMembers.Add(emptyMem);
         }
+
+        var populatedModel = new FamilyUpdateViewModel
+        {
+            Name = family.Name,
+            PhoneNumber = family.PhoneNumber,
+            FamilySize = viewModelMembers.Count,
+            GenerationDay = family.GenerationDay,
+            GenerationTime = family.GenerationTime,
+            TimeZone = family.TimeZone,
+            Members = viewModelMembers,
+            NumberOfBreakfastMeals = family.NumberOfBreakfastMeals,
+            NumberOfLunchMeals = family.NumberOfLunchMeals,
+            NumberOfDinnerMeals = family.NumberOfDinnerMeals
+        };
+        return View(populatedModel);
     }
 
     [Route("/error")]
@@ -245,7 +242,14 @@ public class IndexController(
     public IActionResult Overview()
     {
         var id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        var family = _familyService.GetById(id!).Data;
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var family = _familyService.GetByEmail(email!).Data;
+
+        if (family == null)
+        {
+            return Redirect("CreateProfile");
+        }
+
         var previousRecipes = _previousRecipeService.GetPreviousRecipes(id!).Data;
 
         // groups the recipes by day and then by meal type for display
@@ -272,8 +276,18 @@ public class IndexController(
             };
         }
 
-        var firstJobRun = _userStatusService.CalculateFirstJobRun(family.CreatedAt, family.GenerationDay, family.GenerationTime);
-        var lastJobRun = _userStatusService.CalculateFinalJobRun(family.UserStatus, family.CreatedAt, family.GenerationDay, family.GenerationTime, family.JobTimestamp);
+        var firstJobRun = _userStatusService.CalculateFirstJobRun(
+            family.CreatedAt,
+            family.GenerationDay,
+            family.GenerationTime
+        );
+        var lastJobRun = _userStatusService.CalculateFinalJobRun(
+            family.UserStatus,
+            family.CreatedAt,
+            family.GenerationDay,
+            family.GenerationTime,
+            family.JobTimestamp
+        );
         var model = new OverviewViewModel
         {
             GenerationDay = family!.GenerationDay,

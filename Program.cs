@@ -1,5 +1,6 @@
 using System.Reflection;
 using Auth0.AspNetCore.Authentication;
+using Chefster.Common;
 using Chefster.Context;
 using Chefster.Models;
 using Chefster.Services;
@@ -8,8 +9,10 @@ using Hangfire.Mongo;
 using Hangfire.Mongo.Migration.Strategies;
 using Hangfire.Mongo.Migration.Strategies.Backup;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
+using static Chefster.Common.LoggingHelper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,9 +63,23 @@ builder.Services.AddDbContext<ChefsterDbContext>(options =>
     }
 });
 
+/*
+*
+* Logging Setup
+*
+*/
+
 builder.Services.AddSingleton<IMongoClient, MongoClient>(sp => new MongoClient(
     builder.Configuration["MONGO_LOG_CONN"]
 ));
+
+// Add LoggingService as a singleton so it's available across the app
+builder.Services.AddSingleton(sp =>
+{
+    var client = sp.GetRequiredService<IMongoClient>();
+    ServiceProviderFactory.ServiceProvider = sp;
+    return new LoggingService(client, builder.Configuration);
+});
 
 builder.Services.AddScoped(sp =>
 {
@@ -88,7 +105,6 @@ builder.Services.AddScoped<PreviousRecipesService>();
 builder.Services.AddScoped<UpdateProfileService>();
 builder.Services.AddScoped<HubSpotService>();
 builder.Services.AddScoped<LetterQueueService>();
-builder.Services.AddScoped<LoggingService>();
 builder.Services.AddScoped<AddressService>();
 builder.Services.AddScoped<UserStatusService>();
 builder.Services.AddScoped<JobRecordService>();

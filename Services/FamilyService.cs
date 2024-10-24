@@ -3,7 +3,6 @@ using Chefster.Context;
 using Chefster.Interfaces;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
 
 namespace Chefster.Services;
 
@@ -17,8 +16,9 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         var fam = _context.Families.Find(family.Id);
         if (fam != null)
         {
-            _logger.Log($"Family already exists for ID: {family.Id}", LogLevels.Warning);
-            return ServiceResult<FamilyModel>.ErrorResult("Family Already Exists");
+            return ServiceResult<FamilyModel>.ErrorResult(
+                $"Family already exists for ID: {family.Id}"
+            );
         }
 
         try
@@ -30,7 +30,6 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         }
         catch (SqlException e)
         {
-            _logger.Log($"Failed to save family. Error {e}", LogLevels.Error);
             return ServiceResult<FamilyModel>.ErrorResult(
                 $"Failed to insert Family into database. Error: {e}"
             );
@@ -133,8 +132,9 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
             var existingFam = _context.Families.Find(familyId);
             if (existingFam == null)
             {
-                _logger.Log($"Family does not exist for update. ID {familyId}", LogLevels.Error);
-                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
+                return ServiceResult<FamilyModel>.ErrorResult(
+                    $"Family does not exist for update. ID {familyId}"
+                );
             }
 
             // update attributes
@@ -156,7 +156,6 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         }
         catch (Exception e)
         {
-            _logger.Log($"Failed to update Family with Id {familyId}. Error: {e}", LogLevels.Error);
             return ServiceResult<FamilyModel>.ErrorResult(
                 $"Failed to update Family with Id {familyId}. Error: {e}"
             );

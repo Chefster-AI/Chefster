@@ -23,7 +23,8 @@ public class FamilyController(
     JobService jobService,
     ViewToStringService viewToStringService,
     UpdateProfileService updateProfileService,
-    LetterQueueService letterQueueService
+    LetterQueueService letterQueueService,
+    LoggingService loggingService
 ) : ControllerBase
 {
     private readonly AddressService _addressService = addressService;
@@ -36,6 +37,7 @@ public class FamilyController(
     private readonly ViewToStringService _viewToStringService = viewToStringService;
     private readonly UpdateProfileService _updateProfileService = updateProfileService;
     private readonly LetterQueueService _letterQueueService = letterQueueService;
+    private readonly LoggingService _logger = loggingService;
 
 #if DEBUG
     [HttpGet("{Id}")]
@@ -74,7 +76,8 @@ public class FamilyController(
         var address = Family.Address;
         AddressModel? newAddress = null;
         if (
-            !string.IsNullOrWhiteSpace(address.StreetAddress)
+            address != null
+            && !string.IsNullOrWhiteSpace(address.StreetAddress)
             && !string.IsNullOrWhiteSpace(address.CityOrTown)
             && !string.IsNullOrWhiteSpace(address.StateProvinceRegion)
             && !string.IsNullOrWhiteSpace(address.PostalCode)
@@ -298,73 +301,43 @@ public class FamilyController(
             if (!CreatedMember.Success)
             {
                 return ServiceResult<Task>.ErrorResult(
-                    $"Error creating restriction consideration. Error: {CreatedMember.Error}"
+                    $"Error creating member. Error: {CreatedMember.Error}"
                 );
             }
 
-            // and their considerations
-            foreach (SelectListItem r in Member.Restrictions)
-            {
-                if (r.Selected)
-                {
-                    // create a new consideration
-                    ConsiderationsCreateDto restriction =
-                        new()
-                        {
-                            MemberId = CreatedMember.Data!.MemberId,
-                            Type = ConsiderationsEnum.Restriction,
-                            Value = r.Text
-                        };
+            var allConsiderations = Member
+                .Restrictions.Concat(Member.Goals)
+                .Concat(Member.Cuisines);
 
-                    var isSuccess = _considerationsService.CreateConsideration(restriction);
-                    if (!isSuccess.Success)
-                    {
-                        return ServiceResult<Task>.ErrorResult(
-                            $"Error creating restriction consideration. Error: {isSuccess.Error}"
-                        );
-                    }
-                }
-            }
-
-            foreach (SelectListItem g in Member.Goals)
-            {
-                if (g.Selected)
-                {
-                    ConsiderationsCreateDto goal =
-                        new()
-                        {
-                            MemberId = CreatedMember.Data!.MemberId,
-                            Type = ConsiderationsEnum.Goal,
-                            Value = g.Text
-                        };
-
-                    var isSuccess = _considerationsService.CreateConsideration(goal);
-                    if (!isSuccess.Success)
-                    {
-                        return ServiceResult<Task>.ErrorResult(
-                            $"Error creating goal consideration. Error: {isSuccess.Error}"
-                        );
-                    }
-                }
-            }
-
-            foreach (SelectListItem c in Member.Cuisines)
+            foreach (SelectListItem c in allConsiderations)
             {
                 if (c.Selected)
                 {
-                    ConsiderationsCreateDto cuisine =
-                        new()
-                        {
-                            MemberId = CreatedMember.Data!.MemberId,
-                            Type = ConsiderationsEnum.Cuisine,
-                            Value = c.Text
-                        };
+                    var consideration = new ConsiderationsCreateDto
+                    {
+                        MemberId = CreatedMember.Data!.MemberId,
+                        Type = ConsiderationsEnum.Cuisine, // default
+                        Value = c.Text
+                    };
 
-                    var isSuccess = _considerationsService.CreateConsideration(cuisine);
-                    if (!isSuccess.Success)
+                    if (Member.Restrictions.Contains(c))
+                    {
+                        consideration.Type = ConsiderationsEnum.Restriction;
+                    }
+                    else if (Member.Goals.Contains(c))
+                    {
+                        consideration.Type = ConsiderationsEnum.Goal;
+                    }
+                    else
+                    {
+                        consideration.Type = ConsiderationsEnum.Cuisine;
+                    }
+
+                    var created = _considerationsService.CreateConsideration(consideration);
+                    if (!created.Success)
                     {
                         return ServiceResult<Task>.ErrorResult(
-                            $"Error creating cuisine consideration. Error: {isSuccess.Error}"
+                            $"Error creating consideration. Error: {created.Error}"
                         );
                     }
                 }
