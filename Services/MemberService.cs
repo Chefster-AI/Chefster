@@ -7,9 +7,10 @@ using static Chefster.Common.Constants;
 
 namespace Chefster.Services;
 
-public class MemberService(ChefsterDbContext context) : IMember
+public class MemberService(ChefsterDbContext context, LoggingService loggingService) : IMember
 {
     private readonly ChefsterDbContext _context = context;
+    private readonly LoggingService _logger = loggingService;
 
     public ServiceResult<MemberModel> CreateMember(MemberCreateDto member)
     {

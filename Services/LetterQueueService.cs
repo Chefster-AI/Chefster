@@ -1,79 +1,84 @@
+using Chefster.Common;
+using Chefster.Models;
+using Chefster.ViewModels;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 
 namespace Chefster.Services;
 
-public class LetterQueueService(FamilyService familyService, IConfiguration configuration)
+public class LetterQueueService(IConfiguration configuration, LoggingService loggingService)
 {
-    private readonly FamilyService _familyService = familyService;
     private readonly IConfiguration _configuration = configuration;
+    private readonly LoggingService _logger = loggingService;
     private readonly string _sheetId = "1QSu9sJtQ6aKs_vHzMxPxwONpi8J6SkJ5bg3z08g1zoI";
 
-    public void PopulateLetterQueue()
+    public void PopulateLetterQueue(
+        FamilyViewModel family,
+        string familyId,
+        UserStatus userStatus,
+        string email
+    )
     {
-        var families = _familyService.GatherFamiliesForLetterQueue();
-
-        if (families.Data == null || families.Data.Count == 0 || !families.Success)
+        if (family == null)
         {
-            Console.WriteLine("Families list was either null or empty. Exiting...");
+            _logger.Log($"family was null", LogLevels.Error);
             return;
         }
 
         var service = CreateSpreadSheetService();
-        var allFamilies = new List<List<object>>();
-        foreach (var fam in families.Data)
+
+        // make a list of members.
+        var allMembers = "";
+        if (family.Members != null && family.Members.Count != 0)
         {
-            string? fullAddress = null;
-            string? AllMembers = null;
-            var address = _familyService.GetAddressForFamily(fam!.Id).Data;
-            var members = _familyService.GetMembers(fam!.Id).Data;
-
-            if (members != null && members.Count != 0)
-            {
-                AllMembers = string.Join(", ", members.Select(m => m.Name));
-            }
-
-            if (address != null)
-            {
-                fullAddress =
-                    address.StreetAddress
-                    + ", "
-                    + address.AptOrUnitNumber
-                    + " "
-                    + address.CityOrTown
-                    + ", "
-                    + address.StateProvinceRegion
-                    + " "
-                    + address.PostalCode
-                    + " "
-                    + address.Country;
-            }
-            var letterFamily = new List<object>()
-            {
-                AllMembers ?? "No Members..",
-                fam.UserStatus,
-                fam.PhoneNumber,
-                fam.Email,
-                fam.FamilySize,
-                fullAddress ?? "No Address.."
-            };
-            allFamilies.Add(letterFamily);
+            allMembers = string.Join(", ", family.Members.Select(m => m.Name));
         }
 
-        var row = 1;
-        foreach (var fam in allFamilies)
+        // Construct address in correct form
+        string? fullAddress = null;
+        if (family.Address != null)
         {
-            var range = $"A{row + 1}:F{row + 1}";
-            row += row;
-            var valueRange = new ValueRange() { Values = [fam] };
-            var appendRequest = service.Spreadsheets.Values.Update(valueRange, _sheetId, range);
-            appendRequest.ValueInputOption = SpreadsheetsResource
-                .ValuesResource
-                .UpdateRequest
-                .ValueInputOptionEnum
-                .USERENTERED;
-            var appendResult = appendRequest.Execute();
+            fullAddress =
+                family.Address.StreetAddress
+                + ", "
+                + family.Address.AptOrUnitNumber
+                + " "
+                + family.Address.CityOrTown
+                + ", "
+                + family.Address.StateProvinceRegion
+                + " "
+                + family.Address.PostalCode
+                + " "
+                + family.Address.Country;
+        }
+
+        var letterFamily = new List<object>()
+        {
+            family.Name,
+            allMembers,
+            userStatus.ToString(),
+            family.PhoneNumber,
+            email,
+            family.FamilySize,
+            fullAddress ?? "No Address"
+        };
+
+        var valueRange = new ValueRange() { Values = [letterFamily] };
+        var appendRequest = service.Spreadsheets.Values.Append(valueRange, _sheetId, "Sheet1!A1");
+        appendRequest.ValueInputOption = SpreadsheetsResource
+            .ValuesResource
+            .AppendRequest
+            .ValueInputOptionEnum
+            .USERENTERED;
+
+        var appendResult = appendRequest.Execute();
+        if (appendResult == null || appendResult.Updates.UpdatedRows == 0)
+        {
+            _logger.Log(
+                $"Request to update sheet failed, appendResult was null or number of updated rows was 0. FamilyId: {familyId}",
+                LogLevels.Error
+            );
         }
     }
 
@@ -100,7 +105,8 @@ public class LetterQueueService(FamilyService familyService, IConfiguration conf
         }
         catch (Google.GoogleApiException e)
         {
-            throw new Exception($"Exception Creating credentials: {e}");
+            _logger.Log($"Exception Creating google sheets credentials: {e}", LogLevels.Error);
+            throw new Exception($"Exception Creating google sheets credentials: {e}");
         }
     }
 
@@ -119,7 +125,8 @@ public class LetterQueueService(FamilyService familyService, IConfiguration conf
         }
         catch (Google.GoogleApiException e)
         {
-            throw new Exception($"Exception Creating service: {e}");
+            _logger.Log($"Exception Creating spreadsheet service: {e}", LogLevels.Error);
+            throw new Exception($"Exception Creating spreadsheet service: {e}");
         }
     }
 }

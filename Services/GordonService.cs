@@ -173,11 +173,6 @@ public class GordonService(
                 || status == "expired"
             )
             {
-                _logger.Log(
-                    $"Run loop object had the status code: {status}. Exiting",
-                    LogLevels.Error,
-                    "gordonStatusLoop"
-                );
                 return ServiceResult<GordonResponseModel>.ErrorResult(
                     $"Run loop object had the status code: {status}. Exiting"
                 );
@@ -200,11 +195,6 @@ public class GordonService(
 
         if (attempts == Constants.MAX_ATTEMPTS)
         {
-            _logger.Log(
-                $"Run loop has reached max iterations for response. Exiting",
-                LogLevels.Error,
-                "gordonStatusLoop"
-            );
             return ServiceResult<GordonResponseModel>.ErrorResult(
                 $"Run loop has reached max iterations for response. Exiting"
             );
@@ -223,11 +213,6 @@ public class GordonService(
 
         if (jsonString == null)
         {
-            _logger.Log(
-                "Json Response was invalid and returned null when retreiving Gordon response",
-                LogLevels.Error,
-                "GetMessageResponse"
-            );
             return ServiceResult<GordonResponseModel>.ErrorResult(
                 "Json Response was invalid and returned null when retreiving Gordon response"
             );
@@ -240,13 +225,8 @@ public class GordonService(
         }
         catch (Exception ex)
         {
-            _logger.Log(
-                $"Failed to Deserialize json to GordonResponseModel. Error: {ex}",
-                LogLevels.Error,
-                "GetMessageResponse"
-            );
             return ServiceResult<GordonResponseModel>.ErrorResult(
-                $"Failed to retrieve Gordon response. Error: {ex}"
+                $"Failed to Deserialize json to GordonResponseModel. Error: {ex}"
             );
         }
     }
