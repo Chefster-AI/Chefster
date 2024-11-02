@@ -185,13 +185,20 @@
                 <div id="subscribeBlock" class="collapse multi-collapse">
                     <div class="row">
                         <div class="col-12">
-                            <div class="fs-4 text-center my-3">Coming soon...</div>
+                            <div class="fs-5 mt-3">
+                                Subscribe now to receive weekly recipes!
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="fs-5 my-4">
+                                We use Stripe to process payments. Learn more <a href="https://stripe.com/">here</a>.
+                            </div>
                         </div>
                     </div>
                 </div>
                 <input type="hidden" id="TimeZone" asp-for="TimeZone" value="" required />
                 <div class="form-group">
-                    <button id="createProfileButton" type="submit" class="btn btn-primary w-100">Create Profile</button>
+                    <button id="submitButton" type="submit" class="btn btn-primary w-100">Create Profile</button>
                 </div>
             </form>
         </div>
@@ -278,13 +285,13 @@
             var subscribeRadio = document.getElementById('subscribeRadio');
             var freeTrialBlock = document.getElementById('freeTrialBlock');
             var subscribeBlock = document.getElementById('subscribeBlock');
-            var createProfileButton = document.getElementById('createProfileButton')
+            var submitButton = document.getElementById('submitButton')
 
             freeTrialRadio.addEventListener('click', function() {
                 if (this.checked) {
                     freeTrialBlock.classList.add('show');
                     subscribeBlock.classList.remove('show');
-                    createProfileButton.disabled = false;
+                    submitButton.innerText = "Start Free Trial";
                 }
             });
 
@@ -292,7 +299,7 @@
                 if (this.checked) {
                     freeTrialBlock.classList.remove('show');
                     subscribeBlock.classList.add('show');
-                    createProfileButton.disabled = true;
+                    submitButton.innerText = "Subscribe Now";
                 }
             });
         });
