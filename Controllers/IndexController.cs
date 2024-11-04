@@ -27,6 +27,20 @@ public class IndexController(
     private readonly UserStatusService _userStatusService = userStatusService;
 
     [Authorize]
+    [Route("/account")]
+    public IActionResult Account()
+    {
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var family = _familyService.GetByEmail(email!).Data;
+        var accountViewModel = new AccountViewModel
+        {
+            UserStatus = family!.UserStatus
+        };
+
+        return View(accountViewModel);
+    }
+
+    [Authorize]
     [Route("/chat")]
     public IActionResult Chat()
     {

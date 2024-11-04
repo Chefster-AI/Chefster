@@ -29,13 +29,6 @@ public class UserStatusService(
                     );
                     _familyService.SetFamilyUserStatus(familyId, UserStatus.FreeTrialExpired);
                     break;
-                case UserStatus.ExtendedFreeTrial:
-                    _logger.Log(
-                        $"Changing family user status from ExtendedFreeTrial to FreeTrialExpired for {familyId}",
-                        LogLevels.Info
-                    );
-                    _familyService.SetFamilyUserStatus(familyId, UserStatus.FreeTrialExpired);
-                    break;
                 case UserStatus.Subscribed:
                     _logger.Log(
                         $"Changing family user status from Subscribed to PreviouslySubscribed for {familyId}",
@@ -66,8 +59,6 @@ public class UserStatusService(
             {
                 case UserStatus.FreeTrial:
                     return NUMBER_OF_JOBS_IN_FREE_TRIAL <= numberOfJobsRan;
-                case UserStatus.ExtendedFreeTrial:
-                    return NUMBER_OF_JOBS_IN_EXTENDED_FREE_TRIAL <= numberOfJobsRan;
                 case UserStatus.Subscribed:
                     return false;
                 case UserStatus.FreeTrialExpired:
@@ -93,8 +84,6 @@ public class UserStatusService(
         {
             case UserStatus.FreeTrial:
                 return CalculateFirstJobRun(signUpDate, generationDay, generationTime).AddDays(7);
-            case UserStatus.ExtendedFreeTrial:
-                return CalculateFirstJobRun(signUpDate, generationDay, generationTime).AddDays(21);
             case UserStatus.Subscribed:
                 return null;
             case UserStatus.FreeTrialExpired:

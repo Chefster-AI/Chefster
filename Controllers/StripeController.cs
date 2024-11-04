@@ -14,7 +14,6 @@ public class StripeController : Controller
         var domain = "http://localhost:5144";
         var options = new SessionCreateOptions
         {
-            UiMode = "embedded",
             LineItems = new List<SessionLineItemOptions>
             {
                 new SessionLineItemOptions
@@ -24,13 +23,15 @@ public class StripeController : Controller
                 },
             },
             Mode = "subscription",
-            ReturnUrl = domain + "/confirm?session_id={CHECKOUT_SESSION_ID}",
+            CancelUrl = domain + "/account",
+            SuccessUrl = domain + "/account",
             AutomaticTax = new SessionAutomaticTaxOptions { Enabled = true },
         };
         var service = new SessionService();
         Session session = service.Create(options);
 
-        return Json(new {clientSecret = session.ClientSecret});
+        Response.Headers.Append("Location", session.Url);
+        return new StatusCodeResult(303);
     }
 
     [HttpGet]

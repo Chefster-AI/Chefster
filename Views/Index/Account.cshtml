@@ -1,0 +1,19 @@
+@model Chefster.ViewModels.AccountViewModel
+
+@{
+    ViewData["Title"] = "Account";
+}
+
+<div class="container mt-5">
+    @if (Model.UserStatus == Chefster.Common.UserStatus.NoAccount)
+    {
+        <div>Subscribe today!</div>
+        <form action="/create-checkout-session" method="POST">
+            <button type="submit" id="checkout-button">Checkout</button>
+        </form>
+    }
+    else
+    {
+        <div>Unsubscribe</div>
+    }
+</div>

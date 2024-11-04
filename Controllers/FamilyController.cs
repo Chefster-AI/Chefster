@@ -72,53 +72,13 @@ public class FamilyController(
             return RedirectToAction("Index", "error", new { route = "/profile" });
         }
 
-        // try to create a new address
-        var address = Family.Address;
-        AddressModel? newAddress = null;
-        if (
-            address != null
-            && !string.IsNullOrWhiteSpace(address.StreetAddress)
-            && !string.IsNullOrWhiteSpace(address.CityOrTown)
-            && !string.IsNullOrWhiteSpace(address.StateProvinceRegion)
-            && !string.IsNullOrWhiteSpace(address.PostalCode)
-            && !string.IsNullOrWhiteSpace(address.Country)
-        )
-        {
-            newAddress = new AddressModel
-            {
-                FamilyId = familyId,
-                StreetAddress = address.StreetAddress,
-                AptOrUnitNumber = !string.IsNullOrWhiteSpace(address.AptOrUnitNumber)
-                    ? address.AptOrUnitNumber
-                    : null,
-                CityOrTown = address.CityOrTown,
-                StateProvinceRegion = address.StateProvinceRegion,
-                PostalCode = address.PostalCode,
-                Country = address.Country
-            };
-            var result = _addressService.CreateAddress(newAddress).Data;
-        }
-
-        // determine user status
-        UserStatus userStatus = UserStatus.Unknown;
-        // we only have free trial for now
-        // TODO: adjust logic to account for subscription vs free trial
-        if (newAddress == null)
-        {
-            userStatus = UserStatus.FreeTrial;
-        }
-        else
-        {
-            userStatus = UserStatus.ExtendedFreeTrial;
-        }
-
         // create the new family
         var NewFamily = new FamilyModel
         {
             Id = familyId,
             Name = Family.Name,
             Email = email,
-            UserStatus = userStatus,
+            UserStatus = UserStatus.NoAccount,
             CreatedAt = createdAt,
             PhoneNumber = Family.PhoneNumber,
             FamilySize = Family.FamilySize,
@@ -129,8 +89,6 @@ public class FamilyController(
             GenerationTime = Family.GenerationTime,
             TimeZone = Family.TimeZone,
         };
-
-        // create job
         var created = _familyService.CreateFamily(NewFamily);
         if (!created.Success)
         {
@@ -152,36 +110,14 @@ public class FamilyController(
             return RedirectToAction("Index", "error", new { route = "/profile" });
         }
 
-        _jobService.CreateorUpdateEmailJob(created.Data!.Id);
+        // TODO: send email confirming profile creation
+        // var body = await _viewToStringService.ViewToStringAsync(
+        //     "ConfirmationEmail",
+        //     new { FamilyId = NewFamily.Id }
+        // );
+        // _emailService.SendEmail(NewFamily.Email, "Thanks for signing up for Chefster!", body);
 
-        // if they are eligible, add them to the letter queue
-        if (
-            created.Success
-            && (
-                NewFamily.UserStatus == UserStatus.ExtendedFreeTrial
-                || NewFamily.UserStatus == UserStatus.Subscribed
-            )
-        )
-        {
-            _letterQueueService.PopulateLetterQueue(Family, familyId, userStatus, email);
-        }
-
-        // TODO: send confirmation email
-        var body = await _viewToStringService.ViewToStringAsync(
-            "ConfirmationEmail",
-            new { FamilyId = NewFamily.Id }
-        );
-        _emailService.SendEmail(NewFamily.Email, "Thanks for signing up for Chefster!", body);
-
-        var model = new ThankYouViewModel
-        {
-            EmailAddress = NewFamily.Email,
-            GenerationDay = NewFamily.GenerationDay,
-            GenerationTime = NewFamily.GenerationTime,
-            UserStatus = userStatus
-        };
-
-        return RedirectToAction("ThankYou", "Index", model);
+        return RedirectToAction("Account", "Index");
     }
 
 #if DEBUG
