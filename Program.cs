@@ -89,6 +89,7 @@ builder.Services.AddScoped<UpdateProfileService>();
 builder.Services.AddScoped<HubSpotService>();
 builder.Services.AddScoped<LetterQueueService>();
 builder.Services.AddScoped<LoggingService>();
+builder.Services.AddScoped<AccountService>();
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 

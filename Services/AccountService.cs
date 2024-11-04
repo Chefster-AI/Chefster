@@ -4,7 +4,7 @@ using Chefster.Models;
 
 namespace Chefster.Services;
 
-public class SubscriberService(IConfiguration configuration, ChefsterDbContext context)
+public class AccountService(IConfiguration configuration, ChefsterDbContext context)
 {
     private readonly string? privateKey = configuration["STRIPE_TEST_KEY"];
     private readonly string? publishableKey = configuration["PUBLISHABLE_KEY"];
