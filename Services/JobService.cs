@@ -70,16 +70,17 @@ public class JobService(
                     : "default";
 
             // set time zone, queue name, and update/create job
-            var options = new RecurringJobOptions { TimeZone = timeZone, QueueName = queueName };
+            var options = new RecurringJobOptions { TimeZone = timeZone };
             RecurringJob.AddOrUpdate(
-                family.Id,
-                () => GenerateAndSendRecipes(familyId),
-                Cron.Weekly(
+                recurringJobId: family.Id,
+                methodCall: () => GenerateAndSendRecipes(familyId),
+                cronExpression: Cron.Weekly(
                     family.GenerationDay,
                     family.GenerationTime.Hours,
                     family.GenerationTime.Minutes
                 ),
-                options
+                queue: queueName,
+                options: options
             );
             _logger.Log(
                 $"Created or updated job with Id: {family.Id}. Added to Queue: {queueName}. Generation Time: {family.GenerationDay} {family.GenerationTime.Hours}:{family.GenerationTime.Minutes}",

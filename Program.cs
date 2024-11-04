@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
+using Stripe;
 using static Chefster.Common.LoggingHelper;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +40,8 @@ builder.Services.AddAuth0WebAppAuthentication(options =>
     options.ClientId = builder.Configuration["AUTH_CLIENT_ID"]!;
     options.Scope = "openid profile email";
 });
+
+StripeConfiguration.ApiKey = "sk_test_51P3TK7GO5EdTXxQvkHdOWT0WgLanjFxeDUrM6p5XnKqH2OdkeMh3YlO87bpHIJIWa9c1RKoFwMp2dXpfwG2mhQf200mGUltF4D";
 
 // set up db
 builder.Services.AddDbContext<ChefsterDbContext>(options =>
