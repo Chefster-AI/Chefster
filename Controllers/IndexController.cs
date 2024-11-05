@@ -26,6 +26,12 @@ public class IndexController(
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
     private readonly UserStatusService _userStatusService = userStatusService;
 
+    [Route("/stripeCallback")]
+    public IActionResult StripeCallback()
+    {
+        return RedirectToAction("Privacy", "Index");
+    }
+
     [Authorize]
     [Route("/account")]
     public IActionResult Account()
@@ -34,7 +40,8 @@ public class IndexController(
         var family = _familyService.GetByEmail(email!).Data;
         var accountViewModel = new AccountViewModel
         {
-            UserStatus = family!.UserStatus
+            FamilyId = family!.Id,
+            UserStatus = family.UserStatus
         };
 
         return View(accountViewModel);

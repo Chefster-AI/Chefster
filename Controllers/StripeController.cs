@@ -18,8 +18,8 @@ public class StripeController : Controller
             {
                 new SessionLineItemOptions
                 {
-                Price = "price_1QHAIhGO5EdTXxQvjEjLCBXe",
-                Quantity = 1,
+                    Price = "price_1QHAIhGO5EdTXxQvjEjLCBXe",
+                    Quantity = 1,
                 },
             },
             Mode = "subscription",
