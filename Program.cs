@@ -1,6 +1,7 @@
 using System.Reflection;
 using Auth0.AspNetCore.Authentication;
 using Chefster.Common;
+using Chefster.Consumers;
 using Chefster.Context;
 using Chefster.Models;
 using Chefster.Services;
@@ -113,6 +114,8 @@ builder.Services.AddScoped<AddressService>();
 builder.Services.AddScoped<UserStatusService>();
 builder.Services.AddScoped<JobRecordService>();
 builder.Services.AddScoped<SubscriberService>();
+builder.Services.AddSingleton<StripeMessageConsumer>();
+builder.Services.AddHostedService<StripeMessageConsumer>();
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 

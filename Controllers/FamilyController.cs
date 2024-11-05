@@ -24,7 +24,8 @@ public class FamilyController(
     ViewToStringService viewToStringService,
     UpdateProfileService updateProfileService,
     LetterQueueService letterQueueService,
-    LoggingService loggingService
+    LoggingService loggingService,
+    SubscriberService subscriberService
 ) : ControllerBase
 {
     private readonly AddressService _addressService = addressService;
@@ -38,6 +39,7 @@ public class FamilyController(
     private readonly UpdateProfileService _updateProfileService = updateProfileService;
     private readonly LetterQueueService _letterQueueService = letterQueueService;
     private readonly LoggingService _logger = loggingService;
+    private readonly SubscriberService _subscriberService = subscriberService;
 
 #if DEBUG
     [HttpGet("{Id}")]
@@ -94,6 +96,9 @@ public class FamilyController(
         {
             return RedirectToAction("Index", "error", new { route = "/profile" });
         }
+
+        var subModel = new SubscriberModel { FamilyId = familyId };
+        _subscriberService.CreateSubscriber(subModel);
 
         // register as a contact in hub spot
         _hubSpotService.CreateContact(

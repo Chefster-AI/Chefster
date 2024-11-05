@@ -1,6 +1,9 @@
 using System;
 using System.Text;
+using Amazon.SQS;
+using Amazon.SQS.Model;
 using Chefster.Common;
+using Chefster.Models;
 using Chefster.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,69 +12,45 @@ using Stripe;
 
 namespace Chefster.Controllers;
 
-[Route("api/stripe")]
+[Route("api/stripe/callback")]
 [ApiController]
-public class StripeController(LoggingService loggingService) : ControllerBase
+public class StripeController(LoggingService loggingService, IConfiguration configuration)
+    : ControllerBase
 {
     private readonly LoggingService _logger = loggingService;
+    private readonly AmazonSQSClient _amazonSQSClient = new();
+    private readonly IConfiguration _configuration = configuration;
 
-    [HttpPost("/callback")]
     public async Task<IActionResult> handleCallback()
     {
         var request = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-        // Console.WriteLine(request);
+        var allowed = new HashSet<string>
+        {
+            EventTypes.CheckoutSessionCompleted,
+            EventTypes.ChargeSucceeded,
+            EventTypes.ChargeFailed
+        };
 
         try
         {
             var stripeEvent = EventUtility.ParseEvent(request);
 
-            // Console.WriteLine($"Recieved this event Type: {stripeEvent.Type}");
-
-            // Here is where we would handle all the stripeEvents that can show up in a callback
-            switch (stripeEvent.Type)
+            if (allowed.Contains(stripeEvent.Type))
             {
-                //Successful Cases
-                case EventTypes.CheckoutSessionCompleted:
-                    var sessionComplete = stripeEvent.Data.Object as Stripe.Checkout.Session;
-                    var original = sessionComplete!.ClientReferenceId.Replace('_', '|');
-                    Console.WriteLine(original);
-                    break;
-                case EventTypes.CustomerCreated:
-                    var customer = stripeEvent.Data.Object as Customer;
-                    Console.WriteLine(customer!.Id);
-                    break;
-                case EventTypes.CustomerUpdated:
-                case EventTypes.ChargeUpdated:
-                case EventTypes.ChargeSucceeded:
-                case EventTypes.CustomerSubscriptionCreated:
-                    var customerSubscription = stripeEvent.Data.Object as Subscription;
-                    Console.WriteLine(customerSubscription!.Id);
-                    break;
-                case EventTypes.CustomerSubscriptionUpdated:
-                case EventTypes.PaymentIntentCreated:
-                case EventTypes.PaymentIntentSucceeded:
-                case EventTypes.InvoiceCreated:
-                case EventTypes.InvoiceFinalized:
-                case EventTypes.InvoiceUpdated:
-                case EventTypes.InvoicePaid:
-                case EventTypes.InvoicePaymentSucceeded:
-
-                // Error Cases
-                case EventTypes.ChargeFailed:
-                case EventTypes.PaymentIntentPaymentFailed:
-                case EventTypes.InvoicePaymentFailed:
-                default:
-                    _logger.Log(
-                        $"Received unhandled stripe callback {stripeEvent.Type}",
-                        LogLevels.Warning
-                    );
-                    break;
+                await _amazonSQSClient.SendMessageAsync(
+                    new SendMessageRequest
+                    {
+                        QueueUrl = _configuration["CALLBACK_QUEUE"],
+                        MessageBody = request
+                    }
+                );
+                Console.WriteLine($"Added message: {stripeEvent.Type}");
             }
             return Ok();
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Error receiving callback: {e}");
+            _logger.Log($"Error receiving callback: {e}", LogLevels.Error);
             return BadRequest();
         }
     }
