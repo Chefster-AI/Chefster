@@ -1,5 +1,7 @@
+using System;
 using System.Diagnostics;
 using System.Security.Claims;
+using System.Text;
 using Chefster.Common;
 using Chefster.Models;
 using Chefster.Services;
@@ -38,9 +40,11 @@ public class IndexController(
     {
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
         var family = _familyService.GetByEmail(email!).Data;
+
+        var altered = family!.Id.Replace('|', '_');
         var accountViewModel = new AccountViewModel
         {
-            FamilyId = family!.Id,
+            FamilyId = altered,
             UserStatus = family.UserStatus
         };
 

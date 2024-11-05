@@ -41,7 +41,8 @@ builder.Services.AddAuth0WebAppAuthentication(options =>
     options.Scope = "openid profile email";
 });
 
-StripeConfiguration.ApiKey = "sk_test_51P3TK7GO5EdTXxQvkHdOWT0WgLanjFxeDUrM6p5XnKqH2OdkeMh3YlO87bpHIJIWa9c1RKoFwMp2dXpfwG2mhQf200mGUltF4D";
+StripeConfiguration.ApiKey =
+    "sk_test_51P3TK7GO5EdTXxQvkHdOWT0WgLanjFxeDUrM6p5XnKqH2OdkeMh3YlO87bpHIJIWa9c1RKoFwMp2dXpfwG2mhQf200mGUltF4D";
 
 // set up db
 builder.Services.AddDbContext<ChefsterDbContext>(options =>
@@ -111,6 +112,7 @@ builder.Services.AddScoped<LetterQueueService>();
 builder.Services.AddScoped<AddressService>();
 builder.Services.AddScoped<UserStatusService>();
 builder.Services.AddScoped<JobRecordService>();
+builder.Services.AddScoped<SubscriberService>();
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 

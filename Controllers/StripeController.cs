@@ -1,46 +1,78 @@
+using System;
+using System.Text;
+using Chefster.Common;
+using Chefster.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Stripe.Checkout;
+using MongoDB.Bson;
+using Stripe;
 
 namespace Chefster.Controllers;
 
-// [Route("api/stripe")]
+[Route("api/stripe")]
 [ApiController]
-public class StripeController : Controller
+public class StripeController(LoggingService loggingService) : ControllerBase
 {
-    [HttpPost]
-    [Route("create-checkout-session")]
-    public ActionResult Create()
+    private readonly LoggingService _logger = loggingService;
+
+    [HttpPost("/callback")]
+    public async Task<IActionResult> handleCallback()
     {
-        var domain = "http://localhost:5144";
-        var options = new SessionCreateOptions
+        var request = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+        // Console.WriteLine(request);
+
+        try
         {
-            LineItems = new List<SessionLineItemOptions>
+            var stripeEvent = EventUtility.ParseEvent(request);
+
+            // Console.WriteLine($"Recieved this event Type: {stripeEvent.Type}");
+
+            // Here is where we would handle all the stripeEvents that can show up in a callback
+            switch (stripeEvent.Type)
             {
-                new SessionLineItemOptions
-                {
-                    Price = "price_1QHAIhGO5EdTXxQvjEjLCBXe",
-                    Quantity = 1,
-                },
-            },
-            Mode = "subscription",
-            CancelUrl = domain + "/account",
-            SuccessUrl = domain + "/account",
-            AutomaticTax = new SessionAutomaticTaxOptions { Enabled = true },
-        };
-        var service = new SessionService();
-        Session session = service.Create(options);
+                //Successful Cases
+                case EventTypes.CheckoutSessionCompleted:
+                    var sessionComplete = stripeEvent.Data.Object as Stripe.Checkout.Session;
+                    var original = sessionComplete!.ClientReferenceId.Replace('_', '|');
+                    Console.WriteLine(original);
+                    break;
+                case EventTypes.CustomerCreated:
+                    var customer = stripeEvent.Data.Object as Customer;
+                    Console.WriteLine(customer!.Id);
+                    break;
+                case EventTypes.CustomerUpdated:
+                case EventTypes.ChargeUpdated:
+                case EventTypes.ChargeSucceeded:
+                case EventTypes.CustomerSubscriptionCreated:
+                    var customerSubscription = stripeEvent.Data.Object as Subscription;
+                    Console.WriteLine(customerSubscription!.Id);
+                    break;
+                case EventTypes.CustomerSubscriptionUpdated:
+                case EventTypes.PaymentIntentCreated:
+                case EventTypes.PaymentIntentSucceeded:
+                case EventTypes.InvoiceCreated:
+                case EventTypes.InvoiceFinalized:
+                case EventTypes.InvoiceUpdated:
+                case EventTypes.InvoicePaid:
+                case EventTypes.InvoicePaymentSucceeded:
 
-        Response.Headers.Append("Location", session.Url);
-        return new StatusCodeResult(303);
-    }
-
-    [HttpGet]
-    [Route("session-status")]
-    public ActionResult SessionStatus([FromQuery] string session_id)
-    {
-        var sessionService = new SessionService();
-        Session session = sessionService.Get(session_id);
-
-        return Json(new {status = session.Status,  customer_email = session.CustomerDetails.Email});
+                // Error Cases
+                case EventTypes.ChargeFailed:
+                case EventTypes.PaymentIntentPaymentFailed:
+                case EventTypes.InvoicePaymentFailed:
+                default:
+                    _logger.Log(
+                        $"Received unhandled stripe callback {stripeEvent.Type}",
+                        LogLevels.Warning
+                    );
+                    break;
+            }
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error receiving callback: {e}");
+            return BadRequest();
+        }
     }
 }
