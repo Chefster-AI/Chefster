@@ -11,7 +11,7 @@ public class SubscriberModel
     public required string FamilyId { get; set; }
     public string? CustomerId { get; set; } = null;
     public string? SubscriptionId { get; set; } = null;
-    public PaymentStatus? PaymentStatus { get; set; } = 0;
+    public UserStatus? UserStatus { get; set; } = null;
     public string? PaymentCreatedDate { get; set; } = null;
     public string? ReceiptUrl { get; set; } = null;
 }
@@ -20,7 +20,7 @@ public class SubscriberUpdateDto
 {
     public string? CustomerId { get; set; }
     public string? SubscriptionId { get; set; }
-    public PaymentStatus? PaymentStatus { get; set; }
+    public UserStatus? UserStatus { get; set; }
     public string? PaymentCreatedDate { get; set; }
     public string? ReceiptUrl { get; set; }
 }

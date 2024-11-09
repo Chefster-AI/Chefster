@@ -45,7 +45,7 @@ public class SubscriberService(ChefsterDbContext context)
         try
         {
             var subscriber = _context.Subscribers.Where((s) => s.CustomerId == customerId).First();
-            return ServiceResult<SubscriberModel?>.SuccessResult(subscriber ?? null);
+            return ServiceResult<SubscriberModel?>.SuccessResult(subscriber);
         }
         catch (Exception e)
         {
@@ -55,12 +55,26 @@ public class SubscriberService(ChefsterDbContext context)
         }
     }
 
+    public ServiceResult<bool> SubscriberExists(string customerId)
+    {
+        try
+        {
+            var exists = _context.Subscribers.Any((s) => s.CustomerId == customerId);
+            return ServiceResult<bool>.SuccessResult(exists);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<bool>.ErrorResult(
+                $"Failed to check if a subscriber exists for customerId: {customerId}. Error: {e}"
+            );
+        }
+    }
+
     public ServiceResult<SubscriberModel> UpdateSubscriberByFamilyId(
         string familyId,
         SubscriberUpdateDto model
     )
     {
-        Console.WriteLine($"Updating sub: {model.ToJson()}");
         try
         {
             var current = _context.Subscribers.Find(familyId);
@@ -75,7 +89,7 @@ public class SubscriberService(ChefsterDbContext context)
             current.CustomerId = model.CustomerId ?? current.CustomerId;
             current.SubscriptionId = model.SubscriptionId ?? current.SubscriptionId;
             current.PaymentCreatedDate = model.PaymentCreatedDate ?? current.PaymentCreatedDate;
-            current.PaymentStatus = model.PaymentStatus ?? current.PaymentStatus;
+            current.UserStatus = model.UserStatus ?? current.UserStatus;
             current.ReceiptUrl = model.ReceiptUrl ?? current.ReceiptUrl;
 
             _context.SaveChanges();
@@ -89,12 +103,11 @@ public class SubscriberService(ChefsterDbContext context)
         }
     }
 
-    public ServiceResult<SubscriberModel> UpdateSubscriberByCustomerId(
+    public async Task<ServiceResult<SubscriberModel>> UpdateSubscriberByCustomerId(
         string customerId,
         SubscriberUpdateDto model
     )
     {
-        Console.WriteLine($"Updating sub: {model.ToJson()}");
         try
         {
             var current = _context.Subscribers.Where((s) => s.CustomerId == customerId).First();
@@ -109,10 +122,10 @@ public class SubscriberService(ChefsterDbContext context)
             current.CustomerId = model.CustomerId ?? current.CustomerId;
             current.SubscriptionId = model.SubscriptionId ?? current.SubscriptionId;
             current.PaymentCreatedDate = model.PaymentCreatedDate ?? current.PaymentCreatedDate;
-            current.PaymentStatus = model.PaymentStatus ?? current.PaymentStatus;
+            current.UserStatus = model.UserStatus ?? current.UserStatus;
             current.ReceiptUrl = model.ReceiptUrl ?? current.ReceiptUrl;
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return ServiceResult<SubscriberModel>.SuccessResult(current);
         }
         catch (Exception e)

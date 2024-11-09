@@ -7,5 +7,7 @@ public enum UserStatus
     FreeTrialExpired = 2,
     Subscribed = 3,
     PreviouslySubscribed = 4,
-    Unknown = 5
+    NotPaid = 5,
+    PendingPayment = 6,
+    Unknown = 7
 }
