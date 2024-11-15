@@ -301,26 +301,11 @@ public class IndexController(
             };
         }
 
-        var firstJobRun = _userStatusService.CalculateFirstJobRun(
-            family.CreatedAt,
-            family.GenerationDay,
-            family.GenerationTime
-        );
-        var lastJobRun = _userStatusService.CalculateFinalJobRun(
-            family.UserStatus,
-            family.CreatedAt,
-            family.GenerationDay,
-            family.GenerationTime,
-            family.JobTimestamp
-        );
         var model = new OverviewViewModel
         {
             GenerationDay = family!.GenerationDay,
             GenerationTime = family.GenerationTime,
             Recipes = groupedRecipes,
-            UserStatus = family.UserStatus,
-            FirstJobRun = firstJobRun,
-            LastJobRun = lastJobRun ?? DateTime.Now
         };
 
         return View(model);
