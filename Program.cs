@@ -111,7 +111,6 @@ builder.Services.AddScoped<UpdateProfileService>();
 builder.Services.AddScoped<HubSpotService>();
 builder.Services.AddScoped<LetterQueueService>();
 builder.Services.AddScoped<AddressService>();
-builder.Services.AddScoped<UserStatusService>();
 builder.Services.AddScoped<JobRecordService>();
 builder.Services.AddScoped<SubscriberService>();
 builder.Services.AddSingleton<StripeMessageConsumer>();

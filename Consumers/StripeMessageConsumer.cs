@@ -112,13 +112,13 @@ public class StripeMessageConsumer(
                     newUserStatus = UserStatus.FreeTrial;
                     break;
                 case "paused":
-                    newUserStatus = UserStatus.FreeTrialExpired;
+                    newUserStatus = UserStatus.FreeTrialEnded;
                     break;
                 case "active":
                     newUserStatus = UserStatus.Subscribed;
                     break;
                 case "canceled":
-                    newUserStatus = subscriber.UserStatus == UserStatus.FreeTrial ? UserStatus.FreeTrialExpired : UserStatus.PreviouslySubscribed;
+                    newUserStatus = subscriber.UserStatus == UserStatus.FreeTrial ? UserStatus.FreeTrialEnded : UserStatus.SubscriptionEnded;
                     break;
                 case "unpaid":
                     newUserStatus = UserStatus.NotPaid;

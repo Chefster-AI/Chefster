@@ -97,9 +97,6 @@ public class FamilyController(
             return RedirectToAction("Index", "error", new { route = "/profile" });
         }
 
-        var subModel = new SubscriberModel { FamilyId = familyId };
-        _subscriberService.CreateSubscriber(subModel);
-
         // register as a contact in hub spot
         _hubSpotService.CreateContact(
             created.Data!.Name,

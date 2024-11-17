@@ -18,15 +18,13 @@ public class IndexController(
     ConsiderationsService considerationsService,
     FamilyService familyService,
     MemberService memberService,
-    PreviousRecipesService previousRecipesService,
-    UserStatusService userStatusService
+    PreviousRecipesService previousRecipesService
 ) : Controller
 {
     private readonly ConsiderationsService _considerationService = considerationsService;
     private readonly FamilyService _familyService = familyService;
     private readonly MemberService _memberService = memberService;
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
-    private readonly UserStatusService _userStatusService = userStatusService;
 
     [Route("/stripeCallback")]
     public IActionResult StripeCallback()

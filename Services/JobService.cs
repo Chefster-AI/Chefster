@@ -18,8 +18,7 @@ public class JobService(
     PreviousRecipesService previousRecipesService,
     ViewToStringService viewToStringService,
     LoggingService loggingService,
-    IConfiguration configuration,
-    UserStatusService userStatusService
+    IConfiguration configuration
 )
 {
     private readonly ConsiderationsService _considerationService = considerationsService;
@@ -32,7 +31,6 @@ public class JobService(
     private readonly ViewToStringService _viewToStringService = viewToStringService;
     private readonly LoggingService _logger = loggingService;
     private readonly IConfiguration _configuration = configuration;
-    private readonly UserStatusService _userStatusService = userStatusService;
 
     /*
         The service is responsible for created, updating and executing jobs that will
@@ -189,7 +187,8 @@ public class JobService(
                 JobType = JobType.RecipeGeneration
             };
             _jobRecordService.CreateJobRecord(jobRecord);
-            _userStatusService.CheckFamilyUserStatus(family.Id, family.UserStatus);
+
+            // TODO: check family userstatus, remove recurring job if necessary
         }
         else
         {
