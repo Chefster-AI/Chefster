@@ -9,12 +9,12 @@ public class SubscriberService(ChefsterDbContext context)
 {
     private readonly ChefsterDbContext _context = context;
 
-    public ServiceResult<SubscriberModel> CreateSubscriber(SubscriberModel model)
+    public async Task<ServiceResult<SubscriberModel>> CreateSubscriber(SubscriberModel model)
     {
         try
         {
-            _context.Subscribers.Add(model);
-            _context.SaveChanges();
+            await _context.Subscribers.AddAsync(model);
+            await _context.SaveChangesAsync();
             return ServiceResult<SubscriberModel>.SuccessResult(model);
         }
         catch (Exception e)
@@ -24,7 +24,39 @@ public class SubscriberService(ChefsterDbContext context)
             );
         }
     }
+    public async Task<ServiceResult<SubscriberModel>> GetSubscriberById(string subscriptionId)
+    {
+        try
+        {
+            var subscriber = await _context.Subscribers.FindAsync(subscriptionId);
+            return ServiceResult<SubscriberModel>.SuccessResult(subscriber!);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<SubscriberModel>.ErrorResult(
+                $"Failed to get Subscriber for Id: {subscriptionId}. Error: {e}"
+            );
+        }
+    }
 
+    public async Task<ServiceResult<SubscriberModel>> UpdateUserStatus(string subscriptionId, UserStatus userStatus)
+    {
+        try
+        {
+            var subscriber = await _context.Subscribers.FindAsync(subscriptionId);
+            subscriber.UserStatus = userStatus;
+            await _context.SaveChangesAsync();
+            return ServiceResult<SubscriberModel>.SuccessResult(subscriber);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<SubscriberModel>.ErrorResult(
+                $"Failed to update UserStatus for: {subscriptionId}. Error: {e}"
+            );
+        }
+    }
+
+    /*
     public ServiceResult<SubscriberModel?> GetSubscriberByFamilyId(string familyId)
     {
         try
@@ -135,4 +167,5 @@ public class SubscriberService(ChefsterDbContext context)
             );
         }
     }
+    */
 }

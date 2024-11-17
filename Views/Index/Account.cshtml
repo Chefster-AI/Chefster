@@ -2,20 +2,98 @@
 
 @{
     ViewData["Title"] = "Account";
+
+    string statusDescription;
+    string bgColor;
+    bool isSubscribed;
+
+    switch (Model.UserStatus) {
+        case Chefster.Common.UserStatus.NoAccount:
+            statusDescription = "No Account";
+            bgColor = "danger";
+            isSubscribed = false;
+            break;
+        case Chefster.Common.UserStatus.FreeTrial:
+            statusDescription = "Free Trial";
+            bgColor = "success";
+            isSubscribed = true;
+            break;
+        case Chefster.Common.UserStatus.FreeTrialEnded:
+            statusDescription = "Free Trial Ended";
+            bgColor = "danger";
+            isSubscribed = false;
+            break;
+        case Chefster.Common.UserStatus.Subscribed:
+            statusDescription = "Subscribed";
+            bgColor = "success";
+            isSubscribed = true;
+            break;
+        case Chefster.Common.UserStatus.SubscriptionEnded:
+            statusDescription = "Subscription Ended";
+            bgColor = "danger";
+            isSubscribed = false;
+            break;
+        case Chefster.Common.UserStatus.Paid:
+            statusDescription = "Subscribed";
+            bgColor = "success";
+            isSubscribed = true;
+            break;
+        case Chefster.Common.UserStatus.NotPaid:
+            statusDescription = "";
+            bgColor = "warning";
+            isSubscribed = false;
+            break;
+        case Chefster.Common.UserStatus.PendingPayment:
+            statusDescription = "Processing Payment...";
+            bgColor = "warning";
+            isSubscribed = true;
+            break;
+        default:
+            statusDescription = "Unknown";
+            bgColor = "danger";
+            isSubscribed = false;
+            break;
+    }
+    isSubscribed = true;
 }
 
 <div class="container mt-5">
-    @if (Model.UserStatus == Chefster.Common.UserStatus.NoAccount)
+    <div class="row">
+        <div class="col-md-4">
+            <div class="input-group mb-1">
+                <span class="input-group-text text-light bg-primary">Joined</span>
+                <input type="text" class="form-control" value="@Model.JoinDate.ToString("MMMM d, yyyy")" readonly>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="input-group mb-1">
+                <span class="input-group-text text-light bg-@bgColor">Status</span>
+                <input type="text" class="form-control" value="@statusDescription" readonly>
+            </div>
+        </div>
+    </div>
+    @if (isSubscribed)
     {
-    <stripe-buy-button
-        buy-button-id="buy_btn_1QHITHGO5EdTXxQvR2dzQLeu"
-        publishable-key="pk_test_51P3TK7GO5EdTXxQvdoGqlHub5RM7vlIxZ1rj4kJmxwO8FJ7bPlFL1JvY7FVZSeluLED2imD6lknAb4tb49yPg1jA00oMxDg2Dh"
-        client-reference-id=@Model.FamilyId
-    >
-    </stripe-buy-button>
+        <div class="row">
+            <a class="btn-primary" href="https://billing.stripe.com/p/login/test_3cs4ir2H6cOH90I3cc?prefilled_email=@Uri.EscapeDataString(@Model.Email)">
+                Customer Portal
+            </a>
+        </div>
     }
     else
     {
-        <div>Unsubscribe</div>
+        <div class="row mt-5">
+            <div class="col-md-4">
+            </div>
+            <div class="col-md-4">
+                <stripe-buy-button
+                    buy-button-id="buy_btn_1QHITHGO5EdTXxQvR2dzQLeu"
+                    publishable-key="pk_test_51P3TK7GO5EdTXxQvdoGqlHub5RM7vlIxZ1rj4kJmxwO8FJ7bPlFL1JvY7FVZSeluLED2imD6lknAb4tb49yPg1jA00oMxDg2Dh"
+                    client-reference-id=@Model.FamilyId
+                />
+            </div>
+            <div class="col-md-4">
+            </div>
+        </div>
     }
 </div>

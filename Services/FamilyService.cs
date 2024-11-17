@@ -244,4 +244,21 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
             );
         }
     }
+
+    public async Task<ServiceResult<FamilyModel>> UpdateUserStatusByEmail(string email, UserStatus userStatus)
+    {
+        try
+        {
+            var family = await _context.Families.FindAsync(email);
+            family.UserStatus = userStatus;
+            await _context.SaveChangesAsync();
+            return ServiceResult<FamilyModel>.SuccessResult(family);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<FamilyModel>.ErrorResult(
+                $"Failed to update UserStatus by email for: {email}. Error: {e}"
+            );
+        }
+    }
 }

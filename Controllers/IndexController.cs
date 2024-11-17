@@ -45,7 +45,9 @@ public class IndexController(
         var accountViewModel = new AccountViewModel
         {
             FamilyId = altered,
-            UserStatus = family.UserStatus
+            Email = family.Email,
+            UserStatus = family.UserStatus,
+            JoinDate = family.CreatedAt
         };
 
         return View(accountViewModel);

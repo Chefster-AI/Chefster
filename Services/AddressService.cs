@@ -11,12 +11,12 @@ public class AddressService(ChefsterDbContext context, LoggingService loggingSer
     private readonly ChefsterDbContext _context = context;
     private readonly LoggingService _logger = loggingService;
 
-    public ServiceResult<AddressModel> CreateAddress(AddressModel address)
+    public async Task<ServiceResult<AddressModel>> CreateAddress(AddressModel address)
     {
         try
         {
-            _context.Addresses.Add(address);
-            _context.SaveChanges(); // Save changes to database
+            await _context.Addresses.AddAsync(address);
+            await _context.SaveChangesAsync();
             return ServiceResult<AddressModel>.SuccessResult(address);
         }
         catch (SqlException e)

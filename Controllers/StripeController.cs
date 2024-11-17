@@ -26,9 +26,10 @@ public class StripeController(LoggingService loggingService, IConfiguration conf
         var request = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
         var allowed = new HashSet<string>
         {
-            EventTypes.CheckoutSessionCompleted,
-            EventTypes.ChargeSucceeded,
-            EventTypes.ChargeFailed
+            EventTypes.InvoicePaymentSucceeded,
+            EventTypes.CustomerSubscriptionCreated,
+            EventTypes.CustomerSubscriptionUpdated,
+            EventTypes.CheckoutSessionCompleted
         };
 
         try

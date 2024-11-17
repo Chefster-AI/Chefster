@@ -23,6 +23,8 @@ public class StripeMessageConsumer(
         var queueUrl = _configuration["CALLBACK_QUEUE"]!;
         using var scope = _serviceScopeFactory.CreateScope();
         var _subscriberService = scope.ServiceProvider.GetRequiredService<SubscriberService>();
+        var _familyService = scope.ServiceProvider.GetRequiredService<FamilyService>();
+        var _addressService = scope.ServiceProvider.GetRequiredService<AddressService>();
         bool exists = false;
         while (true)
         {
@@ -43,128 +45,24 @@ public class StripeMessageConsumer(
                     var stripeEvent = EventUtility.ParseEvent(message.Body);
                     switch (stripeEvent.Type)
                     {
-                        //Successful Cases
-                        case EventTypes.CheckoutSessionCompleted:
-                            var sessionComplete =
-                                stripeEvent.Data.Object as Stripe.Checkout.Session;
-                            var original = sessionComplete!.ClientReferenceId.Replace('_', '|');
-
-                            var updated = new SubscriberUpdateDto
-                            {
-                                CustomerId = sessionComplete!.CustomerId,
-                                SubscriptionId = sessionComplete!.SubscriptionId,
-                                PaymentCreatedDate = sessionComplete!.Created.ToString(),
-                                UserStatus =
-                                    sessionComplete!.PaymentStatus == "paid"
-                                        ? UserStatus.Subscribed
-                                        : UserStatus.NotPaid,
-                            };
-
-                            _logger.Log(
-                                $"session complete payment status: {sessionComplete!.PaymentStatus}",
-                                LogLevels.Info
-                            );
-
-                            var sessionCompleteUpdate =
-                                _subscriberService.UpdateSubscriberByFamilyId(original, updated);
-
-                            if (sessionCompleteUpdate.Success)
-                            {
-                                await DeleteMessage(message.ReceiptHandle);
-                            }
+                        case EventTypes.InvoicePaymentSucceeded: // creates majority of subscriber model
+                            InvoicePaymentSucceeded(stripeEvent, message);
                             break;
-
-                        case EventTypes.ChargeSucceeded:
-                            var charge = stripeEvent.Data.Object as Charge;
-                            exists = _subscriberService.SubscriberExists(charge!.CustomerId).Data;
-                            if (!exists)
-                            {
-                                _logger.Log(
-                                    $"Subscriber doesn't exist for Id: {charge!.CustomerId}",
-                                    LogLevels.Warning,
-                                    "ChargeSucceeded Event"
-                                );
-                                break;
-                            }
-
-                            var chargeUpdated = new SubscriberUpdateDto
-                            {
-                                ReceiptUrl = charge!.ReceiptUrl
-                            };
-                            var chargeUpdatedStatus =
-                                await _subscriberService.UpdateSubscriberByCustomerId(
-                                    charge!.CustomerId,
-                                    chargeUpdated
-                                );
-
-                            if (chargeUpdatedStatus!.Success)
-                            {
-                                await DeleteMessage(message.ReceiptHandle);
-                            }
+                        case EventTypes.CustomerSubscriptionCreated: // updates UserStatus
+                            UpdateUserStatus(stripeEvent, message);
                             break;
-
-                        // Error Cases
-                        case EventTypes.ChargeFailed:
-                            var chargeFailed = stripeEvent.Data.Object as Charge;
-                            exists = _subscriberService
-                                .SubscriberExists(chargeFailed!.CustomerId)
-                                .Data;
-
-                            if (!exists)
-                            {
-                                _logger.Log(
-                                    $"Subscriber doesn't exist for Id: {chargeFailed!.CustomerId}",
-                                    LogLevels.Warning,
-                                    "ChargeFailed Event"
-                                );
-                                break;
-                            }
-
-                            var currentSub = _subscriberService.GetSubscriberByCustomerId(
-                                chargeFailed!.CustomerId
-                            );
-
-                            if (
-                                currentSub.Data != null
-                                && currentSub.Data.PaymentCreatedDate != null
-                            )
-                            {
-                                var dateString = currentSub.Data.PaymentCreatedDate;
-                                DateTime parsedDate = DateTime.ParseExact(
-                                    dateString!,
-                                    "M/d/yyyy h:mm:ss tt",
-                                    null
-                                );
-                                // skip updates that are old
-                                if (parsedDate < DateTime.UtcNow)
-                                {
-                                    _logger.Log(
-                                        "Deleting failed charge message because its older than a valid charge",
-                                        LogLevels.Info
-                                    );
-                                    await DeleteMessage(message.ReceiptHandle);
-                                    break;
-                                }
-                            }
-
-                            var chargeFailedUpdate = new SubscriberUpdateDto
-                            {
-                                UserStatus =
-                                    chargeFailed!.Status == "failed"
-                                        ? UserStatus.NotPaid
-                                        : UserStatus.Unknown
-                            };
-                            var chargeFailedUpdateStatus =
-                                await _subscriberService.UpdateSubscriberByCustomerId(
-                                    chargeFailed!.CustomerId,
-                                    chargeFailedUpdate
-                                );
-
-                            if (chargeFailedUpdateStatus!.Success)
-                            {
-                                await DeleteMessage(message.ReceiptHandle);
-                            }
+                        case EventTypes.CustomerSubscriptionUpdated: // updates UserStatus
+                            UpdateUserStatus(stripeEvent, message);
                             break;
+                        case EventTypes.CheckoutSessionCompleted: // contains user address, email, and id
+                            CreateAddress(stripeEvent, message);
+                            break;
+                        // case EventTypes.ChargeSucceeded:
+                        //     ChargeSucceeded(stripeEvent, message);
+                        //     break;
+                        // case EventTypes.ChargeFailed:
+                        //     ChargeFailed(stripeEvent, message);
+                        //     break;
                         default:
                             _logger.Log(
                                 $"Received unhandled stripe callback {stripeEvent.Type}",
@@ -177,9 +75,209 @@ public class StripeMessageConsumer(
                 {
                     Console.WriteLine($"Error processing message from callbackQueue: {e}");
                 }
+
                 await Task.Delay(2000);
             }
         }
+
+        async void InvoicePaymentSucceeded(Event stripeEvent, Message message)
+        {
+            var invoice = stripeEvent.Data.Object as Invoice;
+
+            var subscriber = new SubscriberModel
+            {
+                SubscriptionId = invoice.SubscriptionId,
+                CustomerId = invoice.CustomerId,
+                Email = invoice.CustomerEmail,
+                UserStatus = UserStatus.Paid,
+                InvoiceUrl = invoice.HostedInvoiceUrl,
+                StartDate = invoice.PeriodStart,
+                EndDate = invoice.PeriodEnd
+            };
+
+            await _subscriberService.CreateSubscriber(subscriber);
+            await DeleteMessage(message.ReceiptHandle);
+        }
+
+        async void UpdateUserStatus(Event stripeEvent, Message message)
+        {
+            var subscription = stripeEvent.Data.Object as Subscription;
+            var response = await _subscriberService.GetSubscriberById(subscription.Id);
+            var subscriber = response.Data;
+            var newUserStatus = UserStatus.Unknown;
+
+            // Determine new UserStatus based on the Subscription status
+            switch (subscription.Status) {
+                case "trialing":
+                    newUserStatus = UserStatus.FreeTrial;
+                    break;
+                case "paused":
+                    newUserStatus = UserStatus.FreeTrialExpired;
+                    break;
+                case "active":
+                    newUserStatus = UserStatus.Subscribed;
+                    break;
+                case "canceled":
+                    newUserStatus = subscriber.UserStatus == UserStatus.FreeTrial ? UserStatus.FreeTrialExpired : UserStatus.PreviouslySubscribed;
+                    break;
+                case "unpaid":
+                    newUserStatus = UserStatus.NotPaid;
+                    break;
+                case "past_due":
+                    newUserStatus = UserStatus.NotPaid;
+                    break;
+                default:
+                    newUserStatus = UserStatus.Unknown;
+                    break;
+            }
+            
+            await _subscriberService.UpdateUserStatus(subscriber.SubscriptionId, newUserStatus);
+            await _familyService.UpdateUserStatusByEmail(subscriber.Email, newUserStatus);
+            await DeleteMessage(message.ReceiptHandle);
+        }
+
+        async void CreateAddress(Event stripeEvent, Message message)
+        {
+            var checkoutSession = stripeEvent.Data.Object as Stripe.Checkout.Session;
+            var address = new AddressModel
+            {
+                FamilyId = checkoutSession.ClientReferenceId.Replace('_', '|'),
+                StreetAddress = checkoutSession.CustomerDetails.Address.Line1,
+                AptOrUnitNumber = checkoutSession.CustomerDetails.Address.Line2 ?? null,
+                CityOrTown = checkoutSession.CustomerDetails.Address.City,
+                StateProvinceRegion = checkoutSession.CustomerDetails.Address.State,
+                PostalCode = checkoutSession.CustomerDetails.Address.PostalCode,
+                Country = checkoutSession.CustomerDetails.Address.Country
+            };
+
+            await _addressService.CreateAddress(address);
+            await DeleteMessage(message.ReceiptHandle);
+        }
+
+        /*
+        async void CheckoutSessionCompleted(Event stripeEvent, Message message)
+        {
+            var sessionComplete =
+                stripeEvent.Data.Object as Stripe.Checkout.Session;
+            var original = sessionComplete!.ClientReferenceId.Replace('_', '|');
+
+            var updated = new SubscriberUpdateDto
+            {
+                CustomerId = sessionComplete!.CustomerId,
+                SubscriptionId = sessionComplete!.SubscriptionId,
+                PaymentCreatedDate = sessionComplete!.Created.ToString(),
+                UserStatus =
+                    sessionComplete!.PaymentStatus == "paid"
+                        ? UserStatus.Subscribed
+                        : UserStatus.NotPaid,
+            };
+
+            _logger.Log(
+                $"session complete payment status: {sessionComplete!.PaymentStatus}",
+                LogLevels.Info
+            );
+
+            var sessionCompleteUpdate =
+                _subscriberService.UpdateSubscriberByFamilyId(original, updated);
+
+            if (sessionCompleteUpdate.Success)
+            {
+                await DeleteMessage(message.ReceiptHandle);
+            }
+        }
+
+        async void ChargeSucceeded(Event stripeEvent, Message message)
+        {
+            var charge = stripeEvent.Data.Object as Charge;
+            exists = _subscriberService.SubscriberExists(charge!.CustomerId).Data;
+            if (!exists)
+            {
+                _logger.Log(
+                    $"Subscriber doesn't exist for Id: {charge!.CustomerId}",
+                    LogLevels.Warning,
+                    "ChargeSucceeded Event"
+                );
+                return;
+            }
+
+            var chargeUpdated = new SubscriberUpdateDto
+            {
+                ReceiptUrl = charge!.ReceiptUrl
+            };
+            var chargeUpdatedStatus =
+                await _subscriberService.UpdateSubscriberByCustomerId(
+                    charge!.CustomerId,
+                    chargeUpdated
+                );
+
+            if (chargeUpdatedStatus!.Success)
+            {
+                await DeleteMessage(message.ReceiptHandle);
+            }
+        }
+
+        async void ChargeFailed(Event stripeEvent, Message message)
+        {
+            var chargeFailed = stripeEvent.Data.Object as Charge;
+            exists = _subscriberService
+                .SubscriberExists(chargeFailed!.CustomerId)
+                .Data;
+
+            if (!exists)
+            {
+                _logger.Log(
+                    $"Subscriber doesn't exist for Id: {chargeFailed!.CustomerId}",
+                    LogLevels.Warning,
+                    "ChargeFailed Event"
+                );
+                return;
+            }
+
+            var currentSub = _subscriberService.GetSubscriberByCustomerId(
+                chargeFailed!.CustomerId
+            );
+
+            if (
+                currentSub.Data != null
+                && currentSub.Data.PaymentCreatedDate != null
+            )
+            {
+                var dateString = currentSub.Data.PaymentCreatedDate;
+                DateTime parsedDate = DateTime.ParseExact(
+                    dateString!,
+                    "M/d/yyyy h:mm:ss tt",
+                    null
+                );
+                // skip updates that are old
+                if (parsedDate < DateTime.UtcNow)
+                {
+                    _logger.Log(
+                        "Deleting failed charge message because its older than a valid charge",
+                        LogLevels.Info
+                    );
+                    await DeleteMessage(message.ReceiptHandle);
+                }
+            }
+
+            var chargeFailedUpdate = new SubscriberUpdateDto
+            {
+                UserStatus =
+                    chargeFailed!.Status == "failed"
+                        ? UserStatus.NotPaid
+                        : UserStatus.Unknown
+            };
+            var chargeFailedUpdateStatus =
+                await _subscriberService.UpdateSubscriberByCustomerId(
+                    chargeFailed!.CustomerId,
+                    chargeFailedUpdate
+                );
+
+            if (chargeFailedUpdateStatus!.Success)
+            {
+                await DeleteMessage(message.ReceiptHandle);
+            }
+        }
+        */
     }
 
     private async Task DeleteMessage(string receiptHandle)

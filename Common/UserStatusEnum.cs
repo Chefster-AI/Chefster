@@ -4,10 +4,11 @@ public enum UserStatus
 {
     NoAccount = 0,
     FreeTrial = 1,
-    FreeTrialExpired = 2,
+    FreeTrialEnded = 2,
     Subscribed = 3,
-    PreviouslySubscribed = 4,
-    NotPaid = 5,
-    PendingPayment = 6,
-    Unknown = 7
+    SubscriptionEnded = 4,
+    Paid = 5,
+    NotPaid = 6,
+    PendingPayment = 7,
+    Unknown = 8
 }
