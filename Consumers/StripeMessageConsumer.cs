@@ -43,6 +43,7 @@ public class StripeMessageConsumer(
                 try
                 {
                     var stripeEvent = EventUtility.ParseEvent(message.Body);
+                    Console.WriteLine("[Handling]: " + stripeEvent.Type);
                     switch (stripeEvent.Type)
                     {
                         case EventTypes.InvoicePaymentSucceeded: // creates majority of subscriber model
@@ -86,13 +87,13 @@ public class StripeMessageConsumer(
 
             var subscriber = new SubscriberModel
             {
-                SubscriptionId = invoice.SubscriptionId,
+                SubscriptionId = invoice!.SubscriptionId,
                 CustomerId = invoice.CustomerId,
                 Email = invoice.CustomerEmail,
                 UserStatus = UserStatus.Paid,
                 InvoiceUrl = invoice.HostedInvoiceUrl,
-                StartDate = invoice.PeriodStart,
-                EndDate = invoice.PeriodEnd
+                StartDate = invoice.Lines.Data[0].Period.Start,
+                EndDate = invoice.Lines.Data[0].Period.End
             };
 
             await _subscriberService.CreateSubscriber(subscriber);
@@ -102,8 +103,9 @@ public class StripeMessageConsumer(
         async void UpdateUserStatus(Event stripeEvent, Message message)
         {
             var subscription = stripeEvent.Data.Object as Subscription;
-            var response = await _subscriberService.GetSubscriberById(subscription.Id);
+            var response = await _subscriberService.GetSubscriberById(subscription!.Id);
             var subscriber = response.Data;
+            if (subscriber == null) { return; }
             var newUserStatus = UserStatus.Unknown;
 
             // Determine new UserStatus based on the Subscription status
@@ -141,7 +143,7 @@ public class StripeMessageConsumer(
             var checkoutSession = stripeEvent.Data.Object as Stripe.Checkout.Session;
             var address = new AddressModel
             {
-                FamilyId = checkoutSession.ClientReferenceId.Replace('_', '|'),
+                FamilyId = checkoutSession!.ClientReferenceId.Replace('_', '|'),
                 StreetAddress = checkoutSession.CustomerDetails.Address.Line1,
                 AptOrUnitNumber = checkoutSession.CustomerDetails.Address.Line2 ?? null,
                 CityOrTown = checkoutSession.CustomerDetails.Address.City,

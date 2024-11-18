@@ -1,7 +1,7 @@
 using Chefster.Common;
 using Chefster.Context;
 using Chefster.Models;
-using MongoDB.Bson;
+using Microsoft.EntityFrameworkCore;
 
 namespace Chefster.Services;
 
@@ -35,6 +35,24 @@ public class SubscriberService(ChefsterDbContext context)
         {
             return ServiceResult<SubscriberModel>.ErrorResult(
                 $"Failed to get Subscriber for Id: {subscriptionId}. Error: {e}"
+            );
+        }
+    }
+    
+    public async Task<ServiceResult<SubscriberModel>> GetLatestSubscriptionByEmail(string email)
+    {
+        try
+        {
+            var latestSubscription = await _context.Subscribers
+                .Where(s => s.Email == email)
+                .OrderByDescending(s => s.StartDate)
+                .FirstOrDefaultAsync();
+            return ServiceResult<SubscriberModel>.SuccessResult(latestSubscription!);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<SubscriberModel>.ErrorResult(
+                $"Failed to get latest subscription for email: {email}. Error: {e}"
             );
         }
     }

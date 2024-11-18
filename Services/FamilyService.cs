@@ -3,6 +3,7 @@ using Chefster.Context;
 using Chefster.Interfaces;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace Chefster.Services;
 
@@ -249,7 +250,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
     {
         try
         {
-            var family = await _context.Families.FindAsync(email);
+            var family = await _context.Families.FirstOrDefaultAsync(f => f.Email == email);
             family.UserStatus = userStatus;
             await _context.SaveChangesAsync();
             return ServiceResult<FamilyModel>.SuccessResult(family);

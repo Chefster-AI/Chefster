@@ -45,7 +45,7 @@ public class StripeController(LoggingService loggingService, IConfiguration conf
                         MessageBody = request
                     }
                 );
-                Console.WriteLine($"Added message: {stripeEvent.Type}");
+                Console.WriteLine($"[Queued] {stripeEvent.Type}");
             }
             return Ok();
         }

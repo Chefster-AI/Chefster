@@ -18,13 +18,15 @@ public class IndexController(
     ConsiderationsService considerationsService,
     FamilyService familyService,
     MemberService memberService,
-    PreviousRecipesService previousRecipesService
+    PreviousRecipesService previousRecipesService,
+    SubscriberService subscriberService
 ) : Controller
 {
     private readonly ConsiderationsService _considerationService = considerationsService;
     private readonly FamilyService _familyService = familyService;
     private readonly MemberService _memberService = memberService;
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
+    private readonly SubscriberService _subscriberService = subscriberService;
 
     [Route("/stripeCallback")]
     public IActionResult StripeCallback()
@@ -34,18 +36,23 @@ public class IndexController(
 
     [Authorize]
     [Route("/account")]
-    public IActionResult Account()
+    public async Task<IActionResult> Account()
     {
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
         var family = _familyService.GetByEmail(email!).Data;
-
         var altered = family!.Id.Replace('|', '_');
+
+        var response = await _subscriberService.GetLatestSubscriptionByEmail(email!);
+        var subscriber = response.Data;
+
         var accountViewModel = new AccountViewModel
         {
             FamilyId = altered,
             Email = family.Email,
             UserStatus = family.UserStatus,
-            JoinDate = family.CreatedAt
+            JoinDate = family.CreatedAt,
+            PeriodStart = subscriber != null ? subscriber.StartDate : null,
+            PeriodEnd = subscriber != null ? subscriber.EndDate : null
         };
 
         return View(accountViewModel);
@@ -327,9 +334,18 @@ public class IndexController(
 
     [Authorize]
     [Route("/thankyou")]
-    public IActionResult ThankYou(ThankYouViewModel model)
+    public IActionResult ThankYou()
     {
-        return View(model);
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var family = _familyService.GetByEmail(email!).Data;
+        var thankYou = new ThankYouViewModel
+        {
+            EmailAddress = email!,
+            GenerationDay = family!.GenerationDay,
+            GenerationTime = family.GenerationTime
+        };
+
+        return View(thankYou);
     }
 
     [Route("/unsubscribe/{familyId}")]
