@@ -19,14 +19,14 @@ public class IndexController(
     FamilyService familyService,
     MemberService memberService,
     PreviousRecipesService previousRecipesService,
-    SubscriberService subscriberService
+    SubscriptionService subscriptionService
 ) : Controller
 {
     private readonly ConsiderationsService _considerationService = considerationsService;
     private readonly FamilyService _familyService = familyService;
     private readonly MemberService _memberService = memberService;
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
-    private readonly SubscriberService _subscriberService = subscriberService;
+    private readonly SubscriptionService _subscriptionService = subscriptionService;
 
     [Route("/stripeCallback")]
     public IActionResult StripeCallback()
@@ -42,8 +42,8 @@ public class IndexController(
         var family = _familyService.GetByEmail(email!).Data;
         var altered = family!.Id.Replace('|', '_');
 
-        var response = await _subscriberService.GetLatestSubscriptionByEmail(email!);
-        var subscriber = response.Data;
+        var response = await _subscriptionService.GetLatestSubscriptionByEmail(email!);
+        var subscription = response.Data;
 
         var accountViewModel = new AccountViewModel
         {
@@ -51,8 +51,8 @@ public class IndexController(
             Email = family.Email,
             UserStatus = family.UserStatus,
             JoinDate = family.CreatedAt,
-            PeriodStart = subscriber != null ? subscriber.StartDate : null,
-            PeriodEnd = subscriber != null ? subscriber.EndDate : null
+            PeriodStart = subscription != null ? subscription.StartDate : null,
+            PeriodEnd = subscription != null ? subscription.EndDate : null
         };
 
         return View(accountViewModel);

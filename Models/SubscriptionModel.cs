@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Chefster.Models;
 
-[Table("Subscribers")]
+[Table("Subscriptions")]
 [PrimaryKey(nameof(SubscriptionId))]
-public class SubscriberModel
+public class SubscriptionModel
 {
     public required string SubscriptionId { get; set; }
     public required string CustomerId { get; set; }
@@ -16,12 +16,3 @@ public class SubscriberModel
     public required DateTime StartDate { get; set; }
     public required DateTime EndDate { get; set; }
 }
-
-// public class SubscriberUpdateDto
-// {
-//     public string? CustomerId { get; set; }
-//     public string? SubscriptionId { get; set; }
-//     public UserStatus? UserStatus { get; set; }
-//     public string? PaymentCreatedDate { get; set; }
-//     public string? ReceiptUrl { get; set; }
-// }

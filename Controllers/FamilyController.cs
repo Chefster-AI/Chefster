@@ -25,7 +25,7 @@ public class FamilyController(
     UpdateProfileService updateProfileService,
     LetterQueueService letterQueueService,
     LoggingService loggingService,
-    SubscriberService subscriberService
+    SubscriptionService subscriptionService
 ) : ControllerBase
 {
     private readonly AddressService _addressService = addressService;
@@ -39,7 +39,7 @@ public class FamilyController(
     private readonly UpdateProfileService _updateProfileService = updateProfileService;
     private readonly LetterQueueService _letterQueueService = letterQueueService;
     private readonly LoggingService _logger = loggingService;
-    private readonly SubscriberService _subscriberService = subscriberService;
+    private readonly SubscriptionService _subscriptionService = subscriptionService;
 
 #if DEBUG
     [HttpGet("{Id}")]

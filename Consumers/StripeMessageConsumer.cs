@@ -22,7 +22,7 @@ public class StripeMessageConsumer(
     {
         var queueUrl = _configuration["CALLBACK_QUEUE"]!;
         using var scope = _serviceScopeFactory.CreateScope();
-        var _subscriberService = scope.ServiceProvider.GetRequiredService<SubscriberService>();
+        var _subscriptionService = scope.ServiceProvider.GetRequiredService<Services.SubscriptionService>();
         var _familyService = scope.ServiceProvider.GetRequiredService<FamilyService>();
         var _addressService = scope.ServiceProvider.GetRequiredService<AddressService>();
         bool exists = false;
@@ -46,7 +46,7 @@ public class StripeMessageConsumer(
                     Console.WriteLine("[Handling]: " + stripeEvent.Type);
                     switch (stripeEvent.Type)
                     {
-                        case EventTypes.InvoicePaymentSucceeded: // creates majority of subscriber model
+                        case EventTypes.InvoicePaymentSucceeded: // creates majority of subscription model
                             InvoicePaymentSucceeded(stripeEvent, message);
                             break;
                         case EventTypes.CustomerSubscriptionCreated: // updates UserStatus
@@ -85,7 +85,7 @@ public class StripeMessageConsumer(
         {
             var invoice = stripeEvent.Data.Object as Invoice;
 
-            var subscriber = new SubscriberModel
+            var subscription = new SubscriptionModel
             {
                 SubscriptionId = invoice!.SubscriptionId,
                 CustomerId = invoice.CustomerId,
@@ -96,20 +96,21 @@ public class StripeMessageConsumer(
                 EndDate = invoice.Lines.Data[0].Period.End
             };
 
-            await _subscriberService.CreateSubscriber(subscriber);
+            await _subscriptionService.CreateSubscription(subscription);
             await DeleteMessage(message.ReceiptHandle);
         }
 
         async void UpdateUserStatus(Event stripeEvent, Message message)
         {
-            var subscription = stripeEvent.Data.Object as Subscription;
-            var response = await _subscriberService.GetSubscriberById(subscription!.Id);
-            var subscriber = response.Data;
-            if (subscriber == null) { return; }
+            var updatedSubscription = stripeEvent.Data.Object as Subscription;
+            var response = await _subscriptionService.GetSubscriptionById(updatedSubscription!.Id);
+
+            var currentSubscription = response.Data;
+            if (currentSubscription == null) { return; }
             var newUserStatus = UserStatus.Unknown;
 
-            // Determine new UserStatus based on the Subscription status
-            switch (subscription.Status) {
+            // Determine new UserStatus based on the updated subscription's status
+            switch (updatedSubscription.Status) {
                 case "trialing":
                     newUserStatus = UserStatus.FreeTrial;
                     break;
@@ -120,7 +121,7 @@ public class StripeMessageConsumer(
                     newUserStatus = UserStatus.Subscribed;
                     break;
                 case "canceled":
-                    newUserStatus = subscriber.UserStatus == UserStatus.FreeTrial ? UserStatus.FreeTrialEnded : UserStatus.SubscriptionEnded;
+                    newUserStatus = currentSubscription.UserStatus == UserStatus.FreeTrial ? UserStatus.FreeTrialEnded : UserStatus.SubscriptionEnded;
                     break;
                 case "unpaid":
                     newUserStatus = UserStatus.NotPaid;
@@ -133,8 +134,8 @@ public class StripeMessageConsumer(
                     break;
             }
             
-            await _subscriberService.UpdateUserStatus(subscriber.SubscriptionId, newUserStatus);
-            await _familyService.UpdateUserStatusByEmail(subscriber.Email, newUserStatus);
+            await _subscriptionService.UpdateUserStatus(currentSubscription.SubscriptionId, newUserStatus);
+            await _familyService.UpdateUserStatusByEmail(currentSubscription.Email, newUserStatus);
             await DeleteMessage(message.ReceiptHandle);
         }
 
@@ -157,57 +158,26 @@ public class StripeMessageConsumer(
         }
 
         /*
-        async void CheckoutSessionCompleted(Event stripeEvent, Message message)
-        {
-            var sessionComplete =
-                stripeEvent.Data.Object as Stripe.Checkout.Session;
-            var original = sessionComplete!.ClientReferenceId.Replace('_', '|');
-
-            var updated = new SubscriberUpdateDto
-            {
-                CustomerId = sessionComplete!.CustomerId,
-                SubscriptionId = sessionComplete!.SubscriptionId,
-                PaymentCreatedDate = sessionComplete!.Created.ToString(),
-                UserStatus =
-                    sessionComplete!.PaymentStatus == "paid"
-                        ? UserStatus.Subscribed
-                        : UserStatus.NotPaid,
-            };
-
-            _logger.Log(
-                $"session complete payment status: {sessionComplete!.PaymentStatus}",
-                LogLevels.Info
-            );
-
-            var sessionCompleteUpdate =
-                _subscriberService.UpdateSubscriberByFamilyId(original, updated);
-
-            if (sessionCompleteUpdate.Success)
-            {
-                await DeleteMessage(message.ReceiptHandle);
-            }
-        }
-
         async void ChargeSucceeded(Event stripeEvent, Message message)
         {
             var charge = stripeEvent.Data.Object as Charge;
-            exists = _subscriberService.SubscriberExists(charge!.CustomerId).Data;
+            exists = _subscriptionService.subscriptionExists(charge!.CustomerId).Data;
             if (!exists)
             {
                 _logger.Log(
-                    $"Subscriber doesn't exist for Id: {charge!.CustomerId}",
+                    $"subscription doesn't exist for Id: {charge!.CustomerId}",
                     LogLevels.Warning,
                     "ChargeSucceeded Event"
                 );
                 return;
             }
 
-            var chargeUpdated = new SubscriberUpdateDto
+            var chargeUpdated = new subscriptionUpdateDto
             {
                 ReceiptUrl = charge!.ReceiptUrl
             };
             var chargeUpdatedStatus =
-                await _subscriberService.UpdateSubscriberByCustomerId(
+                await _subscriptionService.UpdateSubscriptionByCustomerId(
                     charge!.CustomerId,
                     chargeUpdated
                 );
@@ -221,21 +191,21 @@ public class StripeMessageConsumer(
         async void ChargeFailed(Event stripeEvent, Message message)
         {
             var chargeFailed = stripeEvent.Data.Object as Charge;
-            exists = _subscriberService
-                .SubscriberExists(chargeFailed!.CustomerId)
+            exists = _subscriptionService
+                .subscriptionExists(chargeFailed!.CustomerId)
                 .Data;
 
             if (!exists)
             {
                 _logger.Log(
-                    $"Subscriber doesn't exist for Id: {chargeFailed!.CustomerId}",
+                    $"subscription doesn't exist for Id: {chargeFailed!.CustomerId}",
                     LogLevels.Warning,
                     "ChargeFailed Event"
                 );
                 return;
             }
 
-            var currentSub = _subscriberService.GetSubscriberByCustomerId(
+            var currentSub = _subscriptionService.GetSubscriptionByCustomerId(
                 chargeFailed!.CustomerId
             );
 
@@ -261,7 +231,7 @@ public class StripeMessageConsumer(
                 }
             }
 
-            var chargeFailedUpdate = new SubscriberUpdateDto
+            var chargeFailedUpdate = new subscriptionUpdateDto
             {
                 UserStatus =
                     chargeFailed!.Status == "failed"
@@ -269,7 +239,7 @@ public class StripeMessageConsumer(
                         : UserStatus.Unknown
             };
             var chargeFailedUpdateStatus =
-                await _subscriberService.UpdateSubscriberByCustomerId(
+                await _subscriptionService.UpdateSubscriptionByCustomerId(
                     chargeFailed!.CustomerId,
                     chargeFailedUpdate
                 );

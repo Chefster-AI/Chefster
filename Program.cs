@@ -9,12 +9,11 @@ using Hangfire;
 using Hangfire.Mongo;
 using Hangfire.Mongo.Migration.Strategies;
 using Hangfire.Mongo.Migration.Strategies.Backup;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using Stripe;
-using static Chefster.Common.LoggingHelper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -112,7 +111,7 @@ builder.Services.AddScoped<HubSpotService>();
 builder.Services.AddScoped<LetterQueueService>();
 builder.Services.AddScoped<AddressService>();
 builder.Services.AddScoped<JobRecordService>();
-builder.Services.AddScoped<SubscriberService>();
+builder.Services.AddScoped<Chefster.Services.SubscriptionService>();
 builder.Services.AddSingleton<StripeMessageConsumer>();
 builder.Services.AddHostedService<StripeMessageConsumer>();
 builder.Services.AddControllers();
