@@ -29,7 +29,8 @@ public class StripeController(LoggingService loggingService, IConfiguration conf
             EventTypes.InvoicePaymentSucceeded,
             EventTypes.CustomerSubscriptionCreated,
             EventTypes.CustomerSubscriptionUpdated,
-            EventTypes.CheckoutSessionCompleted
+            EventTypes.CheckoutSessionCompleted,
+            EventTypes.ChargeFailed
         };
 
         try

@@ -39,7 +39,7 @@ public class JobService(
 
     // Since hangfire has one function for creating and updating jobs we are using one function here for that
     // Obsolute tag suppresses the warning for QueueName
-    public void CreateorUpdateEmailJob(string familyId)
+    public void CreateorUpdateJob(string familyId)
     {
         var family = _familyService.GetById(familyId).Data;
         TimeZoneInfo timeZone;
@@ -91,13 +91,12 @@ public class JobService(
 
     public async Task GenerateAndSendRecipes(string familyId)
     {
-        // grab family, get gordon's prompt, create the email, then send it
         var family = _familyService.GetById(familyId).Data;
         DateTime startTime = GetUserCurrentTime(family!.TimeZone);
 
         if (family != null)
         {
-            // ensure job run meets cooldown period
+            // Ensure job run meets cooldown period
             if (family!.JobTimestamp != null)
             {
                 DateTime familyCurrentTime = GetUserCurrentTime(family.TimeZone);
@@ -118,13 +117,15 @@ public class JobService(
                 }
             }
 
+            // Build the prompt and send it to Gordon
             var gordonPrompt = BuildGordonPrompt(family!)!;
             var gordonResponse = await _gordonService.GetMessageResponse(gordonPrompt);
+
+            // Create the email and send it to the user
             var body = await _viewToStringService.ViewToStringAsync(
                 "EmailTemplate",
                 gordonResponse.Data!
             );
-
             if (body != null)
             {
                 _emailService.SendEmail(family.Email, "Your weekly meal plan has arrived!", body);
@@ -141,7 +142,8 @@ public class JobService(
                 );
                 throw new Exception("Body for recipe email was null");
             }
-
+            
+            // Store previous recipes to reduce redundant suggestions
             var recipesToHold = ExtractRecipes(familyId, gordonResponse.Data!);
             int mealCount =
                 family!.NumberOfBreakfastMeals
@@ -159,6 +161,8 @@ public class JobService(
                     LogLevels.Error
                 );
             }
+
+            // Release previously stored recipes to allow them to be suggested again
             var releaseSuccess = _previousRecipeService.RealeaseRecipes(familyId, mealCount);
             if (!releaseSuccess.Success)
             {
@@ -167,6 +171,8 @@ public class JobService(
                     LogLevels.Error
                 );
             }
+
+            // Timestamp the job
             family = _familyService.UpdateFamilyJobTimestamp(
                 familyId,
                 TimeZoneInfo.ConvertTime(
@@ -178,6 +184,8 @@ public class JobService(
                 $"Updated JobTimestamp for family with ID: {family.Id} and Email: {family.Email}",
                 LogLevels.Info
             );
+
+            // Record job details
             var jobRecord = new JobRecordCreateDto
             {
                 FamilyId = family.Id,
@@ -188,7 +196,11 @@ public class JobService(
             };
             _jobRecordService.CreateJobRecord(jobRecord);
 
-            // TODO: check family userstatus, remove recurring job if necessary
+            // Remove recurring job if family is no longer either in FreeTrial or Subscribed
+            if (family.UserStatus != UserStatus.FreeTrial || family.UserStatus != UserStatus.Subscribed)
+            {
+                RecurringJob.RemoveIfExists(family.Id);
+            }
         }
         else
         {
@@ -366,7 +378,7 @@ public class JobService(
                         + string.Join(", ", enjoyed)
                     : null,
                 notEnjoyed.Any()
-                    ? "Do not generate recipes these recipes, or recipes that are similar to the ones listed here:\n"
+                    ? "Do not generate these recipes, or recipes that are similar to the ones listed here:\n"
                         + string.Join(", ", notEnjoyed)
                     : null
             }.Where(s => s != null)
