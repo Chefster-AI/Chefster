@@ -147,7 +147,7 @@ public class FamilyController(
         }
 
         // once we updated successfully, not now update the job with new generation times
-        _jobService.CreateorUpdateEmailJob(updated.Data!.Id);
+        _jobService.CreateOrUpdateJob(updated.Data!.Id);
 
         return Ok(updated.Data);
     }
@@ -190,7 +190,7 @@ public class FamilyController(
         }
 
         // once we updated successfully, update the job with new generation times
-        _jobService.CreateorUpdateEmailJob(updated.Data!.Id);
+        _jobService.CreateOrUpdateJob(updated.Data!.Id);
 
         // update hub spot contact
         _hubSpotService.UpdateContact(
