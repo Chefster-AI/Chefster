@@ -28,12 +28,6 @@ public class IndexController(
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
     private readonly SubscriptionService _subscriptionService = subscriptionService;
 
-    [Route("/stripeCallback")]
-    public IActionResult StripeCallback()
-    {
-        return RedirectToAction("Privacy", "Index");
-    }
-
     [Authorize]
     [Route("/account")]
     public async Task<IActionResult> Account()
