@@ -133,7 +133,7 @@ public class StripeMessageConsumer(
             if (newUserStatus == UserStatus.FreeTrial || newUserStatus == UserStatus.Subscribed)
             {
                 var family = _familyService.GetByEmail(currentSubscription.Email).Data;
-                _jobService.CreateorUpdateJob(family!.Id);
+                _jobService.CreateOrUpdateJob(family!.Id);
             }
             
             await _subscriptionService.UpdateUserStatus(currentSubscription.SubscriptionId, newUserStatus);

@@ -39,7 +39,7 @@ public class JobService(
 
     // Since hangfire has one function for creating and updating jobs we are using one function here for that
     // Obsolute tag suppresses the warning for QueueName
-    public void CreateorUpdateJob(string familyId)
+    public void CreateOrUpdateJob(string familyId)
     {
         var family = _familyService.GetById(familyId).Data;
         TimeZoneInfo timeZone;
