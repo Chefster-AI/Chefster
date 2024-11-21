@@ -40,6 +40,28 @@ public class SubscriptionService(ChefsterDbContext context)
         }
     }
 
+    public async Task<ServiceResult<string?>> GetEmailBySubscriptionId(string subscriptionId)
+    {
+        try
+        {
+            var subscription = await _context.Subscriptions.FindAsync(subscriptionId);
+            if (subscription == null)
+            {
+                return ServiceResult<string?>.ErrorResult(
+                    $"Subscription does not exist for Id: {subscriptionId}"
+                );
+            }
+            var email = subscription.Email;
+            return ServiceResult<string?>.SuccessResult(email);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<string?>.ErrorResult(
+                $"Failed to get subscription for Id: {subscriptionId}. Error: {e}"
+            );
+        }
+    }
+
     public async Task<ServiceResult<SubscriptionModel>> GetLatestSubscriptionByEmail(string email)
     {
         try

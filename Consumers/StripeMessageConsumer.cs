@@ -4,6 +4,8 @@ using Chefster.Common;
 using Chefster.Models;
 using Chefster.Services;
 using Hangfire;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Stripe;
 
 namespace Chefster.Consumers;
@@ -57,6 +59,7 @@ public class StripeMessageConsumer(
                             UpdateUserStatus(stripeEvent, message);
                             break;
                         case EventTypes.CustomerSubscriptionUpdated: // updates UserStatus
+                            HandleLetterQueue(stripeEvent, message);
                             UpdateUserStatus(stripeEvent, message);
                             break;
                         case EventTypes.CheckoutSessionCompleted: // contains user address
@@ -97,6 +100,7 @@ public class StripeMessageConsumer(
                     $"Subscriptions already exists. {invoice!.SubscriptionId}",
                     LogLevels.Info
                 );
+                await DeleteMessage(message.ReceiptHandle);
                 return;
             }
             var subscription = new SubscriptionModel
@@ -174,10 +178,10 @@ public class StripeMessageConsumer(
         {
             var checkoutSession = stripeEvent.Data.Object as Stripe.Checkout.Session;
             var familyId = checkoutSession!.ClientReferenceId.Replace('_', '|');
-            var existingAddress = _addressService.GetAddress(familyId);
+            var existingAddress = await _addressService.GetAddress(familyId);
 
             // Create Address and add it to the LetterQueue if we don't have one for them yet
-            if (existingAddress == null)
+            if (existingAddress.Data == null)
             {
                 var address = new AddressModel
                 {
@@ -191,23 +195,6 @@ public class StripeMessageConsumer(
                 };
 
                 await _addressService.CreateAddress(address);
-
-                UserStatus status = checkoutSession!.AmountTotal == 0 ? UserStatus.FreeTrial : UserStatus.Subscribed;
-
-                if (status == UserStatus.Subscribed)
-                {
-                    var family = _familyService.GetByEmail(checkoutSession.CustomerEmail).Data;
-                    if (family != null)
-                    {
-                        var letterModel = new LetterModel
-                        {
-                            Email = checkoutSession.CustomerEmail,
-                            Family = family,
-                            Address = address
-                        };
-                        _letterQueueService.PopulateLetterQueue(letterModel);
-                    }
-                }
             }
 
             await DeleteMessage(message.ReceiptHandle);
@@ -221,6 +208,39 @@ public class StripeMessageConsumer(
                 LogLevels.Warning
             );
 
+            await DeleteMessage(message.ReceiptHandle);
+        }
+
+        async void HandleLetterQueue(Event stripeEvent, Message message)
+        {
+            var subscription = stripeEvent.Data.Object as Subscription;
+            var obj = stripeEvent.Data.PreviousAttributes as JObject;
+            var previousAttributes = obj!.ToObject<PreviousAttributes>();
+
+            if (subscription == null || previousAttributes == null)
+            {
+                return;
+            }
+
+            if (previousAttributes.Status == "trialing" && subscription.Status == "active")
+            {
+                var email = await _subscriptionService.GetEmailBySubscriptionId(subscription.Id);
+                if (email.Data != null)
+                {
+                    var family = _familyService.GetByEmail(email.Data).Data;
+                    var address = await _addressService.GetAddress(family!.Id);
+                    if (family != null && address.Data != null)
+                    {
+                        var letterModel = new LetterModel
+                        {
+                            Email = email.Data,
+                            Family = family,
+                            Address = address.Data
+                        };
+                        _letterQueueService.PopulateLetterQueue(letterModel);
+                    }
+                }
+            }
             await DeleteMessage(message.ReceiptHandle);
         }
     }

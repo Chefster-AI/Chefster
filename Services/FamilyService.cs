@@ -93,7 +93,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
     {
         try
         {
-            var family = _context.Families.Where(f => f.Email == email).SingleOrDefault();
+            var family = _context.Families.Where(f => f.Email == email).FirstOrDefault();
             return ServiceResult<FamilyModel?>.SuccessResult(family);
         }
         catch (SqlException e)
@@ -246,7 +246,10 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         }
     }
 
-    public async Task<ServiceResult<FamilyModel>> UpdateUserStatusByEmail(string email, UserStatus userStatus)
+    public async Task<ServiceResult<FamilyModel>> UpdateUserStatusByEmail(
+        string email,
+        UserStatus userStatus
+    )
     {
         try
         {
