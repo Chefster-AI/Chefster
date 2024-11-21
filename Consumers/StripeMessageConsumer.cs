@@ -173,37 +173,42 @@ public class StripeMessageConsumer(
         async void CreateAddress(Event stripeEvent, Message message)
         {
             var checkoutSession = stripeEvent.Data.Object as Stripe.Checkout.Session;
-            var address = new AddressModel
+            var familyId = checkoutSession!.ClientReferenceId.Replace('_', '|');
+            var existingAddress = _addressService.GetAddress(familyId);
+
+            // Create Address and add it to the LetterQueue if we don't have one for them yet
+            if (existingAddress == null)
             {
-                FamilyId = checkoutSession!.ClientReferenceId.Replace('_', '|'),
-                StreetAddress = checkoutSession.CustomerDetails.Address.Line1,
-                AptOrUnitNumber = checkoutSession.CustomerDetails.Address.Line2 ?? null,
-                CityOrTown = checkoutSession.CustomerDetails.Address.City,
-                StateProvinceRegion = checkoutSession.CustomerDetails.Address.State,
-                PostalCode = checkoutSession.CustomerDetails.Address.PostalCode,
-                Country = checkoutSession.CustomerDetails.Address.Country
-            };
+                var address = new AddressModel
+                {
+                    FamilyId = familyId,
+                    StreetAddress = checkoutSession.CustomerDetails.Address.Line1,
+                    AptOrUnitNumber = checkoutSession.CustomerDetails.Address.Line2 ?? null,
+                    CityOrTown = checkoutSession.CustomerDetails.Address.City,
+                    StateProvinceRegion = checkoutSession.CustomerDetails.Address.State,
+                    PostalCode = checkoutSession.CustomerDetails.Address.PostalCode,
+                    Country = checkoutSession.CustomerDetails.Address.Country
+                };
 
-            await _addressService.CreateAddress(address);
+                await _addressService.CreateAddress(address);
 
-            // Needs moved to another location that runs once
-            // UserStatus status =
-            //     checkoutSession!.AmountTotal == 0 ? UserStatus.FreeTrial : UserStatus.Subscribed;
+                UserStatus status = checkoutSession!.AmountTotal == 0 ? UserStatus.FreeTrial : UserStatus.Subscribed;
 
-            // if (status == UserStatus.Subscribed)
-            // {
-            //     var family = _familyService.GetByEmail(checkoutSession.CustomerEmail).Data;
-            //     if (family != null)
-            //     {
-            //         var letterModel = new LetterModel
-            //         {
-            //             Email = checkoutSession.CustomerEmail,
-            //             Family = family,
-            //             Address = address
-            //         };
-            //         _letterQueueService.PopulateLetterQueue(letterModel, family.Id);
-            //     }
-            // }
+                if (status == UserStatus.Subscribed)
+                {
+                    var family = _familyService.GetByEmail(checkoutSession.CustomerEmail).Data;
+                    if (family != null)
+                    {
+                        var letterModel = new LetterModel
+                        {
+                            Email = checkoutSession.CustomerEmail,
+                            Family = family,
+                            Address = address
+                        };
+                        _letterQueueService.PopulateLetterQueue(letterModel);
+                    }
+                }
+            }
 
             await DeleteMessage(message.ReceiptHandle);
         }

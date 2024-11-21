@@ -26,4 +26,19 @@ public class AddressService(ChefsterDbContext context, LoggingService loggingSer
             );
         }
     }
+
+    public async Task<ServiceResult<AddressModel?>> GetAddress(string familyId)
+    {
+        try {
+            var address = await _context.Addresses.FindAsync(familyId);
+            return ServiceResult<AddressModel?>.SuccessResult(address);
+        }
+        catch (SqlException e)
+        {
+            return ServiceResult<AddressModel?>.ErrorResult(
+                $"Failed to retrieve Address for FamilyId: {familyId}. Error: {e}"
+            );
+        }
+
+    }
 }

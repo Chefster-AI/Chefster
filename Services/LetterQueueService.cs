@@ -18,7 +18,7 @@ public class LetterQueueService(
     private readonly FamilyService _familyService = familyService;
     private readonly string _sheetId = "1QSu9sJtQ6aKs_vHzMxPxwONpi8J6SkJ5bg3z08g1zoI";
 
-    public void PopulateLetterQueue(LetterModel letterModel, string familyId)
+    public void PopulateLetterQueue(LetterModel letterModel)
     {
         var family = letterModel.Family;
         var address = letterModel.Address;
@@ -31,7 +31,7 @@ public class LetterQueueService(
         var service = CreateSpreadSheetService();
 
         // make a list of members.
-        var members = _familyService.GetMembers(familyId).Data;
+        var members = _familyService.GetMembers(family.Id).Data;
         var allMembers = "";
         if (members != null && members.Count != 0)
         {
