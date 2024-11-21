@@ -8,7 +8,8 @@
     string period;
     bool isSubscribed;
 
-    switch (Model.UserStatus) {
+    switch (Model.UserStatus)
+    {
         case Chefster.Common.UserStatus.NoAccount:
             statusDescription = "No Stripe Account";
             bgColor = "danger";
@@ -56,12 +57,14 @@
             break;
     }
 
-    if (isSubscribed) {
+    if (isSubscribed)
+    {
         var start = Model.PeriodStart!.Value.ToString("MMMM d, yyyy");
         var end = Model.PeriodEnd!.Value.ToString("MMMM d, yyyy");
         period = start + " - " + end;
     }
-    else {
+    else
+    {
         period = "---";
     }
 }
@@ -69,12 +72,12 @@
 <div class="container my-5">
     <div class="row justify-content-center mt-5 pt-5">
         <div class="col-md-10">
-            <div class="row">
-                <div class="col-md-2"></div>
+            <div class="d-flex justify-content-center row min-vh-100">
                 <div class="col-md-6">
                     <div class="input-group mt-2">
                         <span class="input-group-text text-light bg-primary">Joined</span>
-                        <input type="text" class="form-control" value="@Model.JoinDate.ToString("MMMM d, yyyy")" readonly>
+                        <input type="text" class="form-control" value="@Model.JoinDate.ToString("MMMM d, yyyy")"
+                            readonly>
                     </div>
                     <div class="input-group mt-2">
                         <span class="input-group-text text-light bg-primary">Period</span>
@@ -86,8 +89,10 @@
                     </div>
                     @if (isSubscribed)
                     {
-                        <div class="fs-4 my-5">
-                            Visit the <a href="https://billing.stripe.com/p/login/test_3cs4ir2H6cOH90I3cc?prefilled_email=@Uri.EscapeDataString(@Model.Email)" target="_blank">Stripe Customer Portal</a> to view and manage your Chefster subscription.
+                        <div class="fs-4 my-5 text-center">
+                            Visit the <a
+                                href="https://billing.stripe.com/p/login/test_3cs4ir2H6cOH90I3cc?prefilled_email=@Uri.EscapeDataString(@Model.Email)"
+                                target="_blank">Stripe Customer Portal</a> to view and manage your Chefster subscription.
                         </div>
                     }
                     else
@@ -96,20 +101,16 @@
                             Create a Stripe account to begin your free trial!
                         </div>
                         @* <div class="row">
-                            <div class="col-md-4"></div>
-                            <div class="col-md-4"> *@
-                                <stripe-buy-button
-                                    buy-button-id="buy_btn_1QHITHGO5EdTXxQvR2dzQLeu"
-                                    publishable-key="pk_test_51P3TK7GO5EdTXxQvdoGqlHub5RM7vlIxZ1rj4kJmxwO8FJ7bPlFL1JvY7FVZSeluLED2imD6lknAb4tb49yPg1jA00oMxDg2Dh"
-                                    client-reference-id="@Model.FamilyId"
-                                    customer-email="@Model.Email"
-                                />
-                            @* </div>
-                            <div class="col-md-4"></div>
-                        </div> *@
+                    <div class="col-md-4"></div>
+                    <div class="col-md-4"> *@
+                        <stripe-buy-button buy-button-id="buy_btn_1QHITHGO5EdTXxQvR2dzQLeu"
+                            publishable-key="pk_test_51P3TK7GO5EdTXxQvdoGqlHub5RM7vlIxZ1rj4kJmxwO8FJ7bPlFL1JvY7FVZSeluLED2imD6lknAb4tb49yPg1jA00oMxDg2Dh"
+                            client-reference-id="@Model.FamilyId" customer-email="@Model.Email" />
+                        @* </div>
+                    <div class="col-md-4"></div>
+                    </div> *@
                     }
                 </div>
-                <div class="col-md-2"></div>
             </div>
         </div>
     </div>

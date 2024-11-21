@@ -24,27 +24,28 @@ public class SubscriptionService(ChefsterDbContext context)
             );
         }
     }
-    public async Task<ServiceResult<SubscriptionModel>> GetSubscriptionById(string subscriptionId)
+
+    public async Task<ServiceResult<SubscriptionModel?>> GetSubscriptionById(string subscriptionId)
     {
         try
         {
             var subscription = await _context.Subscriptions.FindAsync(subscriptionId);
-            return ServiceResult<SubscriptionModel>.SuccessResult(subscription!);
+            return ServiceResult<SubscriptionModel?>.SuccessResult(subscription);
         }
         catch (Exception e)
         {
-            return ServiceResult<SubscriptionModel>.ErrorResult(
+            return ServiceResult<SubscriptionModel?>.ErrorResult(
                 $"Failed to get subscription for Id: {subscriptionId}. Error: {e}"
             );
         }
     }
-    
+
     public async Task<ServiceResult<SubscriptionModel>> GetLatestSubscriptionByEmail(string email)
     {
         try
         {
-            var latestSubscription = await _context.Subscriptions
-                .Where(s => s.Email == email)
+            var latestSubscription = await _context
+                .Subscriptions.Where(s => s.Email == email)
                 .OrderByDescending(s => s.StartDate)
                 .FirstOrDefaultAsync();
             return ServiceResult<SubscriptionModel>.SuccessResult(latestSubscription!);
@@ -57,11 +58,22 @@ public class SubscriptionService(ChefsterDbContext context)
         }
     }
 
-    public async Task<ServiceResult<SubscriptionModel>> UpdateUserStatus(string subscriptionId, UserStatus userStatus)
+    public async Task<ServiceResult<SubscriptionModel>> UpdateUserStatus(
+        string subscriptionId,
+        UserStatus userStatus
+    )
     {
         try
         {
             var subscription = await _context.Subscriptions.FindAsync(subscriptionId);
+
+            if (subscription == null)
+            {
+                return ServiceResult<SubscriptionModel>.ErrorResult(
+                    $"Subscription with ID: {subscriptionId} does not exist."
+                );
+            }
+
             subscription.UserStatus = userStatus;
             await _context.SaveChangesAsync();
             return ServiceResult<SubscriptionModel>.SuccessResult(subscription);

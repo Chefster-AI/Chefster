@@ -7,19 +7,21 @@ using Google.Apis.Sheets.v4.Data;
 
 namespace Chefster.Services;
 
-public class LetterQueueService(IConfiguration configuration, LoggingService loggingService)
+public class LetterQueueService(
+    IConfiguration configuration,
+    LoggingService loggingService,
+    FamilyService familyService
+)
 {
     private readonly IConfiguration _configuration = configuration;
     private readonly LoggingService _logger = loggingService;
+    private readonly FamilyService _familyService = familyService;
     private readonly string _sheetId = "1QSu9sJtQ6aKs_vHzMxPxwONpi8J6SkJ5bg3z08g1zoI";
 
-    public void PopulateLetterQueue(
-        FamilyViewModel family,
-        string familyId,
-        UserStatus userStatus,
-        string email
-    )
+    public void PopulateLetterQueue(LetterModel letterModel, string familyId)
     {
+        var family = letterModel.Family;
+        var address = letterModel.Address;
         if (family == null)
         {
             _logger.Log($"family was null", LogLevels.Error);
@@ -29,39 +31,35 @@ public class LetterQueueService(IConfiguration configuration, LoggingService log
         var service = CreateSpreadSheetService();
 
         // make a list of members.
+        var members = _familyService.GetMembers(familyId).Data;
         var allMembers = "";
-        if (family.Members != null && family.Members.Count != 0)
+        if (members != null && members.Count != 0)
         {
-            allMembers = string.Join(", ", family.Members.Select(m => m.Name));
+            allMembers = string.Join(", ", members.Select(m => m.Name));
         }
 
         // Construct address in correct form
-        string? fullAddress = null;
-        if (family.Address != null)
-        {
-            fullAddress =
-                family.Address.StreetAddress
-                + ", "
-                + family.Address.AptOrUnitNumber
-                + " "
-                + family.Address.CityOrTown
-                + ", "
-                + family.Address.StateProvinceRegion
-                + " "
-                + family.Address.PostalCode
-                + " "
-                + family.Address.Country;
-        }
+        var fullAddress =
+            address.StreetAddress
+            + ", "
+            + address.AptOrUnitNumber
+            + " "
+            + address.CityOrTown
+            + ", "
+            + address.StateProvinceRegion
+            + " "
+            + address.PostalCode
+            + " "
+            + address.Country;
 
         var letterFamily = new List<object>()
         {
             family.Name,
             allMembers,
-            userStatus.ToString(),
             family.PhoneNumber,
-            email,
+            letterModel.Email,
             family.FamilySize,
-            fullAddress ?? "No Address"
+            fullAddress
         };
 
         var valueRange = new ValueRange() { Values = [letterFamily] };
@@ -76,7 +74,7 @@ public class LetterQueueService(IConfiguration configuration, LoggingService log
         if (appendResult == null || appendResult.Updates.UpdatedRows == 0)
         {
             _logger.Log(
-                $"Request to update sheet failed, appendResult was null or number of updated rows was 0. FamilyId: {familyId}",
+                $"Request to update sheet failed, appendResult was null or number of updated rows was 0. email: {letterModel.Email}",
                 LogLevels.Error
             );
         }

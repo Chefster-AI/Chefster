@@ -26,7 +26,9 @@ public class StripeMessageConsumer(
         var _addressService = scope.ServiceProvider.GetRequiredService<AddressService>();
         var _familyService = scope.ServiceProvider.GetRequiredService<FamilyService>();
         var _jobService = scope.ServiceProvider.GetRequiredService<JobService>();
-        var _subscriptionService = scope.ServiceProvider.GetRequiredService<Services.SubscriptionService>();
+        var _subscriptionService =
+            scope.ServiceProvider.GetRequiredService<Services.SubscriptionService>();
+        var _letterQueueService = scope.ServiceProvider.GetRequiredService<LetterQueueService>();
 
         while (true)
         {
@@ -51,6 +53,9 @@ public class StripeMessageConsumer(
                         case EventTypes.InvoicePaymentSucceeded: // creates majority of subscription model
                             InvoicePaymentSucceeded(stripeEvent, message);
                             break;
+                        case EventTypes.CustomerSubscriptionCreated:
+                            UpdateUserStatus(stripeEvent, message);
+                            break;
                         case EventTypes.CustomerSubscriptionUpdated: // updates UserStatus
                             UpdateUserStatus(stripeEvent, message);
                             break;
@@ -60,6 +65,7 @@ public class StripeMessageConsumer(
                         case EventTypes.ChargeFailed: // logs details for failed charges
                             ChargeFailed(stripeEvent, message);
                             break;
+                        // TODO: handle unsubscription
                         default:
                             _logger.Log(
                                 $"Received unhandled stripe callback {stripeEvent.Type}",
@@ -70,7 +76,10 @@ public class StripeMessageConsumer(
                 }
                 catch (Exception e)
                 {
-                    _logger.Log($"Error processing message from callbackQueue: {e}", LogLevels.Error);
+                    _logger.Log(
+                        $"Error processing message from callbackQueue: {e}",
+                        LogLevels.Error
+                    );
                 }
 
                 await Task.Delay(2000);
@@ -80,6 +89,16 @@ public class StripeMessageConsumer(
         async void InvoicePaymentSucceeded(Event stripeEvent, Message message)
         {
             var invoice = stripeEvent.Data.Object as Invoice;
+            var exists = await _subscriptionService.GetSubscriptionById(invoice!.SubscriptionId);
+
+            if (exists.Data != null)
+            {
+                _logger.Log(
+                    $"Subscriptions already exists. {invoice!.SubscriptionId}",
+                    LogLevels.Info
+                );
+                return;
+            }
             var subscription = new SubscriptionModel
             {
                 SubscriptionId = invoice!.SubscriptionId,
@@ -102,10 +121,14 @@ public class StripeMessageConsumer(
             var newUserStatus = UserStatus.Unknown;
 
             var currentSubscription = response.Data;
-            if (currentSubscription == null) { return; }
+            if (currentSubscription == null)
+            {
+                return;
+            }
 
             // Determine new UserStatus based on the updated subscription's status
-            switch (updatedSubscription.Status) {
+            switch (updatedSubscription.Status)
+            {
                 case "trialing":
                     newUserStatus = UserStatus.FreeTrial;
                     break;
@@ -116,7 +139,10 @@ public class StripeMessageConsumer(
                     newUserStatus = UserStatus.Subscribed;
                     break;
                 case "canceled":
-                    newUserStatus = currentSubscription.UserStatus == UserStatus.FreeTrial ? UserStatus.FreeTrialEnded : UserStatus.SubscriptionEnded;
+                    newUserStatus =
+                        currentSubscription.UserStatus == UserStatus.FreeTrial
+                            ? UserStatus.FreeTrialEnded
+                            : UserStatus.SubscriptionEnded;
                     break;
                 case "unpaid":
                     newUserStatus = UserStatus.NotPaid;
@@ -135,8 +161,11 @@ public class StripeMessageConsumer(
                 var family = _familyService.GetByEmail(currentSubscription.Email).Data;
                 _jobService.CreateOrUpdateJob(family!.Id);
             }
-            
-            await _subscriptionService.UpdateUserStatus(currentSubscription.SubscriptionId, newUserStatus);
+
+            await _subscriptionService.UpdateUserStatus(
+                currentSubscription.SubscriptionId,
+                newUserStatus
+            );
             await _familyService.UpdateUserStatusByEmail(currentSubscription.Email, newUserStatus);
             await DeleteMessage(message.ReceiptHandle);
         }
@@ -156,14 +185,37 @@ public class StripeMessageConsumer(
             };
 
             await _addressService.CreateAddress(address);
+
+            // Needs moved to another location that runs once
+            // UserStatus status =
+            //     checkoutSession!.AmountTotal == 0 ? UserStatus.FreeTrial : UserStatus.Subscribed;
+
+            // if (status == UserStatus.Subscribed)
+            // {
+            //     var family = _familyService.GetByEmail(checkoutSession.CustomerEmail).Data;
+            //     if (family != null)
+            //     {
+            //         var letterModel = new LetterModel
+            //         {
+            //             Email = checkoutSession.CustomerEmail,
+            //             Family = family,
+            //             Address = address
+            //         };
+            //         _letterQueueService.PopulateLetterQueue(letterModel, family.Id);
+            //     }
+            // }
+
             await DeleteMessage(message.ReceiptHandle);
         }
 
         async void ChargeFailed(Event stripeEvent, Message message)
         {
             var charge = stripeEvent.Data.Object as Charge;
-            _logger.Log($"Charge failed for Stripe customer {charge!.CustomerId}. Details: {charge.FailureMessage} {charge.Outcome.SellerMessage}", LogLevels.Warning);
-            
+            _logger.Log(
+                $"Charge failed for Stripe customer {charge!.CustomerId}. Details: {charge.FailureMessage} {charge.Outcome.SellerMessage}",
+                LogLevels.Warning
+            );
+
             await DeleteMessage(message.ReceiptHandle);
         }
     }

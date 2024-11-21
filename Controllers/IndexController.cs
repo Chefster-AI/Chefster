@@ -43,10 +43,10 @@ public class IndexController(
         {
             FamilyId = altered,
             Email = family.Email,
-            UserStatus = family.UserStatus,
+            UserStatus = subscription != null ? subscription.UserStatus : UserStatus.NoAccount,
             JoinDate = family.CreatedAt,
-            PeriodStart = subscription != null ? subscription.StartDate : null,
-            PeriodEnd = subscription != null ? subscription.EndDate : null
+            PeriodStart = subscription?.StartDate,
+            PeriodEnd = subscription?.EndDate
         };
 
         return View(accountViewModel);

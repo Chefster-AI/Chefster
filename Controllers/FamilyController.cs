@@ -191,7 +191,6 @@ public class FamilyController(
 
         // once we updated successfully, update the job with new generation times
         _jobService.CreateOrUpdateJob(updated.Data!.Id);
-
         // update hub spot contact
         _hubSpotService.UpdateContact(
             updated.Data.Name,
@@ -199,19 +198,6 @@ public class FamilyController(
             updated.Data.UserStatus,
             updated.Data.PhoneNumber
         );
-
-        // TODO: Allow user to update subscription status
-        // User when from free trial to a letter queue eligible status (extendedFreeTrial or Subscribed)
-        // if (
-        //     (original.UserStatus == UserStatus.FreeTrial)
-        //     && (
-        //         updatedFamily.UserStatus == UserStatus.ExtendedFreeTrial
-        //         || updatedFamily.UserStatus == UserStatus.Subscribed
-        //     )
-        // )
-        // {
-        //     _letterQueueService.PopulateLetterQueue(familyId);
-        // }
 
         // Update old members and create new considerations
         await _updateProfileService.UpdateOrCreateMembersAndCreateConsiderations(familyId, family);
