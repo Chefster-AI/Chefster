@@ -38,6 +38,14 @@ public class IndexController(
 
         var response = await _subscriptionService.GetLatestSubscriptionByEmail(email!);
         var subscription = response.Data;
+        DateTime? periodStart = null;
+        DateTime? periodEnd = null;
+
+        if (subscription != null)
+        {
+            periodStart = TimeZoneInfo.ConvertTimeFromUtc(subscription.StartDate, TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone));
+            periodEnd = TimeZoneInfo.ConvertTimeFromUtc(subscription.EndDate, TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone));
+        }
 
         var accountViewModel = new AccountViewModel
         {
@@ -45,8 +53,8 @@ public class IndexController(
             Email = family.Email,
             UserStatus = subscription != null ? subscription.UserStatus : UserStatus.NoAccount,
             JoinDate = family.CreatedAt,
-            PeriodStart = subscription?.StartDate,
-            PeriodEnd = subscription?.EndDate
+            PeriodStart = periodStart,
+            PeriodEnd = periodEnd
         };
 
         return View(accountViewModel);
