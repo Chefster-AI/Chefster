@@ -27,6 +27,7 @@ public class StripeMessageConsumer(
         using var scope = _serviceScopeFactory.CreateScope();
         var _addressService = scope.ServiceProvider.GetRequiredService<AddressService>();
         var _familyService = scope.ServiceProvider.GetRequiredService<FamilyService>();
+        var _hubSpotService = scope.ServiceProvider.GetRequiredService<HubSpotService>();
         var _jobService = scope.ServiceProvider.GetRequiredService<JobService>();
         var _subscriptionService =
             scope.ServiceProvider.GetRequiredService<Services.SubscriptionService>();
@@ -166,11 +167,14 @@ public class StripeMessageConsumer(
                 _jobService.CreateOrUpdateJob(family!.Id);
             }
 
+            // Update the UserStatus in the Subscription, the Family, and in HubSpot
             await _subscriptionService.UpdateUserStatus(
                 currentSubscription.SubscriptionId,
                 newUserStatus
             );
             await _familyService.UpdateUserStatusByEmail(currentSubscription.Email, newUserStatus);
+            await _hubSpotService.UpdateContact(null, currentSubscription.Email, newUserStatus, null);
+            
             await DeleteMessage(message.ReceiptHandle);
         }
 

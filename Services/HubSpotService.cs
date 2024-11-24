@@ -55,7 +55,7 @@ public class HubSpotService(
         }
     }
 
-    public async void UpdateContact(
+    public async Task UpdateContact(
         string? name,
         string emailAddress,
         UserStatus? userStatus,
