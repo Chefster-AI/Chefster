@@ -15,6 +15,7 @@ namespace Chefster.Controllers;
 // use this to make swagger ignore this controller if its not really an api
 [ApiExplorerSettings(IgnoreApi = true)]
 public class IndexController(
+    IConfiguration configuration,
     ConsiderationsService considerationsService,
     FamilyService familyService,
     MemberService memberService,
@@ -22,6 +23,7 @@ public class IndexController(
     SubscriptionService subscriptionService
 ) : Controller
 {
+    private readonly IConfiguration  _configuration = configuration;
     private readonly ConsiderationsService _considerationService = considerationsService;
     private readonly FamilyService _familyService = familyService;
     private readonly MemberService _memberService = memberService;
@@ -47,6 +49,10 @@ public class IndexController(
             periodEnd = TimeZoneInfo.ConvertTimeFromUtc(subscription.EndDate, TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone));
         }
 
+        string stripePublishableKey = _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+            ? _configuration["STRIPE_PUBLISHABLE_KEY_DEV"]!
+            : _configuration["STRIPE_PUBLISHABLE_KEY_PROD"]!;
+
         var accountViewModel = new AccountViewModel
         {
             FamilyId = altered,
@@ -54,7 +60,8 @@ public class IndexController(
             UserStatus = subscription != null ? subscription.UserStatus : UserStatus.NoAccount,
             JoinDate = family.CreatedAt,
             PeriodStart = periodStart,
-            PeriodEnd = periodEnd
+            PeriodEnd = periodEnd,
+            StripePublishableKey = stripePublishableKey
         };
 
         return View(accountViewModel);

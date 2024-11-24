@@ -10,4 +10,5 @@ public class AccountViewModel
     public required DateTime JoinDate { get; set; }
     public DateTime? PeriodStart { get; set; }
     public DateTime? PeriodEnd { get; set; }
+    public required string StripePublishableKey { get; set; }
 }
