@@ -163,6 +163,44 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         }
     }
 
+    public ServiceResult<FamilyModel> UpdateFamilyByEmail(string email, FamilyUpdateDto family)
+    {
+        try
+        {
+            // find the family
+            var existingFam = _context.Families.Where(f => f.Email == email).FirstOrDefault();
+            if (existingFam == null)
+            {
+                return ServiceResult<FamilyModel>.ErrorResult(
+                    $"Family does not exist for update. email {email}"
+                );
+            }
+
+            // update attributes
+            existingFam.Name = family.Name;
+            existingFam.PhoneNumber = family.PhoneNumber;
+            existingFam.FamilySize = family.FamilySize;
+            existingFam.GenerationDay = family.GenerationDay;
+            existingFam.GenerationTime = family.GenerationTime;
+            existingFam.NumberOfBreakfastMeals = family.NumberOfBreakfastMeals;
+            existingFam.NumberOfLunchMeals = family.NumberOfLunchMeals;
+            existingFam.NumberOfDinnerMeals = family.NumberOfDinnerMeals;
+            existingFam.TimeZone = family.TimeZone;
+
+            _context.SaveChanges();
+
+            _logger.Log($"Successfully updated family with email: {email}", LogLevels.Info);
+            // return updated family
+            return ServiceResult<FamilyModel>.SuccessResult(existingFam);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<FamilyModel>.ErrorResult(
+                $"Failed to update Family with email {email}. Error: {e}"
+            );
+        }
+    }
+
     // useful utility if we just need to update the size due to the deletion or addition of a member
     public ServiceResult<FamilyModel> UpdateFamilySize(string familyId, int size)
     {

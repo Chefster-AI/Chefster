@@ -317,7 +317,6 @@ public class IndexController(
         {
             return Redirect("email-verification");
         }
-        var id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
         var family = _familyService.GetByEmail(email!).Data;
 
@@ -326,7 +325,7 @@ public class IndexController(
             return Redirect("CreateProfile");
         }
 
-        var previousRecipes = _previousRecipeService.GetPreviousRecipes(id!).Data;
+        var previousRecipes = _previousRecipeService.GetPreviousRecipes(family.Id).Data;
 
         // groups the recipes by day and then by meal type for display
         var groupedRecipes = previousRecipes!
@@ -354,7 +353,7 @@ public class IndexController(
 
         var model = new OverviewViewModel
         {
-            GenerationDay = family!.GenerationDay,
+            GenerationDay = family.GenerationDay,
             GenerationTime = family.GenerationTime,
             Recipes = groupedRecipes,
         };

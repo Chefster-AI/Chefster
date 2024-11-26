@@ -62,10 +62,8 @@ public class HubSpotService(
         string? phoneNumber
     )
     {
-        _client.DefaultRequestHeaders.Add(
-            "Authorization",
-            "Bearer " + configuration["HUBSPOT_API_KEY"]
-        );
+        var token = configuration["HUBSPOT_API_KEY"];
+        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
 
         var properties = new Dictionary<string, object> { { "email", emailAddress } };
 

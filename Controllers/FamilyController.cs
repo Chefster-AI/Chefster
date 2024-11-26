@@ -66,6 +66,8 @@ public class FamilyController(
     [HttpPost]
     public ActionResult CreateFamily([FromForm] FamilyViewModel Family)
     {
+        // Whoever created the family will assign the familyId.
+        // Searches for Families should look at email instead to support multiple login methods
         var familyId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value!;
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!;
         var createdAt = GetUserCurrentTime(Family.TimeZone);
@@ -159,15 +161,11 @@ public class FamilyController(
         [FromForm] FamilyUpdateViewModel family
     )
     {
-        var familyId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
-        if (familyId == null)
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        if (email == null)
         {
             return Unauthorized("No Authorized User. Denied");
         }
-
-        // get original before its updated
-        var original = _familyService.GetById(familyId).Data!;
 
         var updatedFamily = new FamilyUpdateDto
         {
@@ -182,7 +180,7 @@ public class FamilyController(
             TimeZone = family.TimeZone,
         };
 
-        var updated = _familyService.UpdateFamily(familyId, updatedFamily);
+        var updated = _familyService.UpdateFamilyByEmail(email, updatedFamily);
 
         if (!updated.Success)
         {
@@ -192,15 +190,18 @@ public class FamilyController(
         // once we updated successfully, update the job with new generation times
         _jobService.CreateOrUpdateJob(updated.Data!.Id);
         // update hub spot contact
-        _hubSpotService.UpdateContact(
+        await _hubSpotService.UpdateContact(
             updated.Data.Name,
             updated.Data.Email,
             updated.Data.UserStatus,
             updated.Data.PhoneNumber
         );
 
-        // Update old members and create new considerations
-        await _updateProfileService.UpdateOrCreateMembersAndCreateConsiderations(familyId, family);
+        // Update old members and create new considerations using the Id from the stored family
+        await _updateProfileService.UpdateOrCreateMembersAndCreateConsiderations(
+            updated.Data.Id,
+            family
+        );
 
         // probably redirect to summary page
         return RedirectToAction("Index", "profile");
@@ -210,7 +211,7 @@ public class FamilyController(
     {
         foreach (MemberViewModel Member in Family.Members)
         {
-            // create the new member
+            // create the new member with original familyId
             var NewMember = new MemberCreateDto
             {
                 FamilyId = User
