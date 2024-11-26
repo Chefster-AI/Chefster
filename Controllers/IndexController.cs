@@ -163,7 +163,7 @@ public class IndexController(
         // if family doesnt exist, redirect to create one
         if (family == null)
         {
-            return Redirect("CreateProfile");
+            return Redirect("createprofile");
         }
 
         var members = _memberService.GetByFamilyId(family.Id).Data;
@@ -322,7 +322,7 @@ public class IndexController(
 
         if (family == null)
         {
-            return Redirect("CreateProfile");
+            return Redirect("createprofile");
         }
 
         var previousRecipes = _previousRecipeService.GetPreviousRecipes(family.Id).Data;

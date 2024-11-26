@@ -1,5 +1,6 @@
 using System.Text;
 using Chefster.Common;
+using Microsoft.Net.Http.Headers;
 
 namespace Chefster.Services;
 
@@ -9,7 +10,6 @@ public class HubSpotService(
     LoggingService loggingService
 )
 {
-    private readonly HttpClient _client = httpClientFactory.CreateClient();
     private readonly LoggingService _logger = loggingService;
 
     public async void CreateContact(
@@ -19,7 +19,8 @@ public class HubSpotService(
         string phoneNumber
     )
     {
-        _client.DefaultRequestHeaders.Add(
+        var client = new HttpClient();
+        client.DefaultRequestHeaders.Add(
             "Authorization",
             "Bearer " + configuration["HUBSPOT_API_KEY"]
         );
@@ -40,7 +41,7 @@ public class HubSpotService(
             "application/json"
         );
 
-        var response = await _client.PostAsync(
+        var response = await client.PostAsync(
             "https://api.hubapi.com/crm/v3/objects/contacts",
             content
         );
@@ -62,8 +63,9 @@ public class HubSpotService(
         string? phoneNumber
     )
     {
+        var client = new HttpClient();
         var token = configuration["HUBSPOT_API_KEY"];
-        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+        client.DefaultRequestHeaders.Add(HeaderNames.Authorization, $"Bearer {token}");
 
         var properties = new Dictionary<string, object> { { "email", emailAddress } };
 
@@ -90,7 +92,7 @@ public class HubSpotService(
             "application/json"
         );
 
-        var response = await _client.PatchAsync(
+        var response = await client.PatchAsync(
             $"https://api.hubapi.com/crm/v3/objects/contacts/{emailAddress}?idProperty=email",
             content
         );
