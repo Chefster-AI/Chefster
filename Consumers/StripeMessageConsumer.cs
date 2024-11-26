@@ -57,11 +57,11 @@ public class StripeMessageConsumer(
                             InvoicePaymentSucceeded(stripeEvent, message);
                             break;
                         case EventTypes.CustomerSubscriptionCreated:
-                            UpdateUserStatus(stripeEvent, message);
+                            UpdateSubscriptionStatus(stripeEvent, message);
                             break;
                         case EventTypes.CustomerSubscriptionUpdated: // updates UserStatus
                             HandleLetterQueue(stripeEvent, message);
-                            UpdateUserStatus(stripeEvent, message);
+                            UpdateSubscriptionStatus(stripeEvent, message);
                             break;
                         case EventTypes.CheckoutSessionCompleted: // contains user address
                             CreateAddress(stripeEvent, message);
@@ -119,7 +119,7 @@ public class StripeMessageConsumer(
             await DeleteMessage(message.ReceiptHandle);
         }
 
-        async void UpdateUserStatus(Event stripeEvent, Message message)
+        async void UpdateSubscriptionStatus(Event stripeEvent, Message message)
         {
             var updatedSubscription = stripeEvent.Data.Object as Subscription;
             var response = await _subscriptionService.GetSubscriptionById(updatedSubscription!.Id);
@@ -168,13 +168,22 @@ public class StripeMessageConsumer(
             }
 
             // Update the UserStatus in the Subscription, the Family, and in HubSpot
-            await _subscriptionService.UpdateUserStatus(
+            var start = updatedSubscription.CurrentPeriodStart;
+            var end = updatedSubscription.CurrentPeriodEnd;
+            await _subscriptionService.UpdateSubscriptionStatus(
                 currentSubscription.SubscriptionId,
-                newUserStatus
+                newUserStatus,
+                start,
+                end
             );
             await _familyService.UpdateUserStatusByEmail(currentSubscription.Email, newUserStatus);
-            await _hubSpotService.UpdateContact(null, currentSubscription.Email, newUserStatus, null);
-            
+            await _hubSpotService.UpdateContact(
+                null,
+                currentSubscription.Email,
+                newUserStatus,
+                null
+            );
+
             await DeleteMessage(message.ReceiptHandle);
         }
 

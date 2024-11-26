@@ -64,7 +64,7 @@ public class FamilyController(
 #endif
 
     [HttpPost]
-    public async Task<ActionResult> CreateFamily([FromForm] FamilyViewModel Family)
+    public ActionResult CreateFamily([FromForm] FamilyViewModel Family)
     {
         var familyId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value!;
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!;

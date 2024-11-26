@@ -1,7 +1,5 @@
-using System;
 using System.Diagnostics;
 using System.Security.Claims;
-using System.Text;
 using Chefster.Common;
 using Chefster.Models;
 using Chefster.Services;
@@ -20,22 +18,37 @@ public class IndexController(
     FamilyService familyService,
     MemberService memberService,
     PreviousRecipesService previousRecipesService,
-    SubscriptionService subscriptionService
+    SubscriptionService subscriptionService,
+    AuthenticationService authenticationService
 ) : Controller
 {
-    private readonly IConfiguration  _configuration = configuration;
+    private readonly IConfiguration _configuration = configuration;
     private readonly ConsiderationsService _considerationService = considerationsService;
     private readonly FamilyService _familyService = familyService;
     private readonly MemberService _memberService = memberService;
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
     private readonly SubscriptionService _subscriptionService = subscriptionService;
+    private readonly AuthenticationService _authService = authenticationService;
 
     [Authorize]
     [Route("/account")]
     public async Task<IActionResult> Account()
     {
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
+
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
         var family = _familyService.GetByEmail(email!).Data;
+
+        // if family doesnt exist, redirect to create one
+        if (family == null)
+        {
+            return Redirect("createprofile");
+        }
+
         var altered = family!.Id.Replace('|', '_');
 
         var response = await _subscriptionService.GetLatestSubscriptionByEmail(email!);
@@ -45,13 +58,20 @@ public class IndexController(
 
         if (subscription != null)
         {
-            periodStart = TimeZoneInfo.ConvertTimeFromUtc(subscription.StartDate, TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone));
-            periodEnd = TimeZoneInfo.ConvertTimeFromUtc(subscription.EndDate, TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone));
+            periodStart = TimeZoneInfo.ConvertTimeFromUtc(
+                subscription.StartDate,
+                TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)
+            );
+            periodEnd = TimeZoneInfo.ConvertTimeFromUtc(
+                subscription.EndDate,
+                TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)
+            );
         }
 
-        string stripePublishableKey = _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
-            ? _configuration["STRIPE_PUBLISHABLE_KEY_DEV"]!
-            : _configuration["STRIPE_PUBLISHABLE_KEY_PROD"]!;
+        string stripePublishableKey =
+            _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+                ? _configuration["STRIPE_PUBLISHABLE_KEY_DEV"]!
+                : _configuration["STRIPE_PUBLISHABLE_KEY_PROD"]!;
 
         var accountViewModel = new AccountViewModel
         {
@@ -67,24 +87,29 @@ public class IndexController(
         return View(accountViewModel);
     }
 
-    [Authorize]
-    [Route("/chat")]
-    public IActionResult Chat()
-    {
-        return View();
-    }
+    // [Authorize]
+    // [Route("/chat")]
+    // public IActionResult Chat()
+    // {
+    //     return View();
+    // }
 
-    [Route("/confirm")]
-    public IActionResult ConfirmationEmail()
-    {
-        return View(new { FamilyId = "exampleFamilyId" });
-    }
+    // [Route("/confirm")]
+    // public IActionResult ConfirmationEmail()
+    // {
+    //     return View(new { FamilyId = "exampleFamilyId" });
+    // }
 
     [Authorize]
     [HttpGet]
     [Route("/createprofile")]
-    public IActionResult CreateProfile()
+    public async Task<IActionResult> CreateProfile()
     {
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
         var family = _familyService.GetByEmail(email!).Data;
 
@@ -124,8 +149,13 @@ public class IndexController(
     [Authorize]
     [HttpGet]
     [Route("/profile")]
-    public IActionResult Profile()
+    public async Task<IActionResult> Profile()
     {
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
         var family = _familyService.GetByEmail(email!).Data;
         var viewModelMembers = new List<MemberUpdateViewModel>();
@@ -280,8 +310,13 @@ public class IndexController(
 
     [Authorize]
     [Route("/overview")]
-    public IActionResult Overview()
+    public async Task<IActionResult> Overview()
     {
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
         var id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
         var family = _familyService.GetByEmail(email!).Data;
@@ -329,8 +364,15 @@ public class IndexController(
 
     [HttpPut]
     [Route("/previousRecipe")]
-    public ActionResult PreviousRecipe([FromBody] PreviousRecipeUpdateDto previousRecipe)
+    public async Task<IActionResult> PreviousRecipe(
+        [FromBody] PreviousRecipeUpdateDto previousRecipe
+    )
     {
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
         _previousRecipeService.UpdatePreviousRecipe(previousRecipe);
         return Ok();
     }
@@ -343,8 +385,13 @@ public class IndexController(
 
     [Authorize]
     [Route("/thankyou")]
-    public IActionResult ThankYou()
+    public async Task<IActionResult> ThankYou()
     {
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
         var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
         var family = _familyService.GetByEmail(email!).Data;
         var thankYou = new ThankYouViewModel
@@ -355,6 +402,17 @@ public class IndexController(
         };
 
         return View(thankYou);
+    }
+
+    [Route("email-verification")]
+    public async Task<IActionResult> EmailVerification()
+    {
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (emailVerfied)
+        {
+            return Redirect("profile");
+        }
+        return View();
     }
 
     [Route("/unsubscribe/{familyId}")]

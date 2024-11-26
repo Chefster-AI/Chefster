@@ -1,17 +1,13 @@
-using System;
-using System.Text;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Chefster.Common;
-using Chefster.Models;
 using Chefster.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
 using Stripe;
 
 namespace Chefster.Controllers;
 
+[ApiExplorerSettings(IgnoreApi = true)]
 [Route("api/stripe/callback")]
 [ApiController]
 public class StripeController(LoggingService loggingService, IConfiguration configuration)
@@ -21,7 +17,7 @@ public class StripeController(LoggingService loggingService, IConfiguration conf
     private readonly AmazonSQSClient _amazonSQSClient = new();
     private readonly IConfiguration _configuration = configuration;
 
-    public async Task<IActionResult> handleCallback()
+    public async Task<IActionResult> HandleCallback()
     {
         var request = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
         var allowed = new HashSet<string>
@@ -46,7 +42,7 @@ public class StripeController(LoggingService loggingService, IConfiguration conf
                         MessageBody = request
                     }
                 );
-                Console.WriteLine($"[Queued] {stripeEvent.Type}");
+                _logger.Log($"[Queued] {stripeEvent.Type}", LogLevels.Info);
             }
             return Ok();
         }

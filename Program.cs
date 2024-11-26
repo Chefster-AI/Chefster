@@ -9,7 +9,6 @@ using Hangfire;
 using Hangfire.Mongo;
 using Hangfire.Mongo.Migration.Strategies;
 using Hangfire.Mongo.Migration.Strategies.Backup;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
@@ -33,24 +32,31 @@ builder.Configuration.AddSystemsManager(c =>
 
 Console.WriteLine("Builder's Environment: " + builder.Environment.EnvironmentName);
 
-// set up auth0
-builder.Services.AddAuth0WebAppAuthentication(options =>
+//setup auth0
+builder
+    .Services.AddAuth0WebAppAuthentication(options =>
+    {
+        options.Domain = builder.Configuration["AUTH_DOMAIN"]!;
+        options.ClientId = builder.Configuration["AUTH_CLIENT_ID"]!;
+        options.ClientSecret = builder.Configuration["AUTH_CLIENT_SECRET"];
+        options.Scope = "openid profile email offline_access";
+    })
+    .WithAccessToken(options =>
+    {
+        options.Audience = builder.Configuration["AUTH_AUDIENCE"];
+        options.UseRefreshTokens = true;
+    });
+
+// Configure the login path
+builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.Domain = builder.Configuration["AUTH_DOMAIN"]!;
-    options.ClientId = builder.Configuration["AUTH_CLIENT_ID"]!;
-    options.Scope = "openid profile email";
+    options.LoginPath = "/login";
 });
 
 // set up Stripe
 StripeConfiguration.ApiKey = builder.Environment.IsDevelopment()
     ? builder.Configuration["STRIPE_SECRET_DEV"]
     : builder.Configuration["STRIPE_SECRET_PROD"];
-
-Console.WriteLine("STRIPE VARS: ");
-Console.WriteLine(builder.Configuration["STRIPE_SECRET_PROD"]);
-Console.WriteLine(builder.Configuration["STRIPE_PUBLISHABLE_KEY_PROD"]);
-Console.WriteLine(builder.Configuration["STRIPE_SECRET_DEV"]);
-Console.WriteLine(builder.Configuration["STRIPE_PUBLISHABLE_KEY_DEV"]);
 
 // set up db
 builder.Services.AddDbContext<ChefsterDbContext>(options =>
@@ -105,6 +111,8 @@ builder.Services.AddScoped(sp =>
     return database.GetCollection<LogModel>("logs");
 });
 
+builder.Services.AddHttpContextAccessor();
+
 // add services
 builder.Services.AddScoped<FamilyService>();
 builder.Services.AddScoped<MemberService>();
@@ -120,6 +128,7 @@ builder.Services.AddScoped<LetterQueueService>();
 builder.Services.AddScoped<AddressService>();
 builder.Services.AddScoped<JobRecordService>();
 builder.Services.AddScoped<Chefster.Services.SubscriptionService>();
+builder.Services.AddScoped<AuthenticationService>();
 builder.Services.AddSingleton<StripeMessageConsumer>();
 builder.Services.AddHostedService<StripeMessageConsumer>();
 builder.Services.AddControllers();
@@ -155,8 +164,8 @@ builder.Services.AddHangfire(
 if (builder.Environment.IsDevelopment())
 {
     // handy when developing frontend stuff. Can cause wonkiness when server side rendering pages
-    // var mvc = builder.Services.AddRazorPages();
-    // mvc.AddRazorRuntimeCompilation();
+    var mvc = builder.Services.AddRazorPages();
+    mvc.AddRazorRuntimeCompilation();
     builder.Services.AddHangfireServer(options =>
         options.Queues = [builder.Configuration["QUEUE_NAME"]]
     );
