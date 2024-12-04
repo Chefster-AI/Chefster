@@ -221,6 +221,15 @@ public class StripeMessageConsumer(
                 LogLevels.Warning
             );
 
+            var result = await _subscriptionService.GetEmailByCustomerId(charge.CustomerId);
+            string email;
+
+            if (result.Success && result.Data is not null)
+            {
+                email = result.Data;
+                await _familyService.UpdateUserStatusByEmail(email, UserStatus.NotPaid);
+            }
+
             await DeleteMessage(message.ReceiptHandle);
         }
 

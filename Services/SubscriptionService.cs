@@ -80,6 +80,32 @@ public class SubscriptionService(ChefsterDbContext context)
         }
     }
 
+    public async Task<ServiceResult<string>> GetEmailByCustomerId(string customerId)
+    {
+        try
+        {
+            var subscription = await _context
+                .Subscriptions.Where(s => s.CustomerId == customerId)
+                .OrderByDescending(s => s.StartDate)
+                .FirstOrDefaultAsync();
+
+            if (subscription == null)
+            {
+                return ServiceResult<string>.ErrorResult(
+                    $"Subscription does not exist for customer Id: {customerId}"
+                );
+            }
+
+            return ServiceResult<string>.SuccessResult(subscription.Email);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<string>.ErrorResult(
+                $"Failed to get email by customer id: {customerId}. Error: {e}"
+            );
+        }
+    }
+
     public async Task<ServiceResult<SubscriptionModel>> UpdateSubscriptionStatus(
         string subscriptionId,
         UserStatus userStatus,
