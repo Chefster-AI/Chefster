@@ -17,6 +17,7 @@ public class StripeController(LoggingService loggingService, IConfiguration conf
     private readonly AmazonSQSClient _amazonSQSClient = new();
     private readonly IConfiguration _configuration = configuration;
 
+    [HttpPost]
     public async Task<IActionResult> HandleCallback()
     {
         var request = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
@@ -31,7 +32,10 @@ public class StripeController(LoggingService loggingService, IConfiguration conf
 
         try
         {
-            var stripeEvent = EventUtility.ParseEvent(request);
+            var signatureSecret = _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+                ? _configuration["STRIPE_SIGNATURE_SECRET_DEV"]
+                : _configuration["STRIPE_SIGNATURE_SECRET_PROD"];
+            var stripeEvent = EventUtility.ConstructEvent(request, Request.Headers["Stripe-Signature"], signatureSecret);
 
             if (allowed.Contains(stripeEvent.Type))
             {
