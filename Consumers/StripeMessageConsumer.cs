@@ -50,7 +50,7 @@ public class StripeMessageConsumer(
                 try
                 {
                     var stripeEvent = EventUtility.ParseEvent(message.Body);
-                    Console.WriteLine("[Handling]: " + stripeEvent.Type);
+                    _logger.Log("[Handling]: " + stripeEvent.Type, LogLevels.Info);
                     switch (stripeEvent.Type)
                     {
                         case EventTypes.InvoicePaymentSucceeded: // creates majority of subscription model
@@ -60,7 +60,7 @@ public class StripeMessageConsumer(
                             UpdateSubscriptionStatus(stripeEvent, message);
                             break;
                         case EventTypes.CustomerSubscriptionUpdated: // updates UserStatus
-                            HandleLetterQueue(stripeEvent, message);
+                            HandleLetterQueue(stripeEvent);
                             UpdateSubscriptionStatus(stripeEvent, message);
                             break;
                         case EventTypes.CheckoutSessionCompleted: // contains user address
@@ -224,7 +224,7 @@ public class StripeMessageConsumer(
             await DeleteMessage(message.ReceiptHandle);
         }
 
-        async void HandleLetterQueue(Event stripeEvent, Message message)
+        async void HandleLetterQueue(Event stripeEvent)
         {
             var subscription = stripeEvent.Data.Object as Subscription;
             var obj = stripeEvent.Data.PreviousAttributes as JObject;
@@ -254,12 +254,12 @@ public class StripeMessageConsumer(
                     }
                 }
             }
-            await DeleteMessage(message.ReceiptHandle);
         }
     }
 
     private async Task DeleteMessage(string receiptHandle)
     {
+        _logger.Log($"Deleting message with handle: {receiptHandle}", LogLevels.Info);
         await _amazonSQSClient.DeleteMessageAsync(_configuration["CALLBACK_QUEUE"], receiptHandle);
     }
 

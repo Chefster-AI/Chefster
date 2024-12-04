@@ -62,7 +62,7 @@ public class SubscriptionService(ChefsterDbContext context)
         }
     }
 
-    public async Task<ServiceResult<SubscriptionModel>> GetLatestSubscriptionByEmail(string email)
+    public async Task<ServiceResult<SubscriptionModel?>> GetLatestSubscriptionByEmail(string email)
     {
         try
         {
@@ -70,11 +70,11 @@ public class SubscriptionService(ChefsterDbContext context)
                 .Subscriptions.Where(s => s.Email == email)
                 .OrderByDescending(s => s.StartDate)
                 .FirstOrDefaultAsync();
-            return ServiceResult<SubscriptionModel>.SuccessResult(latestSubscription!);
+            return ServiceResult<SubscriptionModel?>.SuccessResult(latestSubscription);
         }
         catch (Exception e)
         {
-            return ServiceResult<SubscriptionModel>.ErrorResult(
+            return ServiceResult<SubscriptionModel?>.ErrorResult(
                 $"Failed to get latest subscription for email: {email}. Error: {e}"
             );
         }

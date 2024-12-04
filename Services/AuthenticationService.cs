@@ -29,6 +29,8 @@ public class AuthenticationService(
             return false;
         }
         var user = httpContext.User;
+        var email = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
         // avoid calls to auth0 if we dont need to
         var currentStatus = user.FindFirst("email_verified")?.Value;
         if (currentStatus != null && currentStatus == "true")
@@ -36,20 +38,37 @@ public class AuthenticationService(
             return true;
         }
 
-        _logger.Log("Getting Auth0 User Information", LogLevels.Info);
-        var accessToken = await httpContext.GetTokenAsync("access_token");
+        _logger.Log($"Getting Auth0 User Information for email: {email}", LogLevels.Info);
 
+        var accessToken = await httpContext.GetTokenAsync("access_token");
         var httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.Add(HeaderNames.Authorization, $"Bearer {accessToken}");
         var domain = _configuration["AUTH_DOMAIN"];
         var request = await httpClient.GetAsync($"https://{domain}/userinfo");
 
-        var response = await request.Content.ReadAsStringAsync();
+        if (!request.IsSuccessStatusCode)
+        {
+            _logger.Log($"Failed to get user info for email: {email}", LogLevels.Error);
+            return false;
+        }
 
-        var emailVerified = JsonDocument
-            .Parse(response)
-            .RootElement.GetProperty("email_verified")
-            .GetBoolean();
+        var response = await request.Content.ReadAsStringAsync();
+        bool emailVerified = false;
+        try
+        {
+            emailVerified = JsonDocument
+                .Parse(response)
+                .RootElement.GetProperty("email_verified")
+                .GetBoolean();
+        }
+        catch (Exception e)
+        {
+            _logger.Log(
+                $"Failed to get email_verified value from object for email: {email}. Exception: {e}",
+                LogLevels.Error
+            );
+            return false;
+        }
 
         // refresh auth if email is verified
         if (emailVerified)
@@ -62,7 +81,6 @@ public class AuthenticationService(
 
     private async Task RefreshAuth()
     {
-        _logger.Log("Refreshing Authentication", LogLevels.Info);
         var httpClient = new HttpClient();
         var domain = _configuration["AUTH_DOMAIN"];
         var clientId = _configuration["AUTH_CLIENT_ID"];
@@ -73,6 +91,8 @@ public class AuthenticationService(
             _logger.Log($"httpContext was null.", LogLevels.Error);
             return;
         }
+        var email = httpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        _logger.Log($"Refreshing Authentication for email: {email}", LogLevels.Info);
 
         var url = $"https://{domain}/oauth/token";
         var refreshToken = await httpContext!.GetTokenAsync("refresh_token");
@@ -104,16 +124,28 @@ public class AuthenticationService(
         if (!response.IsSuccessStatusCode)
         {
             _logger.Log(
-                $"Failed to refresh token. {response.StatusCode} {response.Content.ToJson()}",
+                $"Failed to refresh user auth. {email} {response.StatusCode} {response.Content.ToJson()}",
                 LogLevels.Error
             );
             return;
         }
 
-        var token = JsonDocument
-            .Parse(responseContent)
-            .RootElement.GetProperty("id_token")
-            .GetString();
+        string? token;
+        try
+        {
+            token = JsonDocument
+                .Parse(responseContent)
+                .RootElement.GetProperty("id_token")
+                .GetString();
+        }
+        catch (Exception e)
+        {
+            _logger.Log(
+                $"error parsing id_token out of request for email: {email}. Exception: {e}",
+                LogLevels.Error
+            );
+            return;
+        }
 
         // grab new token and update the User Object
         var handler = new JwtSecurityTokenHandler();

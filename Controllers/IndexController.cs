@@ -87,19 +87,6 @@ public class IndexController(
         return View(accountViewModel);
     }
 
-    // [Authorize]
-    // [Route("/chat")]
-    // public IActionResult Chat()
-    // {
-    //     return View();
-    // }
-
-    // [Route("/confirm")]
-    // public IActionResult ConfirmationEmail()
-    // {
-    //     return View(new { FamilyId = "exampleFamilyId" });
-    // }
-
     [Authorize]
     [HttpGet]
     [Route("/createprofile")]

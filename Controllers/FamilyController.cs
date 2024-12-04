@@ -181,14 +181,22 @@ public class FamilyController(
         };
 
         var updated = _familyService.UpdateFamilyByEmail(email, updatedFamily);
-
-        if (!updated.Success)
+        var subscription = await _subscriptionService.GetLatestSubscriptionByEmail(email);
+        if (!updated.Success || updated.Data == null)
         {
             return RedirectToAction("Index", "error", new { route = "/profile" });
         }
 
-        // once we updated successfully, update the job with new generation times
-        _jobService.CreateOrUpdateJob(updated.Data!.Id);
+        if (subscription.Data != null)
+        {
+            // once we updated successfully, update the job with new generation times
+            var status = subscription.Data.UserStatus;
+            if (status == UserStatus.Subscribed || status == UserStatus.FreeTrial)
+            {
+                _jobService.CreateOrUpdateJob(updated.Data!.Id);
+            }
+        }
+
         // update hub spot contact
         await _hubSpotService.UpdateContact(
             updated.Data.Name,
