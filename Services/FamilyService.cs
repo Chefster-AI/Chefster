@@ -292,6 +292,10 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         try
         {
             var family = await _context.Families.FirstOrDefaultAsync(f => f.Email == email);
+            if (family == null)
+            {
+                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
+            }
             family.UserStatus = userStatus;
             await _context.SaveChangesAsync();
             return ServiceResult<FamilyModel>.SuccessResult(family);
