@@ -41,7 +41,7 @@
             isSubscribed = true;
             break;
         case Chefster.Common.UserStatus.NotPaid:
-            statusDescription = "";
+            statusDescription = "Not Paid";
             bgColor = "warning";
             isSubscribed = false;
             break;
@@ -101,8 +101,8 @@
                             Create a Stripe account to begin your free trial!
                         </div>
                         <stripe-buy-button buy-button-id="buy_btn_1QHITHGO5EdTXxQvR2dzQLeu"
-                            publishable-key="@Model.StripePublishableKey"
-                            client-reference-id="@Model.FamilyId" customer-email="@Model.Email" />
+                            publishable-key="@Model.StripePublishableKey" client-reference-id="@Model.FamilyId"
+                            customer-email="@Model.Email" />
                     }
                 </div>
             </div>

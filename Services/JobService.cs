@@ -3,8 +3,8 @@ using Chefster.Common;
 using Chefster.Models;
 using Hangfire;
 using static Chefster.Common.ConsiderationsEnum;
-using static Chefster.Common.Helpers;
 using static Chefster.Common.Constants;
+using static Chefster.Common.Helpers;
 
 namespace Chefster.Services;
 
@@ -142,7 +142,7 @@ public class JobService(
                 );
                 throw new Exception("Body for recipe email was null");
             }
-            
+
             // Store previous recipes to reduce redundant suggestions
             var recipesToHold = ExtractRecipes(familyId, gordonResponse.Data!);
             int mealCount =
@@ -173,13 +173,15 @@ public class JobService(
             }
 
             // Timestamp the job
-            family = _familyService.UpdateFamilyJobTimestamp(
-                familyId,
-                TimeZoneInfo.ConvertTime(
-                    DateTime.UtcNow,
-                    TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)
+            family = _familyService
+                .UpdateFamilyJobTimestamp(
+                    familyId,
+                    TimeZoneInfo.ConvertTime(
+                        DateTime.UtcNow,
+                        TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)
+                    )
                 )
-            ).Data;
+                .Data;
             _logger.Log(
                 $"Updated JobTimestamp for family with ID: {family.Id} and Email: {family.Email}",
                 LogLevels.Info
@@ -197,7 +199,10 @@ public class JobService(
             _jobRecordService.CreateJobRecord(jobRecord);
 
             // Remove recurring job if family is no longer either in FreeTrial or Subscribed
-            if (family.UserStatus != UserStatus.FreeTrial || family.UserStatus != UserStatus.Subscribed)
+            if (
+                family.UserStatus != UserStatus.FreeTrial
+                && family.UserStatus != UserStatus.Subscribed
+            )
             {
                 RecurringJob.RemoveIfExists(family.Id);
             }

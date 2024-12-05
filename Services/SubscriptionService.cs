@@ -109,8 +109,8 @@ public class SubscriptionService(ChefsterDbContext context)
     public async Task<ServiceResult<SubscriptionModel>> UpdateSubscriptionStatus(
         string subscriptionId,
         UserStatus userStatus,
-        DateTime start,
-        DateTime end
+        DateTime? start = null,
+        DateTime? end = null
     )
     {
         try
@@ -125,8 +125,12 @@ public class SubscriptionService(ChefsterDbContext context)
             }
 
             subscription.UserStatus = userStatus;
-            subscription.StartDate = start;
-            subscription.EndDate = end;
+
+            if (start is not null && end is not null)
+            {
+                subscription.StartDate = (DateTime)start;
+                subscription.EndDate = (DateTime)end;
+            }
             await _context.SaveChangesAsync();
             return ServiceResult<SubscriptionModel>.SuccessResult(subscription);
         }

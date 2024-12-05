@@ -227,6 +227,15 @@ public class StripeMessageConsumer(
             if (result.Success && result.Data is not null)
             {
                 email = result.Data;
+                var subscription = await _subscriptionService.GetLatestSubscriptionByEmail(email);
+
+                if (subscription.Data is not null)
+                {
+                    await _subscriptionService.UpdateSubscriptionStatus(
+                        subscription.Data.SubscriptionId,
+                        UserStatus.NotPaid
+                    );
+                }
                 await _familyService.UpdateUserStatusByEmail(email, UserStatus.NotPaid);
             }
 
