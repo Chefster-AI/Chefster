@@ -1,6 +1,7 @@
 using System.Reflection;
 using Auth0.AspNetCore.Authentication;
 using Chefster.Common;
+using Chefster.Consumers;
 using Chefster.Context;
 using Chefster.Models;
 using Chefster.Services;
@@ -9,10 +10,9 @@ using Hangfire.Mongo;
 using Hangfire.Mongo.Migration.Strategies;
 using Hangfire.Mongo.Migration.Strategies.Backup;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
-using static Chefster.Common.LoggingHelper;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,13 +32,31 @@ builder.Configuration.AddSystemsManager(c =>
 
 Console.WriteLine("Builder's Environment: " + builder.Environment.EnvironmentName);
 
-// set up auth0
-builder.Services.AddAuth0WebAppAuthentication(options =>
+//setup auth0
+builder
+    .Services.AddAuth0WebAppAuthentication(options =>
+    {
+        options.Domain = builder.Configuration["AUTH_DOMAIN"]!;
+        options.ClientId = builder.Configuration["AUTH_CLIENT_ID"]!;
+        options.ClientSecret = builder.Configuration["AUTH_CLIENT_SECRET"];
+        options.Scope = "openid profile email offline_access";
+    })
+    .WithAccessToken(options =>
+    {
+        options.Audience = builder.Configuration["AUTH_AUDIENCE"];
+        options.UseRefreshTokens = true;
+    });
+
+// Configure the login path
+builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.Domain = builder.Configuration["AUTH_DOMAIN"]!;
-    options.ClientId = builder.Configuration["AUTH_CLIENT_ID"]!;
-    options.Scope = "openid profile email";
+    options.LoginPath = "/login";
 });
+
+// set up Stripe
+StripeConfiguration.ApiKey = builder.Environment.IsDevelopment()
+    ? builder.Configuration["STRIPE_SECRET_DEV"]
+    : builder.Configuration["STRIPE_SECRET_PROD"];
 
 // set up db
 builder.Services.AddDbContext<ChefsterDbContext>(options =>
@@ -93,6 +111,8 @@ builder.Services.AddScoped(sp =>
     return database.GetCollection<LogModel>("logs");
 });
 
+builder.Services.AddHttpContextAccessor();
+
 // add services
 builder.Services.AddScoped<FamilyService>();
 builder.Services.AddScoped<MemberService>();
@@ -106,8 +126,11 @@ builder.Services.AddScoped<UpdateProfileService>();
 builder.Services.AddScoped<HubSpotService>();
 builder.Services.AddScoped<LetterQueueService>();
 builder.Services.AddScoped<AddressService>();
-builder.Services.AddScoped<UserStatusService>();
 builder.Services.AddScoped<JobRecordService>();
+builder.Services.AddScoped<Chefster.Services.SubscriptionService>();
+builder.Services.AddScoped<AuthenticationService>();
+builder.Services.AddSingleton<StripeMessageConsumer>();
+builder.Services.AddHostedService<StripeMessageConsumer>();
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 

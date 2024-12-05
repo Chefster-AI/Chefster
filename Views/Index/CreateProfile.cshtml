@@ -98,107 +98,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="fs-3 pt-5">
-                    Select your plan
-                </div>
-                <hr class="border border-primary border-1 opacity-100">
-                <div class="row">
-                    <div class="col">
-                        <div class="vstack">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="options" id="freeTrialRadio" checked>
-                                <label class="form-check-label" for="freeTrialRadio">
-                                    Free Trial
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="options" id="subscribeRadio">
-                                <label class="form-check-label" for="subscribeRadio">
-                                    Subscribe
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="freeTrialBlock" class="collapse multi-collapse show">
-                    <div class="row my-3">
-                        <div class="col-12">
-                            <div class="fs-5">
-                                Start your 2-week free trial today!
-                            </div>
-                        </div>
-                        <div class="col-12 my-4">
-                            <div class="fs-5">
-                                To receive a hand-written letter from the founders,
-                                as well as an additional 2 weeks on your free trial, consider
-                                providing your address.
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="optInAddress">
-                                <label class="form-check-label" for="optInAddress">I would like to provide my address</label>
-                            </div>
-                        </div>
-                        <div id="addressFields" style="display: none;">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="form-group mt-1">
-                                        <label asp-for="Address.StreetAddress">Street Address</label>
-                                        <input asp-for="Address.StreetAddress" type="text" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <div class="form-group mt-1">
-                                        <label asp-for="Address.AptOrUnitNumber">Apartment or Unit Number (optional)</label>
-                                        <input id="AptOrUnitNumber" asp-for="Address.AptOrUnitNumber" type="text" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="col-md-5">
-                                    <div class="form-group mt-1">
-                                        <label asp-for="Address.CityOrTown">City</label>
-                                        <input asp-for="Address.CityOrTown" type="text" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group mt-1">
-                                        <label asp-for="Address.StateProvinceRegion">State</label>
-                                        <input asp-for="Address.StateProvinceRegion" type="text" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group mt-1">
-                                        <label asp-for="Address.PostalCode">Postal Code</label>
-                                        <input asp-for="Address.PostalCode" type="text" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <div class="form-group mt-1">
-                                        <label asp-for="Address.Country">Country</label>
-                                        <input asp-for="Address.Country" type="text" class="form-control">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="subscribeBlock" class="collapse multi-collapse">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="fs-5 mt-3">
-                                Subscribe now to receive weekly recipes!
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="fs-5 my-4">
-                                We use Stripe to process payments. Learn more <a href="https://stripe.com/">here</a>.
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 <input type="hidden" id="TimeZone" asp-for="TimeZone" value="" required />
                 <div class="form-group">
-                    <button id="submitButton" type="submit" class="btn btn-primary w-100">Create Profile</button>
+                    <button id="submitButton" type="submit" class="btn btn-primary w-100 my-4">Create Profile</button>
                 </div>
             </form>
         </div>
@@ -207,18 +109,6 @@
 
 @section Scripts {
     <script>
-        document.getElementById('optInAddress').addEventListener('change', function() {
-            var addressFields = document.getElementById('addressFields');
-            var addressInputs = addressFields.querySelectorAll('input:not(#AptOrUnitNumber)')
-            if (this.checked) {
-                addressFields.style.display = 'block';
-                addressInputs.forEach(input => input.setAttribute('required', 'required'));
-            } else {
-                addressFields.style.display = 'none';
-                addressInputs.forEach(input => input.removeAttribute('required'));
-            }
-        });
-
         document.getElementById('createform').addEventListener('submit', function (event) {
             event.preventDefault();
 
@@ -278,30 +168,6 @@
             var addMemberButton = document.getElementById('addMemberButton')
             addMemberButton.addEventListener('click', function () {
                 increaseFamilySize();
-            });
-
-            // free trial and subscribe radio listeners
-            var freeTrialRadio = document.getElementById('freeTrialRadio');
-            var subscribeRadio = document.getElementById('subscribeRadio');
-            var freeTrialBlock = document.getElementById('freeTrialBlock');
-            var subscribeBlock = document.getElementById('subscribeBlock');
-            var submitButton = document.getElementById('submitButton')
-
-            freeTrialRadio.addEventListener('click', function() {
-                if (this.checked) {
-                    freeTrialBlock.classList.add('show');
-                    subscribeBlock.classList.remove('show');
-                    submitButton.innerText = "Start Free Trial";
-                }
-            });
-
-            subscribeRadio.addEventListener('click', function() {
-                if (this.checked) {
-                    freeTrialBlock.classList.remove('show');
-                    subscribeBlock.classList.add('show');
-                    submitButton.innerText = "Subscribe Now";
-                    // TODO: create the profile, then take user to stripe
-                }
             });
         });
 

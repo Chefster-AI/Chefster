@@ -1,72 +1,12 @@
 @model Chefster.ViewModels.OverviewViewModel
 
-@{
-    ViewData["Title"] = "Overview";
-
-    string statusDescription;
-    string bgColor;
-    switch (Model.UserStatus)
-    {
-        case Chefster.Common.UserStatus.FreeTrial:
-            statusDescription = "In 2-week Free Trial";
-            bgColor = "success";
-            break;
-        case Chefster.Common.UserStatus.ExtendedFreeTrial:
-            statusDescription = "In 4-week Free Trial";
-            bgColor = "success";
-            break;
-        case Chefster.Common.UserStatus.FreeTrialExpired:
-            statusDescription = "Free Trail Expired";
-            bgColor = "warning";
-            break;
-        case Chefster.Common.UserStatus.Subscribed:
-            statusDescription = "Subscribed";
-            bgColor = "success";
-            break;
-        case Chefster.Common.UserStatus.PreviouslySubscribed:
-            statusDescription = "Previously Subscribed";
-            bgColor = "warning";
-            break;
-        case Chefster.Common.UserStatus.Unknown:
-            statusDescription = "Awesome";
-            bgColor = "success";
-            break;
-        default:
-            statusDescription = "Awesome";
-            bgColor = "success";
-            break;
-    }   
-}
-
 <div class="container">
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="input-group mb-1">
-                    <span class="input-group-text text-light bg-@bgColor">Status</span>
-                    <input type="text" class="form-control" value="@statusDescription" readonly>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="input-group mb-1">
-                    <span class="input-group-text text-light bg-primary">First Recipes On</span>
-                    <input type="text" class="form-control" value="@Model.FirstJobRun.ToString("MMMM d, yyyy")" readonly>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="input-group mb-1">
-                    <span class="input-group-text text-light bg-primary">Last Recipes On</span>
-                    <input type="text" class="form-control" value="@Model.LastJobRun.ToString("MMMM d, yyyy")" readonly>
-                </div>
-            </div>
-        </div>
-    </div>
     <div id="countdown">
     </div>
     <div class="container text-center fs-1 mb-5" style="max-width: 800px">
         <div class="row fs-2 mt-5 mb-4">
             <div class="col-12">
-                You will receive your custom recipes in:
+                Get ready! You will receive your recipes in:
             </div>
         </div>
         <div class="row gap-2 mt-4">

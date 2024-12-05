@@ -11,12 +11,12 @@ public class AddressService(ChefsterDbContext context, LoggingService loggingSer
     private readonly ChefsterDbContext _context = context;
     private readonly LoggingService _logger = loggingService;
 
-    public ServiceResult<AddressModel> CreateAddress(AddressModel address)
+    public async Task<ServiceResult<AddressModel>> CreateAddress(AddressModel address)
     {
         try
         {
-            _context.Addresses.Add(address);
-            _context.SaveChanges(); // Save changes to database
+            await _context.Addresses.AddAsync(address);
+            await _context.SaveChangesAsync();
             return ServiceResult<AddressModel>.SuccessResult(address);
         }
         catch (SqlException e)
@@ -25,5 +25,20 @@ public class AddressService(ChefsterDbContext context, LoggingService loggingSer
                 $"Failed to create address {address.ToJson()}. Error {e}"
             );
         }
+    }
+
+    public async Task<ServiceResult<AddressModel?>> GetAddress(string familyId)
+    {
+        try {
+            var address = await _context.Addresses.FindAsync(familyId);
+            return ServiceResult<AddressModel?>.SuccessResult(address);
+        }
+        catch (SqlException e)
+        {
+            return ServiceResult<AddressModel?>.ErrorResult(
+                $"Failed to retrieve Address for FamilyId: {familyId}. Error: {e}"
+            );
+        }
+
     }
 }

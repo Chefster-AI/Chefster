@@ -3,6 +3,7 @@ using Chefster.Context;
 using Chefster.Interfaces;
 using Chefster.Models;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace Chefster.Services;
 
@@ -92,7 +93,7 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
     {
         try
         {
-            var family = _context.Families.Where(f => f.Email == email).SingleOrDefault();
+            var family = _context.Families.Where(f => f.Email == email).FirstOrDefault();
             return ServiceResult<FamilyModel?>.SuccessResult(family);
         }
         catch (SqlException e)
@@ -158,6 +159,44 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         {
             return ServiceResult<FamilyModel>.ErrorResult(
                 $"Failed to update Family with Id {familyId}. Error: {e}"
+            );
+        }
+    }
+
+    public ServiceResult<FamilyModel> UpdateFamilyByEmail(string email, FamilyUpdateDto family)
+    {
+        try
+        {
+            // find the family
+            var existingFam = _context.Families.Where(f => f.Email == email).FirstOrDefault();
+            if (existingFam == null)
+            {
+                return ServiceResult<FamilyModel>.ErrorResult(
+                    $"Family does not exist for update. email {email}"
+                );
+            }
+
+            // update attributes
+            existingFam.Name = family.Name;
+            existingFam.PhoneNumber = family.PhoneNumber;
+            existingFam.FamilySize = family.FamilySize;
+            existingFam.GenerationDay = family.GenerationDay;
+            existingFam.GenerationTime = family.GenerationTime;
+            existingFam.NumberOfBreakfastMeals = family.NumberOfBreakfastMeals;
+            existingFam.NumberOfLunchMeals = family.NumberOfLunchMeals;
+            existingFam.NumberOfDinnerMeals = family.NumberOfDinnerMeals;
+            existingFam.TimeZone = family.TimeZone;
+
+            _context.SaveChanges();
+
+            _logger.Log($"Successfully updated family with email: {email}", LogLevels.Info);
+            // return updated family
+            return ServiceResult<FamilyModel>.SuccessResult(existingFam);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<FamilyModel>.ErrorResult(
+                $"Failed to update Family with email {email}. Error: {e}"
             );
         }
     }
@@ -241,6 +280,30 @@ public class FamilyService(ChefsterDbContext context, LoggingService loggingServ
         {
             return ServiceResult<FamilyModel>.ErrorResult(
                 $"Failed to set user status to {userStatus} for family {familyId}. Error: {e}"
+            );
+        }
+    }
+
+    public async Task<ServiceResult<FamilyModel>> UpdateUserStatusByEmail(
+        string email,
+        UserStatus userStatus
+    )
+    {
+        try
+        {
+            var family = await _context.Families.FirstOrDefaultAsync(f => f.Email == email);
+            if (family == null)
+            {
+                return ServiceResult<FamilyModel>.ErrorResult("Family does not exist");
+            }
+            family.UserStatus = userStatus;
+            await _context.SaveChangesAsync();
+            return ServiceResult<FamilyModel>.SuccessResult(family);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<FamilyModel>.ErrorResult(
+                $"Failed to update UserStatus by email for: {email}. Error: {e}"
             );
         }
     }
