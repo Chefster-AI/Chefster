@@ -12,5 +12,4 @@ public class FamilyViewModel
     public required TimeSpan GenerationTime { get; set; }
     public required string TimeZone { get; set; }
     public required List<MemberViewModel> Members { get; set; }
-    public AddressViewModel? Address { get; set; }
 }
