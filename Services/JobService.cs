@@ -182,17 +182,19 @@ public class JobService(
                     )
                 )
                 .Data;
+
+            var email = family is not null ? family.Email : "";
             _logger.Log(
-                $"Updated JobTimestamp for family with ID: {family.Id} and Email: {family.Email}",
+                $"Updated JobTimestamp for family with ID: {familyId} and Email: {email}",
                 LogLevels.Info
             );
 
             // Record job details
             var jobRecord = new JobRecordCreateDto
             {
-                FamilyId = family.Id,
+                FamilyId = familyId,
                 StartTime = startTime,
-                EndTime = GetUserCurrentTime(family.TimeZone),
+                EndTime = GetUserCurrentTime(family!.TimeZone),
                 JobStatus = JobStatus.Completed,
                 JobType = JobType.RecipeGeneration
             };
@@ -204,6 +206,10 @@ public class JobService(
                 && family.UserStatus != UserStatus.Subscribed
             )
             {
+                _logger.Log(
+                    $"Removing Job with Id: {family.Id}. {family.UserStatus}",
+                    LogLevels.Info
+                );
                 RecurringJob.RemoveIfExists(family.Id);
             }
         }
@@ -215,9 +221,9 @@ public class JobService(
             );
             var jobRecord = new JobRecordCreateDto
             {
-                FamilyId = family.Id,
+                FamilyId = familyId,
                 StartTime = startTime,
-                EndTime = GetUserCurrentTime(family.TimeZone),
+                EndTime = GetUserCurrentTime(family!.TimeZone),
                 JobStatus = JobStatus.Failed,
                 JobType = JobType.RecipeGeneration
             };

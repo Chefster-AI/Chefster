@@ -7,6 +7,7 @@
     string bgColor;
     string period;
     bool isSubscribed;
+    bool paid = false;
 
     switch (Model.UserStatus)
     {
@@ -29,6 +30,7 @@
             statusDescription = "Subscribed";
             bgColor = "success";
             isSubscribed = true;
+            paid = true;
             break;
         case Chefster.Common.UserStatus.SubscriptionEnded:
             statusDescription = "Subscription Ended";
@@ -39,11 +41,13 @@
             statusDescription = "Subscribed";
             bgColor = "success";
             isSubscribed = true;
+            paid = true;
             break;
         case Chefster.Common.UserStatus.NotPaid:
             statusDescription = "Not Paid";
             bgColor = "warning";
             isSubscribed = false;
+            paid = false;
             break;
         case Chefster.Common.UserStatus.PendingPayment:
             statusDescription = "Processing Payment...";
@@ -54,10 +58,11 @@
             statusDescription = "Unknown";
             bgColor = "danger";
             isSubscribed = false;
+            paid = false;
             break;
     }
 
-    if (isSubscribed)
+    if (isSubscribed && paid)
     {
         var start = Model.PeriodStart!.Value.ToString("MMMM d, yyyy");
         var end = Model.PeriodEnd!.Value.ToString("MMMM d, yyyy");
@@ -87,7 +92,8 @@
                         <span class="input-group-text text-light bg-@bgColor">Status</span>
                         <input type="text" class="form-control" value="@statusDescription" readonly>
                     </div>
-                    @if (isSubscribed)
+                    @* Allow for users to access their stripe account even if they haven't paid *@
+                    @if (isSubscribed || !paid)
                     {
                         <div class="fs-4 my-5 text-center">
                             Visit the <a
