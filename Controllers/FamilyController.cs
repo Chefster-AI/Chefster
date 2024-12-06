@@ -14,31 +14,21 @@ namespace Chefster.Controllers;
 [Route("api/family")]
 [ApiController]
 public class FamilyController(
-    AddressService addressService,
     ConsiderationsService considerationsService,
-    EmailService emailService,
     FamilyService familyService,
     HubSpotService hubSpotService,
     MemberService memberService,
     JobService jobService,
-    ViewToStringService viewToStringService,
     UpdateProfileService updateProfileService,
-    LetterQueueService letterQueueService,
-    LoggingService loggingService,
     SubscriptionService subscriptionService
 ) : ControllerBase
 {
-    private readonly AddressService _addressService = addressService;
     private readonly ConsiderationsService _considerationsService = considerationsService;
-    private readonly EmailService _emailService = emailService;
     private readonly FamilyService _familyService = familyService;
     private readonly HubSpotService _hubSpotService = hubSpotService;
     private readonly MemberService _memberService = memberService;
     private readonly JobService _jobService = jobService;
-    private readonly ViewToStringService _viewToStringService = viewToStringService;
     private readonly UpdateProfileService _updateProfileService = updateProfileService;
-    private readonly LetterQueueService _letterQueueService = letterQueueService;
-    private readonly LoggingService _logger = loggingService;
     private readonly SubscriptionService _subscriptionService = subscriptionService;
 
 #if DEBUG

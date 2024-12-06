@@ -56,7 +56,7 @@ public class DatabaseFixture
         // Initialize services
         LoggingService = serviceProvider.GetRequiredService<LoggingService>();
         FamilyService = new FamilyService(Context, LoggingService);
-        MemberService = new MemberService(Context, LoggingService);
+        MemberService = new MemberService(Context);
         ConsiderationsService = new ConsiderationsService(Context, LoggingService);
     }
 

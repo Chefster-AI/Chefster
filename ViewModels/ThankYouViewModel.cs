@@ -1,5 +1,3 @@
-using Chefster.Common;
-
 namespace Chefster.ViewModels;
 
 public class ThankYouViewModel

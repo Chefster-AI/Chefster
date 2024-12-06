@@ -6,10 +6,9 @@ using MongoDB.Bson;
 
 namespace Chefster.Services;
 
-public class AddressService(ChefsterDbContext context, LoggingService loggingService)
+public class AddressService(ChefsterDbContext context)
 {
     private readonly ChefsterDbContext _context = context;
-    private readonly LoggingService _logger = loggingService;
 
     public async Task<ServiceResult<AddressModel>> CreateAddress(AddressModel address)
     {

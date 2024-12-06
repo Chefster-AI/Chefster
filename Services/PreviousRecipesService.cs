@@ -5,10 +5,9 @@ using Microsoft.Data.SqlClient;
 
 namespace Chefster.Services;
 
-public class PreviousRecipesService(ChefsterDbContext context, LoggingService loggingService)
+public class PreviousRecipesService(ChefsterDbContext context)
 {
     private readonly ChefsterDbContext _context = context;
-    private readonly LoggingService _logger = loggingService;
 
     public ServiceResult<List<PreviousRecipeModel>> GetPreviousRecipes(string familyId)
     {

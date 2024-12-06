@@ -3,8 +3,6 @@ using Amazon.SQS.Model;
 using Chefster.Common;
 using Chefster.Models;
 using Chefster.Services;
-using Hangfire;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Stripe;
 

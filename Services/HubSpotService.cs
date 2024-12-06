@@ -5,7 +5,6 @@ using Microsoft.Net.Http.Headers;
 namespace Chefster.Services;
 
 public class HubSpotService(
-    IHttpClientFactory httpClientFactory,
     IConfiguration configuration,
     LoggingService loggingService
 )
