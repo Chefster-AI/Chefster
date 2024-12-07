@@ -43,14 +43,10 @@ jobs:
         with:
           dotnet-version: "8.0.110"
 
-      - name: Verify .NET SDK version
-        run: dotnet --version
-
       - name: Build project
-        run: dotnet publish -c Release -o app --os linux --self-contained true
-
-      - name: List published files
-        run: ls -alh app
+        run: |
+          dotnet new globaljson --sdk-version 8.0.110
+          dotnet publish -c Release -o app --os linux
 
       - name: Deploy to EC2
         env:
