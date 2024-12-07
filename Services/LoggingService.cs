@@ -1,5 +1,4 @@
 using Chefster.Common;
-using Chefster.Interfaces;
 using Chefster.Models;
 using MongoDB.Driver;
 
@@ -44,7 +43,7 @@ public class LoggingService(IMongoClient mongoClient, IConfiguration configurati
         {
             // Print the log to console so we can use it for debugging
             Console.WriteLine($"[LOG:{log.LogLevel}] {log.Message}");
-            // don't save logs from development
+            // don't save logs from development or during unit tests
             if (_configuration["ASPNETCORE_ENVIRONMENT"] != "Development")
             {
                 collection.InsertOne(log);

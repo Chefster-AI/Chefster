@@ -5,10 +5,9 @@ using Microsoft.Data.SqlClient;
 
 namespace Chefster.Services;
 
-public class PreviousRecipesService(ChefsterDbContext context, LoggingService loggingService)
+public class PreviousRecipesService(ChefsterDbContext context)
 {
     private readonly ChefsterDbContext _context = context;
-    private readonly LoggingService _logger = loggingService;
 
     public ServiceResult<List<PreviousRecipeModel>> GetPreviousRecipes(string familyId)
     {
@@ -20,11 +19,6 @@ public class PreviousRecipesService(ChefsterDbContext context, LoggingService lo
         }
         catch (SqlException e)
         {
-            _logger.Log(
-                $"Failed to get previous recipes for family {familyId}. Error: {e}",
-                LogLevels.Error,
-                "getPreviousRecipes"
-            );
             return ServiceResult<List<PreviousRecipeModel>>.ErrorResult(
                 $"Failed to get previous recipes for family {familyId}. Error: {e}"
             );
@@ -40,12 +34,8 @@ public class PreviousRecipesService(ChefsterDbContext context, LoggingService lo
             var existingPreviousRecipe = _context.PreviousRecipes.Find(previousRecipe.RecipeId);
             if (existingPreviousRecipe == null)
             {
-                _logger.Log(
-                    $"Failed to find previous recipe with Id: {previousRecipe.RecipeId}",
-                    LogLevels.Error
-                );
                 return ServiceResult<PreviousRecipeModel>.ErrorResult(
-                    "Failed to find previous recipe with Id:" + previousRecipe.RecipeId
+                    $"Failed to find previous recipe with Id: {previousRecipe.RecipeId}"
                 );
             }
 
@@ -56,10 +46,6 @@ public class PreviousRecipesService(ChefsterDbContext context, LoggingService lo
         }
         catch (SqlException e)
         {
-            _logger.Log(
-                $"Failed to update previous recipe with Id: {previousRecipe.RecipeId}. Error: {e}",
-                LogLevels.Error
-            );
             return ServiceResult<PreviousRecipeModel>.ErrorResult(
                 $"Failed to update previous recipe with Id: {previousRecipe.RecipeId}. Error: {e}"
             );
@@ -96,10 +82,6 @@ public class PreviousRecipesService(ChefsterDbContext context, LoggingService lo
         }
         catch (SqlException e)
         {
-            _logger.Log(
-                $"Failed to hold previous recipes for family {familyId}. Error: {e}",
-                LogLevels.Error
-            );
             return ServiceResult<Task>.ErrorResult(
                 $"Failed to hold previous recipes for family {familyId}. Error: {e}"
             );
@@ -130,10 +112,6 @@ public class PreviousRecipesService(ChefsterDbContext context, LoggingService lo
         }
         catch (SqlException e)
         {
-            _logger.Log(
-                $"Failed to release previous recipes for family {familyId}. Error: {e}",
-                LogLevels.Error
-            );
             return ServiceResult<Task>.ErrorResult(
                 $"Failed to release previous recipes for family {familyId}. Error: {e}"
             );

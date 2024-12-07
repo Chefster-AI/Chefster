@@ -18,45 +18,11 @@ public class UpdateProfileService(
     private readonly ConsiderationsService _considerationsService = considerationsService;
     private readonly LoggingService _logger = loggingService;
 
-    // Handles the deletion of considerations if a member was to update theirs
-    public Task DeleteOldConsiderations(string memberId, DateTime timeAdded)
-    {
-        var considerations = _considerationsService.GetMemberConsiderations(memberId).Data;
-
-        if (considerations != null)
-        {
-            foreach (var consideration in considerations)
-            {
-                if (consideration.CreatedAt <= timeAdded)
-                {
-                    Console.WriteLine(
-                        $"Deleting consideration with Id: {consideration.ConsiderationId}"
-                    );
-                    var deleted = _considerationsService.DeleteConsideration(
-                        consideration.ConsiderationId
-                    );
-
-                    if (!deleted.Success)
-                    {
-                        // Throwing exceptions is not good because we want to continue trying to delete others
-                        _logger.Log(
-                            $"Failed to delete consideration with Id: {deleted.Data!.ConsiderationId}",
-                            LogLevels.Error
-                        );
-                    }
-                }
-            }
-        }
-
-        return Task.CompletedTask;
-    }
-
     public Task UpdateOrCreateMembersAndCreateConsiderations(
         string familyId,
         FamilyUpdateViewModel Family
     )
     {
-        var memberTotal = 0;
         foreach (MemberUpdateViewModel Member in Family.Members)
         {
             MemberModel? contextMember = null;
@@ -109,22 +75,44 @@ public class UpdateProfileService(
                 }
             }
 
-            // any considerations made before this time will be deleted
-            var deleteAfter = DateTime.UtcNow;
-
-            // Create all new considerations for update
-            foreach (SelectListItem r in Member.Restrictions)
+            List<string> originalConsiderations = [];
+            if (contextMember != null)
             {
-                if (r.Selected && contextMember != null)
+                originalConsiderations = _considerationsService
+                    .GetMemberConsiderations(contextMember.MemberId)
+                    .Data!.Select(c => c.Value)
+                    .ToList();
+            }
+
+            var allConsiderations = Member
+                .Restrictions.Concat(Member.Goals)
+                .Concat(Member.Cuisines);
+
+            foreach (SelectListItem c in allConsiderations)
+            {
+                if (c.Selected && contextMember != null && !originalConsiderations.Contains(c.Text))
                 {
-                    ConsiderationsCreateDto restriction =
-                        new()
-                        {
-                            MemberId = contextMember.MemberId,
-                            Type = ConsiderationsEnum.Restriction,
-                            Value = r.Text
-                        };
-                    var created = _considerationsService.CreateConsideration(restriction);
+                    var consideration = new ConsiderationsCreateDto
+                    {
+                        MemberId = contextMember.MemberId,
+                        Type = ConsiderationsEnum.Cuisine, // default
+                        Value = c.Text
+                    };
+
+                    if (Member.Restrictions.Contains(c))
+                    {
+                        consideration.Type = ConsiderationsEnum.Restriction;
+                    }
+                    else if (Member.Goals.Contains(c))
+                    {
+                        consideration.Type = ConsiderationsEnum.Goal;
+                    }
+                    else
+                    {
+                        consideration.Type = ConsiderationsEnum.Cuisine;
+                    }
+
+                    var created = _considerationsService.CreateConsideration(consideration);
                     if (!created.Success)
                     {
                         _logger.Log(
@@ -138,69 +126,32 @@ public class UpdateProfileService(
                 }
             }
 
-            foreach (SelectListItem g in Member.Goals)
+            // if we aren't deleting the member grab a list of remaining considerations
+            var remainingConsiderations = !Member.ShouldDelete
+                ? Member
+                    .Cuisines.Concat(Member.Restrictions)
+                    .Concat(Member.Goals)
+                    .Where(c => c.Selected)
+                    .Select(c => c.Text)
+                    .ToList()
+                : [];
+
+            if (Member.ShouldDelete && Member.MemberId != null)
             {
-                if (g.Selected && contextMember != null)
-                {
-                    ConsiderationsCreateDto goal =
-                        new()
-                        {
-                            MemberId = contextMember.MemberId,
-                            Type = ConsiderationsEnum.Goal,
-                            Value = g.Text
-                        };
-                    var created = _considerationsService.CreateConsideration(goal);
-                    if (!created.Success)
-                    {
-                        _logger.Log(
-                            $"Error creating consideration. Error: {created.Error}",
-                            LogLevels.Error
-                        );
-                        return Task.FromException(
-                            new Exception($"Error creating consideration. Error: {created.Error}")
-                        );
-                    }
-                }
+                _memberService.DeleteMember(Member.MemberId);
             }
 
-            foreach (SelectListItem c in Member.Cuisines)
-            {
-                if (c.Selected && contextMember != null)
-                {
-                    ConsiderationsCreateDto cuisine =
-                        new()
-                        {
-                            MemberId = contextMember.MemberId,
-                            Type = ConsiderationsEnum.Cuisine,
-                            Value = c.Text
-                        };
-                    var created = _considerationsService.CreateConsideration(cuisine);
-                    if (!created.Success)
-                    {
-                        _logger.Log(
-                            $"Error creating consideration. Error: {created.Error}",
-                            LogLevels.Error
-                        );
-                        return Task.FromException(
-                            new Exception($"Error creating consideration. Error: {created.Error}")
-                        );
-                    }
-                }
-            }
-
-            if (Member.MemberId != null)
-            {
-                DeleteOldConsiderations(Member.MemberId, deleteAfter);
-
-                // delete the member if it was checked to delete
-                if (Member.ShouldDelete)
-                {
-                    _memberService.DeleteMember(Member.MemberId);
-                    memberTotal += 1;
-                    _familyService.UpdateFamilySize(familyId, Family.Members.Count - memberTotal);
-                }
-            }
+            // delete considerations for deleted and updated members
+            _considerationsService.DeleteOldConsiderations(
+                Member.MemberId!,
+                remainingConsiderations
+            );
         }
+
+        // Update Family Size
+        var deletedMembers = Family.Members.Where(m => m.ShouldDelete).ToList().Count;
+        _familyService.UpdateFamilySize(familyId, Family.Members.Count - deletedMembers);
+
         return Task.CompletedTask;
     }
 }

@@ -33,6 +33,9 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Index" asp-action="Profile">Profile</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Index" asp-action="Account">Account</a>
+                        </li>
                     </ul>
                     <div class="d-flex hstack gap-3">
                         @if (User.Identity != null)
@@ -77,6 +80,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script async src="https://js.stripe.com/v3/buy-button.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 

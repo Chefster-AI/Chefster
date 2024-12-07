@@ -4,6 +4,7 @@ using Chefster.Models;
 using Hangfire;
 using static Chefster.Common.ConsiderationsEnum;
 using static Chefster.Common.Constants;
+using static Chefster.Common.Helpers;
 
 namespace Chefster.Services;
 
@@ -12,6 +13,7 @@ public class JobService(
     EmailService emailService,
     FamilyService familyService,
     GordonService gordonService,
+    JobRecordService jobRecordService,
     MemberService memberService,
     PreviousRecipesService previousRecipesService,
     ViewToStringService viewToStringService,
@@ -23,6 +25,7 @@ public class JobService(
     private readonly EmailService _emailService = emailService;
     private readonly FamilyService _familyService = familyService;
     private readonly GordonService _gordonService = gordonService;
+    private readonly JobRecordService _jobRecordService = jobRecordService;
     private readonly MemberService _memberService = memberService;
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
     private readonly ViewToStringService _viewToStringService = viewToStringService;
@@ -36,7 +39,7 @@ public class JobService(
 
     // Since hangfire has one function for creating and updating jobs we are using one function here for that
     // Obsolute tag suppresses the warning for QueueName
-    public void CreateorUpdateEmailJob(string familyId)
+    public void CreateOrUpdateJob(string familyId)
     {
         var family = _familyService.GetById(familyId).Data;
         TimeZoneInfo timeZone;
@@ -65,16 +68,17 @@ public class JobService(
                     : "default";
 
             // set time zone, queue name, and update/create job
-            var options = new RecurringJobOptions { TimeZone = timeZone, QueueName = queueName };
+            var options = new RecurringJobOptions { TimeZone = timeZone };
             RecurringJob.AddOrUpdate(
-                family.Id,
-                () => GenerateAndSendRecipes(familyId),
-                Cron.Weekly(
+                recurringJobId: family.Id,
+                methodCall: () => GenerateAndSendRecipes(familyId),
+                cronExpression: Cron.Weekly(
                     family.GenerationDay,
                     family.GenerationTime.Hours,
                     family.GenerationTime.Minutes
                 ),
-                options
+                queue: queueName,
+                options: options
             );
             _logger.Log(
                 $"Created or updated job with Id: {family.Id}. Added to Queue: {queueName}. Generation Time: {family.GenerationDay} {family.GenerationTime.Hours}:{family.GenerationTime.Minutes}",
@@ -87,19 +91,15 @@ public class JobService(
 
     public async Task GenerateAndSendRecipes(string familyId)
     {
-        // grab family, get gordon's prompt, create the email, then send it
         var family = _familyService.GetById(familyId).Data;
+        DateTime startTime = GetUserCurrentTime(family!.TimeZone);
 
         if (family != null)
         {
-            // ensure job run meets cooldown period
+            // Ensure job run meets cooldown period
             if (family!.JobTimestamp != null)
             {
-                TimeZoneInfo familyTimeZone = TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone);
-                DateTime familyCurrentTime = TimeZoneInfo.ConvertTime(
-                    DateTime.UtcNow,
-                    familyTimeZone
-                );
+                DateTime familyCurrentTime = GetUserCurrentTime(family.TimeZone);
                 double daysSinceLastRun = (familyCurrentTime - family.JobTimestamp).Value.TotalDays;
                 Console.WriteLine("Last Job Run Timestamp: " + family.JobTimestamp.ToString()!);
                 Console.WriteLine("Family's current time: " + familyCurrentTime.ToString());
@@ -117,13 +117,15 @@ public class JobService(
                 }
             }
 
+            // Build the prompt and send it to Gordon
             var gordonPrompt = BuildGordonPrompt(family!)!;
             var gordonResponse = await _gordonService.GetMessageResponse(gordonPrompt);
+
+            // Create the email and send it to the user
             var body = await _viewToStringService.ViewToStringAsync(
                 "EmailTemplate",
                 gordonResponse.Data!
             );
-
             if (body != null)
             {
                 _emailService.SendEmail(family.Email, "Your weekly meal plan has arrived!", body);
@@ -141,6 +143,7 @@ public class JobService(
                 throw new Exception("Body for recipe email was null");
             }
 
+            // Store previous recipes to reduce redundant suggestions
             var recipesToHold = ExtractRecipes(familyId, gordonResponse.Data!);
             int mealCount =
                 family!.NumberOfBreakfastMeals
@@ -158,6 +161,8 @@ public class JobService(
                     LogLevels.Error
                 );
             }
+
+            // Release previously stored recipes to allow them to be suggested again
             var releaseSuccess = _previousRecipeService.RealeaseRecipes(familyId, mealCount);
             if (!releaseSuccess.Success)
             {
@@ -166,17 +171,47 @@ public class JobService(
                     LogLevels.Error
                 );
             }
-            _familyService.UpdateFamilyJobTimestamp(
-                familyId,
-                TimeZoneInfo.ConvertTime(
-                    DateTime.UtcNow,
-                    TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)
+
+            // Timestamp the job
+            family = _familyService
+                .UpdateFamilyJobTimestamp(
+                    familyId,
+                    TimeZoneInfo.ConvertTime(
+                        DateTime.UtcNow,
+                        TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)
+                    )
                 )
-            );
+                .Data;
+
+            var email = family is not null ? family.Email : "";
             _logger.Log(
-                $"Updated JobTimestamp for family with ID: {family.Id} and Email: {family.Email}",
+                $"Updated JobTimestamp for family with ID: {familyId} and Email: {email}",
                 LogLevels.Info
             );
+
+            // Record job details
+            var jobRecord = new JobRecordCreateDto
+            {
+                FamilyId = familyId,
+                StartTime = startTime,
+                EndTime = GetUserCurrentTime(family!.TimeZone),
+                JobStatus = JobStatus.Completed,
+                JobType = JobType.RecipeGeneration
+            };
+            _jobRecordService.CreateJobRecord(jobRecord);
+
+            // Remove recurring job if family is no longer either in FreeTrial or Subscribed
+            if (
+                family.UserStatus != UserStatus.FreeTrial
+                && family.UserStatus != UserStatus.Subscribed
+            )
+            {
+                _logger.Log(
+                    $"Removing Job with Id: {family.Id}. {family.UserStatus}",
+                    LogLevels.Info
+                );
+                RecurringJob.RemoveIfExists(family.Id);
+            }
         }
         else
         {
@@ -184,6 +219,15 @@ public class JobService(
                 $"Family was null when attempting to generate and send recipe email. ID: {familyId}",
                 LogLevels.Error
             );
+            var jobRecord = new JobRecordCreateDto
+            {
+                FamilyId = familyId,
+                StartTime = startTime,
+                EndTime = GetUserCurrentTime(family!.TimeZone),
+                JobStatus = JobStatus.Failed,
+                JobType = JobType.RecipeGeneration
+            };
+            _jobRecordService.CreateJobRecord(jobRecord);
             throw new Exception(
                 "Family was null when attempting to generate and send recipe email"
             );
@@ -345,7 +389,7 @@ public class JobService(
                         + string.Join(", ", enjoyed)
                     : null,
                 notEnjoyed.Any()
-                    ? "Do not generate recipes these recipes, or recipes that are similar to the ones listed here:\n"
+                    ? "Do not generate these recipes, or recipes that are similar to the ones listed here:\n"
                         + string.Join(", ", notEnjoyed)
                     : null
             }.Where(s => s != null)

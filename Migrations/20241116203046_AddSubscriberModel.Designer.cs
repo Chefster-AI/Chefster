@@ -3,6 +3,7 @@ using System;
 using Chefster.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Chefster.Migrations
 {
     [DbContext(typeof(ChefsterDbContext))]
-    partial class ChefsterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241116203046_AddSubscriberModel")]
+    partial class AddSubscriberModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
@@ -205,35 +208,29 @@ namespace Chefster.Migrations
                     b.ToTable("PreviousRecipes", (string)null);
                 });
 
-            modelBuilder.Entity("Chefster.Models.SubscriptionModel", b =>
+            modelBuilder.Entity("Chefster.Models.SubscriberModel", b =>
                 {
-                    b.Property<string>("SubscriptionId")
+                    b.Property<string>("FamilyId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CustomerId")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
+                    b.Property<string>("PaymentCreatedDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("EndDate")
+                    b.Property<string>("ReceiptUrl")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("InvoiceUrl")
-                        .IsRequired()
+                    b.Property<string>("SubscriptionId")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("UserStatus")
+                    b.Property<int?>("UserStatus")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("SubscriptionId");
+                    b.HasKey("FamilyId");
 
-                    b.ToTable("Subscriptions", (string)null);
+                    b.ToTable("Subscribers", (string)null);
                 });
 #pragma warning restore 612, 618
         }

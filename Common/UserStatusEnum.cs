@@ -2,10 +2,13 @@ namespace Chefster.Common;
 
 public enum UserStatus
 {
-    FreeTrial = 0,
-    ExtendedFreeTrial = 1,
-    FreeTrialExpired = 2,
+    NoAccount = 0,
+    FreeTrial = 1,
+    FreeTrialEnded = 2,
     Subscribed = 3,
-    PreviouslySubscribed = 4,
-    Unknown = 5
+    SubscriptionEnded = 4,
+    Paid = 5,
+    NotPaid = 6,
+    PendingPayment = 7,
+    Unknown = 8
 }

@@ -6,16 +6,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Chefster.Controllers;
 
-public class AccountController : Controller
+[ApiExplorerSettings(IgnoreApi = true)]
+public class AccountController() : Controller
 {
     private static string GetProtocol()
     {
         if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
         {
-            Console.WriteLine("http");
             return "http";
         }
-        Console.WriteLine("https");
         return "https";
     }
 
@@ -26,7 +25,7 @@ public class AccountController : Controller
                 "redirect_uri",
                 $"{Url.Action("Index", "Index", null, GetProtocol())}callback"
             )
-            .WithRedirectUri(Url.Action("Profile", "Index")!)
+            .WithRedirectUri(Url.Action("callback")!)
             .Build();
 
         await HttpContext.ChallengeAsync(
@@ -57,12 +56,35 @@ public class AccountController : Controller
                 "redirect_uri",
                 $"{Url.Action("Index", "Index", null, GetProtocol())}callback"
             )
-            .WithRedirectUri(Url.Action("Profile", "Index")!)
+            .WithRedirectUri(Url.Action("callback")!)
             .Build();
-
         await HttpContext.ChallengeAsync(
             Auth0Constants.AuthenticationScheme,
             authenticationProperties
         );
+    }
+
+    [Authorize]
+    public async Task<IActionResult> Callback()
+    {
+        var authenticateResult = await HttpContext.AuthenticateAsync(
+            Auth0Constants.AuthenticationScheme
+        );
+        if (!authenticateResult.Succeeded)
+        {
+            return Redirect($"{Url.Action("Index", "Index", null, GetProtocol())}error");
+        }
+
+        // Handle post-authentication logic
+        var emailVerified =
+            authenticateResult.Principal?.FindFirst("email_verified")?.Value == "true";
+        if (!emailVerified)
+        {
+            return Redirect(
+                $"{Url.Action("Index", "Index", null, GetProtocol())}email-verification"
+            );
+        }
+
+        return RedirectToAction("Profile", "Index");
     }
 }
