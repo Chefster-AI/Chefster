@@ -41,7 +41,7 @@ public class StripeMessageConsumer(
             var receivedMessageRequest = new ReceiveMessageRequest
             {
                 QueueUrl = queueUrl,
-                MaxNumberOfMessages = 10,
+                MaxNumberOfMessages = 1,
                 WaitTimeSeconds = 20
             };
 
@@ -49,7 +49,7 @@ public class StripeMessageConsumer(
 
             // Handle each message
             var response = await _amazonSQSClient.ReceiveMessageAsync(receivedMessageRequest);
-            Console.WriteLine(response.ToString());
+            Console.WriteLine(response.ToJson());
             foreach (var message in response.Messages)
             {
                 try
