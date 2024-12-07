@@ -11,4 +11,6 @@ public class AccountViewModel
     public DateTime? PeriodStart { get; set; }
     public DateTime? PeriodEnd { get; set; }
     public required string StripePublishableKey { get; set; }
+    public required string CustomerPortalLink { get; set; }
+    public required string StripeBuyButton { get; set; }
 }

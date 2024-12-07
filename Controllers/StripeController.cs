@@ -32,10 +32,12 @@ public class StripeController(LoggingService loggingService, IConfiguration conf
 
         try
         {
-            var signatureSecret = _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
-                ? _configuration["STRIPE_SIGNATURE_SECRET_DEV"]
-                : _configuration["STRIPE_SIGNATURE_SECRET_PROD"];
-            var stripeEvent = EventUtility.ConstructEvent(request, Request.Headers["Stripe-Signature"], signatureSecret);
+            var signatureSecret = _configuration["STRIPE_SIGNATURE_SECRET"];
+            var stripeEvent = EventUtility.ConstructEvent(
+                request,
+                Request.Headers["Stripe-Signature"],
+                signatureSecret
+            );
 
             if (allowed.Contains(stripeEvent.Type))
             {

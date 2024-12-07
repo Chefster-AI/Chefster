@@ -73,6 +73,16 @@ public class IndexController(
                 ? _configuration["STRIPE_PUBLISHABLE_KEY_DEV"]!
                 : _configuration["STRIPE_PUBLISHABLE_KEY_PROD"]!;
 
+        string customerPortalLink =
+            _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+                ? _configuration["CUSTOMER_PORTAL_LINK_DEV"]!
+                : _configuration["CUSTOMER_PORTAL_LINK_PROD"]!;
+
+        string stripeBuyButton =
+            _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+                ? _configuration["STRIPE_BUY_BUTTON_ID_DEV"]!
+                : _configuration["STRIPE_BUY_BUTTON_ID_PROD"]!;
+
         var accountViewModel = new AccountViewModel
         {
             FamilyId = altered,
@@ -81,7 +91,9 @@ public class IndexController(
             JoinDate = family.CreatedAt,
             PeriodStart = periodStart,
             PeriodEnd = periodEnd,
-            StripePublishableKey = stripePublishableKey
+            StripePublishableKey = stripePublishableKey,
+            CustomerPortalLink = customerPortalLink,
+            StripeBuyButton = stripeBuyButton
         };
 
         return View(accountViewModel);
