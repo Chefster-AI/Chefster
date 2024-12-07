@@ -47,7 +47,7 @@ jobs:
         run: dotnet --version
 
       - name: Build project
-        run: dotnet publish -c Release -o app --runtime linux-x64 --self-contained --version 8.0.110
+        run: dotnet publish -c Release -o app --os linux --self-contained true
 
       - name: List published files
         run: ls -alh app
