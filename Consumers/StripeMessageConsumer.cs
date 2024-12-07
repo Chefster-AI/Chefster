@@ -1,8 +1,10 @@
+using Amazon;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Chefster.Common;
 using Chefster.Models;
 using Chefster.Services;
+using MongoDB.Bson;
 using Newtonsoft.Json.Linq;
 using Stripe;
 
@@ -43,8 +45,11 @@ public class StripeMessageConsumer(
                 WaitTimeSeconds = 20
             };
 
+            Console.WriteLine(receivedMessageRequest.ToJson());
+
             // Handle each message
             var response = await _amazonSQSClient.ReceiveMessageAsync(receivedMessageRequest);
+            Console.WriteLine(response.ToString());
             foreach (var message in response.Messages)
             {
                 try
