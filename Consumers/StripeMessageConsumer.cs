@@ -31,6 +31,8 @@ public class StripeMessageConsumer(
             scope.ServiceProvider.GetRequiredService<Services.SubscriptionService>();
         var _letterQueueService = scope.ServiceProvider.GetRequiredService<LetterQueueService>();
 
+        _logger.Log("Starting Message Consumer...", LogLevels.Info);
+
         while (true)
         {
             // Wait up to 20 seconds per interval for messages
@@ -281,6 +283,13 @@ public class StripeMessageConsumer(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await MessageConsumer();
+        try
+        {
+            await MessageConsumer();
+        }
+        catch (Exception e)
+        {
+            _logger.Log($"Failed to start message consumer: {e}", LogLevels.Error);
+        }
     }
 }
