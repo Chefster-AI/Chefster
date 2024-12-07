@@ -18,18 +18,13 @@ public class StripeMessageConsumer(
 ) : BackgroundService
 {
     private readonly LoggingService _logger = loggingService;
+    private readonly AmazonSQSClient _amazonSQSClient = new();
     private readonly IConfiguration _configuration = configuration;
     private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
 
     public async Task MessageConsumer()
     {
-        var config = new AmazonSQSConfig
-        {
-            RegionEndpoint = RegionEndpoint.USEast1,
-            LogResponse = true,
-            LogMetrics = true,
-            DisableRequestCompression = true
-        };
+        var config = new AmazonSQSConfig { RegionEndpoint = RegionEndpoint.USEast1 };
         var _amazonSQSClient = new AmazonSQSClient(config);
         var queueUrl = _configuration["CALLBACK_QUEUE"]!;
         using var scope = _serviceScopeFactory.CreateScope();
@@ -299,14 +294,6 @@ public class StripeMessageConsumer(
     private async Task DeleteMessage(string receiptHandle)
     {
         _logger.Log($"Deleting message with handle: {receiptHandle}", LogLevels.Info);
-        var config = new AmazonSQSConfig
-        {
-            RegionEndpoint = RegionEndpoint.USEast1,
-            LogResponse = true,
-            LogMetrics = true,
-            DisableRequestCompression = true
-        };
-        var _amazonSQSClient = new AmazonSQSClient(config);
         await _amazonSQSClient.DeleteMessageAsync(_configuration["CALLBACK_QUEUE"], receiptHandle);
     }
 
