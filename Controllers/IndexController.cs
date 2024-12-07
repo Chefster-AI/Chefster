@@ -13,37 +13,104 @@ namespace Chefster.Controllers;
 // use this to make swagger ignore this controller if its not really an api
 [ApiExplorerSettings(IgnoreApi = true)]
 public class IndexController(
+    IConfiguration configuration,
     ConsiderationsService considerationsService,
     FamilyService familyService,
     MemberService memberService,
-    PreviousRecipesService previousRecipesService
+    PreviousRecipesService previousRecipesService,
+    SubscriptionService subscriptionService,
+    AuthenticationService authenticationService
 ) : Controller
 {
+    private readonly IConfiguration _configuration = configuration;
     private readonly ConsiderationsService _considerationService = considerationsService;
     private readonly FamilyService _familyService = familyService;
     private readonly MemberService _memberService = memberService;
     private readonly PreviousRecipesService _previousRecipeService = previousRecipesService;
+    private readonly SubscriptionService _subscriptionService = subscriptionService;
+    private readonly AuthenticationService _authService = authenticationService;
 
     [Authorize]
-    [Route("/chat")]
-    public IActionResult Chat()
+    [Route("/account")]
+    public async Task<IActionResult> Account()
     {
-        return View();
-    }
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
 
-    [Route("/confirm")]
-    public IActionResult ConfirmationEmail()
-    {
-        return View(new { FamilyId = "exampleFamilyId" });
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var family = _familyService.GetByEmail(email!).Data;
+
+        // if family doesnt exist, redirect to create one
+        if (family == null)
+        {
+            return Redirect("createprofile");
+        }
+
+        var altered = family!.Id.Replace('|', '_');
+
+        var response = await _subscriptionService.GetLatestSubscriptionByEmail(email!);
+        var subscription = response.Data;
+        DateTime? periodStart = null;
+        DateTime? periodEnd = null;
+
+        if (subscription != null)
+        {
+            periodStart = TimeZoneInfo.ConvertTimeFromUtc(
+                subscription.StartDate,
+                TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)
+            );
+            periodEnd = TimeZoneInfo.ConvertTimeFromUtc(
+                subscription.EndDate,
+                TimeZoneInfo.FindSystemTimeZoneById(family.TimeZone)
+            );
+        }
+
+        string stripePublishableKey =
+            _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+                ? _configuration["STRIPE_PUBLISHABLE_KEY_DEV"]!
+                : _configuration["STRIPE_PUBLISHABLE_KEY_PROD"]!;
+
+        string customerPortalLink =
+            _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+                ? _configuration["CUSTOMER_PORTAL_LINK_DEV"]!
+                : _configuration["CUSTOMER_PORTAL_LINK_PROD"]!;
+
+        string stripeBuyButton =
+            _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+                ? _configuration["STRIPE_BUY_BUTTON_ID_DEV"]!
+                : _configuration["STRIPE_BUY_BUTTON_ID_PROD"]!;
+
+        var accountViewModel = new AccountViewModel
+        {
+            FamilyId = altered,
+            Email = family.Email,
+            UserStatus = subscription != null ? subscription.UserStatus : UserStatus.NoAccount,
+            JoinDate = family.CreatedAt,
+            PeriodStart = periodStart,
+            PeriodEnd = periodEnd,
+            StripePublishableKey = stripePublishableKey,
+            CustomerPortalLink = customerPortalLink,
+            StripeBuyButton = stripeBuyButton
+        };
+
+        return View(accountViewModel);
     }
 
     [Authorize]
     [HttpGet]
     [Route("/createprofile")]
-    public IActionResult CreateProfile()
+    public async Task<IActionResult> CreateProfile()
     {
-        var id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value!;
-        var family = _familyService.GetById(id).Data;
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var family = _familyService.GetByEmail(email!).Data;
 
         if (family == null)
         {
@@ -81,136 +148,138 @@ public class IndexController(
     [Authorize]
     [HttpGet]
     [Route("/profile")]
-    public IActionResult Profile()
+    public async Task<IActionResult> Profile()
     {
-        var id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        var family = _familyService.GetById(id!).Data;
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var family = _familyService.GetByEmail(email!).Data;
         var viewModelMembers = new List<MemberUpdateViewModel>();
 
-        if (family != null)
+        // if family doesnt exist, redirect to create one
+        if (family == null)
         {
-            var members = _memberService.GetByFamilyId(family.Id).Data;
+            return Redirect("createprofile");
+        }
 
-            var count = 0;
-            foreach (var member in members!)
+        var members = _memberService.GetByFamilyId(family.Id).Data;
+
+        var count = 0;
+        foreach (var member in members!)
+        {
+            var considerations = _considerationService
+                .GetMemberConsiderations(member.MemberId)
+                .Data;
+            var goalSelectListsItems = new List<SelectListItem>();
+            goalSelectListsItems.AddRange(ConsiderationsLists.GoalsList);
+            var restrictionsSelectListsItems = new List<SelectListItem>();
+            restrictionsSelectListsItems.AddRange(ConsiderationsLists.RestrictionsList);
+            var cuisineSelectListsItems = new List<SelectListItem>();
+            cuisineSelectListsItems.AddRange(ConsiderationsLists.CuisinesList);
+
+            if (considerations != null)
             {
-                var considerations = _considerationService
-                    .GetMemberConsiderations(member.MemberId)
-                    .Data;
-                var goalSelectListsItems = new List<SelectListItem>();
-                goalSelectListsItems.AddRange(ConsiderationsLists.GoalsList);
-                var restrictionsSelectListsItems = new List<SelectListItem>();
-                restrictionsSelectListsItems.AddRange(ConsiderationsLists.RestrictionsList);
-                var cuisineSelectListsItems = new List<SelectListItem>();
-                cuisineSelectListsItems.AddRange(ConsiderationsLists.CuisinesList);
-
-                if (considerations != null)
+                foreach (var consideration in considerations)
                 {
-                    foreach (var consideration in considerations)
+                    if (consideration.Type == ConsiderationsEnum.Cuisine)
                     {
-                        if (consideration.Type == ConsiderationsEnum.Cuisine)
+                        foreach (var item in ConsiderationsLists.CuisinesList)
                         {
-                            foreach (var item in ConsiderationsLists.CuisinesList)
+                            if (item.Text == consideration.Value)
                             {
-                                if (item.Text == consideration.Value)
+                                cuisineSelectListsItems[count] = new SelectListItem
                                 {
-                                    cuisineSelectListsItems[count] = new SelectListItem
-                                    {
-                                        Selected = true,
-                                        Text = consideration.Value
-                                    };
-                                }
-                                count += 1;
+                                    Selected = true,
+                                    Text = consideration.Value
+                                };
                             }
-                            count = 0;
+                            count += 1;
                         }
-
-                        if (consideration.Type == ConsiderationsEnum.Goal)
-                        {
-                            foreach (var item in ConsiderationsLists.GoalsList)
-                            {
-                                if (item.Text == consideration.Value)
-                                {
-                                    goalSelectListsItems[count] = new SelectListItem
-                                    {
-                                        Selected = true,
-                                        Text = consideration.Value
-                                    };
-                                }
-                                count += 1;
-                            }
-                            count = 0;
-                        }
-
-                        if (consideration.Type == ConsiderationsEnum.Restriction)
-                        {
-                            foreach (var item in ConsiderationsLists.RestrictionsList)
-                            {
-                                if (item.Text == consideration.Value)
-                                {
-                                    restrictionsSelectListsItems[count] = new SelectListItem
-                                    {
-                                        Selected = true,
-                                        Text = consideration.Value
-                                    };
-                                }
-                                count += 1;
-                            }
-                            count = 0;
-                        }
+                        count = 0;
                     }
-                    var tooAdd = new MemberUpdateViewModel
+
+                    if (consideration.Type == ConsiderationsEnum.Goal)
                     {
-                        MemberId = member.MemberId,
-                        Name = member.Name,
-                        Notes = member.Notes,
-                        Restrictions = restrictionsSelectListsItems,
-                        Goals = goalSelectListsItems,
-                        Cuisines = cuisineSelectListsItems,
-                        ShouldDelete = false
-                    };
+                        foreach (var item in ConsiderationsLists.GoalsList)
+                        {
+                            if (item.Text == consideration.Value)
+                            {
+                                goalSelectListsItems[count] = new SelectListItem
+                                {
+                                    Selected = true,
+                                    Text = consideration.Value
+                                };
+                            }
+                            count += 1;
+                        }
+                        count = 0;
+                    }
 
-                    viewModelMembers.Add(tooAdd);
+                    if (consideration.Type == ConsiderationsEnum.Restriction)
+                    {
+                        foreach (var item in ConsiderationsLists.RestrictionsList)
+                        {
+                            if (item.Text == consideration.Value)
+                            {
+                                restrictionsSelectListsItems[count] = new SelectListItem
+                                {
+                                    Selected = true,
+                                    Text = consideration.Value
+                                };
+                            }
+                            count += 1;
+                        }
+                        count = 0;
+                    }
                 }
-            }
-
-            if (members.Count == 0)
-            {
-                var emptyMem = new MemberUpdateViewModel
+                var tooAdd = new MemberUpdateViewModel
                 {
-                    MemberId = null,
-                    Name = "",
-                    Notes = "",
-                    Restrictions = ConsiderationsLists.RestrictionsList,
-                    Goals = ConsiderationsLists.GoalsList,
-                    Cuisines = ConsiderationsLists.CuisinesList,
+                    MemberId = member.MemberId,
+                    Name = member.Name,
+                    Notes = member.Notes,
+                    Restrictions = restrictionsSelectListsItems,
+                    Goals = goalSelectListsItems,
+                    Cuisines = cuisineSelectListsItems,
                     ShouldDelete = false
                 };
 
-                viewModelMembers.Add(emptyMem);
+                viewModelMembers.Add(tooAdd);
             }
+        }
 
-            var populatedModel = new FamilyUpdateViewModel
-            {
-                Name = family.Name,
-                PhoneNumber = family.PhoneNumber,
-                FamilySize = viewModelMembers.Count,
-                GenerationDay = family.GenerationDay,
-                GenerationTime = family.GenerationTime,
-                TimeZone = family.TimeZone,
-                Members = viewModelMembers,
-                NumberOfBreakfastMeals = family.NumberOfBreakfastMeals,
-                NumberOfLunchMeals = family.NumberOfLunchMeals,
-                NumberOfDinnerMeals = family.NumberOfDinnerMeals
-            };
-            return View(populatedModel);
-        }
-        else
+        if (members.Count == 0)
         {
-            // if the family was null we redict to the create profile page
-            Console.WriteLine("Family was null");
-            return View("CreateProfile");
+            var emptyMem = new MemberUpdateViewModel
+            {
+                MemberId = null,
+                Name = "",
+                Notes = "",
+                Restrictions = ConsiderationsLists.RestrictionsList,
+                Goals = ConsiderationsLists.GoalsList,
+                Cuisines = ConsiderationsLists.CuisinesList,
+                ShouldDelete = false
+            };
+
+            viewModelMembers.Add(emptyMem);
         }
+
+        var populatedModel = new FamilyUpdateViewModel
+        {
+            Name = family.Name,
+            PhoneNumber = family.PhoneNumber,
+            FamilySize = viewModelMembers.Count,
+            GenerationDay = family.GenerationDay,
+            GenerationTime = family.GenerationTime,
+            TimeZone = family.TimeZone,
+            Members = viewModelMembers,
+            NumberOfBreakfastMeals = family.NumberOfBreakfastMeals,
+            NumberOfLunchMeals = family.NumberOfLunchMeals,
+            NumberOfDinnerMeals = family.NumberOfDinnerMeals
+        };
+        return View(populatedModel);
     }
 
     [Route("/error")]
@@ -240,11 +309,22 @@ public class IndexController(
 
     [Authorize]
     [Route("/overview")]
-    public IActionResult Overview()
+    public async Task<IActionResult> Overview()
     {
-        var id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        var family = _familyService.GetById(id!).Data;
-        var previousRecipes = _previousRecipeService.GetPreviousRecipes(id!).Data;
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var family = _familyService.GetByEmail(email!).Data;
+
+        if (family == null)
+        {
+            return Redirect("createprofile");
+        }
+
+        var previousRecipes = _previousRecipeService.GetPreviousRecipes(family.Id).Data;
 
         // groups the recipes by day and then by meal type for display
         var groupedRecipes = previousRecipes!
@@ -272,9 +352,9 @@ public class IndexController(
 
         var model = new OverviewViewModel
         {
-            GenerationDay = family!.GenerationDay,
+            GenerationDay = family.GenerationDay,
             GenerationTime = family.GenerationTime,
-            Recipes = groupedRecipes
+            Recipes = groupedRecipes,
         };
 
         return View(model);
@@ -282,8 +362,15 @@ public class IndexController(
 
     [HttpPut]
     [Route("/previousRecipe")]
-    public ActionResult PreviousRecipe([FromBody] PreviousRecipeUpdateDto previousRecipe)
+    public async Task<IActionResult> PreviousRecipe(
+        [FromBody] PreviousRecipeUpdateDto previousRecipe
+    )
     {
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
         _previousRecipeService.UpdatePreviousRecipe(previousRecipe);
         return Ok();
     }
@@ -296,9 +383,34 @@ public class IndexController(
 
     [Authorize]
     [Route("/thankyou")]
-    public IActionResult ThankYou(ThankYouViewModel model)
+    public async Task<IActionResult> ThankYou()
     {
-        return View(model);
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (!emailVerfied)
+        {
+            return Redirect("email-verification");
+        }
+        var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var family = _familyService.GetByEmail(email!).Data;
+        var thankYou = new ThankYouViewModel
+        {
+            EmailAddress = email!,
+            GenerationDay = family!.GenerationDay,
+            GenerationTime = family.GenerationTime
+        };
+
+        return View(thankYou);
+    }
+
+    [Route("email-verification")]
+    public async Task<IActionResult> EmailVerification()
+    {
+        var emailVerfied = await _authService.IsEmailVerifiedAsync();
+        if (emailVerfied)
+        {
+            return Redirect("profile");
+        }
+        return View();
     }
 
     [Route("/unsubscribe/{familyId}")]

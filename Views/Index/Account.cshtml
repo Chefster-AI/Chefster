@@ -1,0 +1,118 @@
+@model Chefster.ViewModels.AccountViewModel
+
+@{
+    ViewData["Title"] = "Account";
+
+    string statusDescription;
+    string bgColor;
+    string period;
+    bool hasStripeAccount = false;
+
+    switch (Model.UserStatus)
+    {
+        case Chefster.Common.UserStatus.NoAccount:
+            statusDescription = "No Stripe Account";
+            bgColor = "danger";
+            break;
+        case Chefster.Common.UserStatus.FreeTrial:
+            statusDescription = "Free Trial";
+            bgColor = "success";
+            hasStripeAccount = true;
+            break;
+        case Chefster.Common.UserStatus.FreeTrialEnded:
+            statusDescription = "Free Trial Ended";
+            bgColor = "danger";
+            hasStripeAccount = true;
+            break;
+        case Chefster.Common.UserStatus.Subscribed:
+            statusDescription = "Subscribed";
+            bgColor = "success";
+            hasStripeAccount = true;
+            break;
+        case Chefster.Common.UserStatus.SubscriptionEnded:
+            statusDescription = "Subscription Ended";
+            bgColor = "danger";
+            hasStripeAccount = true;
+            break;
+        case Chefster.Common.UserStatus.Paid:
+            statusDescription = "Subscribed";
+            bgColor = "success";
+            hasStripeAccount = true;
+            break;
+        case Chefster.Common.UserStatus.NotPaid:
+            statusDescription = "Not Paid";
+            bgColor = "warning";
+            hasStripeAccount = true;
+            break;
+        case Chefster.Common.UserStatus.PendingPayment:
+            statusDescription = "Processing Payment...";
+            bgColor = "warning";
+            hasStripeAccount = true;
+            break;
+        case Chefster.Common.UserStatus.Unknown:
+            statusDescription = "Unknown";
+            bgColor = "danger";
+            break;
+        default:
+            statusDescription = "Unknown";
+            bgColor = "danger";
+            break;
+    }
+
+    if (hasStripeAccount)
+    {
+        var start = Model.PeriodStart!.Value.ToString("MMMM d, yyyy");
+        var end = Model.PeriodEnd!.Value.ToString("MMMM d, yyyy");
+        period = start + " - " + end;
+    }
+    else
+    {
+        period = "---";
+    }
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center mt-5 pt-5">
+        <div class="col-md-10">
+            <div class="d-flex justify-content-center row min-vh-100">
+                <div class="col-md-6">
+                    <div class="input-group mt-2">
+                        <span class="input-group-text text-light bg-primary">Joined</span>
+                        <input type="text" class="form-control" value="@Model.JoinDate.ToString("MMMM d, yyyy")"
+                            readonly>
+                    </div>
+                    <div class="input-group mt-2">
+                        <span class="input-group-text text-light bg-primary">Period</span>
+                        <input type="text" class="form-control" value="@period" readonly>
+                    </div>
+                    <div class="input-group mt-2">
+                        <span class="input-group-text text-light bg-@bgColor">Status</span>
+                        <input type="text" class="form-control" value="@statusDescription" readonly>
+                    </div>
+                    @* Allow for users to access their stripe account even if they haven't paid *@
+                    @if (hasStripeAccount)
+                    {
+                        <div class="fs-4 my-5 text-center">
+                            Visit the <a
+                                href="@Model.CustomerPortalLink?prefilled_email=@Uri.EscapeDataString(@Model.Email)"
+                                target="_blank">Stripe Customer Portal</a> to view and manage your Chefster subscription.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="fs-4 my-5 ms-2">
+                            Create a Stripe account to begin your free trial!
+                        </div>
+                        <div class="d-flex justify-content-center align-items-center">
+                            <div>
+                                <stripe-buy-button buy-button-id="@Model.StripeBuyButton"
+                                    publishable-key="@Model.StripePublishableKey" client-reference-id="@Model.FamilyId"
+                                    customer-email="@Model.Email" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

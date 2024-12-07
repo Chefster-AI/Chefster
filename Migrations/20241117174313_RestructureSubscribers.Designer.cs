@@ -3,6 +3,7 @@ using System;
 using Chefster.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Chefster.Migrations
 {
     [DbContext(typeof(ChefsterDbContext))]
-    partial class ChefsterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241117174313_RestructureSubscribers")]
+    partial class RestructureSubscribers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
@@ -205,7 +208,7 @@ namespace Chefster.Migrations
                     b.ToTable("PreviousRecipes", (string)null);
                 });
 
-            modelBuilder.Entity("Chefster.Models.SubscriptionModel", b =>
+            modelBuilder.Entity("Chefster.Models.SubscriberModel", b =>
                 {
                     b.Property<string>("SubscriptionId")
                         .HasColumnType("TEXT");
@@ -233,7 +236,7 @@ namespace Chefster.Migrations
 
                     b.HasKey("SubscriptionId");
 
-                    b.ToTable("Subscriptions", (string)null);
+                    b.ToTable("Subscribers", (string)null);
                 });
 #pragma warning restore 612, 618
         }

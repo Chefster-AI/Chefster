@@ -21,6 +21,7 @@ public class ServiceResult<T>
 
     public static ServiceResult<T> ErrorResult(string error)
     {
+        LoggingHelper.Logger.Log(error, LogLevels.Error);
         return new ServiceResult<T>
         {
             Success = false,

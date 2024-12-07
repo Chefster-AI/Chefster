@@ -1,0 +1,72 @@
+@{
+    ViewData["Title"] = "Email Verification";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .error-container {
+            height: 100vh;
+            display: flex;
+            using Chefster.ViewModels;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .error-message {
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .error-message h1 {
+            font-size: 3.5rem;
+            font-weight: bold;
+        }
+
+        .error-message p {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: #6c757d;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="error-container">
+        <div class="error-message">
+            <p>Please Verify Your Email to Continue</p>
+            <button id="refreshButton" class="btn btn-primary">Continue</button>
+        </div>
+    </div>
+</body>
+
+</html>
+
+<script>
+    var refreshButton = document.getElementById("refreshButton")
+    refreshButton.onclick = refreshPage
+
+    function refreshPage() {
+        document.location.reload()
+    }
+</script>
