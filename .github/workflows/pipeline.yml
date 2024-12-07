@@ -44,7 +44,7 @@ jobs:
           dotnet-version: "8.x"
 
       - name: Build project
-        run: dotnet publish -c Release -o app
+        run: dotnet publish -c Release -o app --os linux
 
       - name: Deploy to EC2
         env:
