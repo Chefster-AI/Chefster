@@ -45,6 +45,7 @@ public class StripeController(LoggingService loggingService, IConfiguration conf
 
             if (allowed.Contains(stripeEvent.Type))
             {
+                Console.WriteLine($"Request Body going into queue: {request}");
                 await _amazonSQSClient.SendMessageAsync(
                     new SendMessageRequest
                     {
