@@ -1,4 +1,5 @@
 using Amazon;
+using Amazon.Runtime;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Chefster.Common;
@@ -47,10 +48,18 @@ public class StripeMessageConsumer(
 
             Console.WriteLine(receivedMessageRequest.ToJson());
 
+            ReceiveMessageResponse? response = null;
+            try
+            {
+                response = await _amazonSQSClient.ReceiveMessageAsync(receivedMessageRequest);
+            }
+            catch (AmazonUnmarshallingException e)
+            {
+                Console.WriteLine($"Exception with ReceiveMessageAsync: {e}");
+            }
             // Handle each message
-            var response = await _amazonSQSClient.ReceiveMessageAsync(receivedMessageRequest);
             Console.WriteLine(response.ToJson());
-            foreach (var message in response.Messages)
+            foreach (var message in response is not null ? response.Messages : [])
             {
                 try
                 {
