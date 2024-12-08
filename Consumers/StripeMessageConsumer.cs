@@ -48,8 +48,6 @@ public class StripeMessageConsumer(
                 WaitTimeSeconds = 20
             };
 
-            Console.WriteLine(receivedMessageRequest.ToJson());
-
             ReceiveMessageResponse? response = null;
             try
             {
@@ -59,8 +57,10 @@ public class StripeMessageConsumer(
             {
                 Console.WriteLine($"Exception with ReceiveMessageAsync: {e}");
             }
+
+            _logger.Log("Received " + response.Messages.Count + " messages.", LogLevels.Info);
+            
             // Handle each message
-            Console.WriteLine(response.ToJson());
             foreach (var message in response is not null ? response.Messages : [])
             {
                 try
