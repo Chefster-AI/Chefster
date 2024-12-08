@@ -16,6 +16,8 @@ using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseUrls("0.0.0.0:5144");
+
 // Limit local db logging
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.None);
 
