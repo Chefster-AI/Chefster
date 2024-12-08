@@ -2,9 +2,11 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build-env
 
 WORKDIR /app
 
-COPY . ./
+COPY Chefster.csproj .
 
 RUN dotnet restore
+
+COPY . .
 
 RUN dotnet publish -c Debug -o out
 
