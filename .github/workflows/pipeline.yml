@@ -5,8 +5,9 @@ on:
     branches:
       - master
     tags:
-      - 'v*'
+      - "v*"
   pull_request:
+  workflow_dispatch:
 
 jobs:
   run-unit-tests:
@@ -30,75 +31,62 @@ jobs:
       - name: Run tests
         run: |
           dotnet test Tests/Tests.csproj
-            
+
   build-and-push-image:
     needs: run-unit-tests
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    # If we push to master or manually run this workflow
+    if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Extract version from tag
-      id: get_version
-      run: |
-        if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-        else
-          echo "version=dev" >> $GITHUB_OUTPUT
-        fi  
-    
-    - name: Extract metadata for Docker
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ghcr.io/${{ github.repository }}
-        tags: |
-          type=raw,value={{date 'YYYYMMDD'}}
-          type=raw,value=latest
-    
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Set up Docker Build
+        uses: docker/setup-buildx-action@v3
 
-  # not running this job termporarily
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "version=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=${{ steps.get_version.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy_to_ec2:
     needs: run-unit-tests
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && false
+    if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: "8.0.110"
-
-      - name: Build project
-        run: |
-          dotnet new globaljson --sdk-version 8.0.110
-          dotnet publish -c Release -o app --os linux
-
       - name: Deploy to EC2
         env:
           PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
@@ -107,16 +95,10 @@ jobs:
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
           ssh -v -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOST_NAME} `
-            sudo rm -rf /var/www/*
-            sudo rm -rf /etc/systemd/system/chefster.service
+            echo ${{ secrets.CHEFSTER_PAT}} | docker login ghcr.io -u ${{secrets.CHEFSTER_DOCKER_USERNAME}} --password-stdin
+            docker pull ghcr.io/${{ secrets.CHEFSTER_DOCKER_USERNAME }}/Chefster:${{ steps.get_version.outputs.version }}
             exit
           `
-          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key" chefster.service ${USER_NAME}@${HOST_NAME}:/etc/systemd/system --rsync-path="sudo rsync"
-          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key" ./app/ ${USER_NAME}@${HOST_NAME}:/var/www/ --rsync-path="sudo rsync"
-          ssh -v -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOST_NAME} '
-            sudo systemctl stop chefster.service
-            sudo systemctl start chefster.service
-            exit
-          '
+
       - name: Cleanup
         run: rm -f private_key
