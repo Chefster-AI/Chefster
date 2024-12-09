@@ -112,8 +112,11 @@ jobs:
             echo $CHEFSTER_PAT | docker login ghcr.io -u ${CHEFSTER_ORG} --password-stdin
             echo "Pulling Docker image..."
             sudo docker pull ${IMAGE_REFERENCE}
+            echo "Force deleting old containers"
+            sudo docker rm -f $(docker ps -a -q)
+            sudo docker rmi $(docker images -q | grep -v ${IMAGE_REFERENCE})
             echo "Running Docker container..."
-            sudo docker run -d -p 8080:80 --name chefster-container ${IMAGE_REFERENCE}
+            sudo docker run -d -p 80:8080 --name chefster-container ${IMAGE_REFERENCE}
             exit
           EOF
 
