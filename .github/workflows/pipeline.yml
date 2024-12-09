@@ -93,12 +93,17 @@ jobs:
           PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
           HOST_NAME: ${{ secrets.EC2_HOST_NAME }}
           USER_NAME: ${{ secrets.EC2_USER_NAME }}
+          CHEFSTER_PAT: ${{ secrets.CHEFSTER_PAT }}
+          CHEFSTER_DOCKER_USERNAME: ${{ secrets.CHEFSTER_DOCKER_USERNAME }}
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
           ssh -v -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOST_NAME} << 'EOF'
-            echo ${{ secrets.CHEFSTER_PAT}} | docker login ghcr.io -u ${{secrets.CHEFSTER_DOCKER_USERNAME}} --password-stdin
-            sudo docker pull ghcr.io/${{ secrets.CHEFSTER_DOCKER_USERNAME }}/chefster:${{ steps.get_version.outputs.version }}
-            sudo docker run -d -p 5144:80 --name chefster-container ghcr.io/${{ secrets.CHEFSTER_DOCKER_USERNAME }}/chefster:${{ steps.get_version.outputs.version }}
+            echo "Version: ${{ steps.get_version.outputs.version }}"
+            IMAGE_REFERENCE="ghcr.io/$CHEFSTER_DOCKER_USERNAME/chefster:${{ steps.get_version.outputs.version }}"
+            echo "Using image reference: $IMAGE_REFERENCE"
+            echo $CHEFSTER_PAT | docker login ghcr.io -u $CHEFSTER_DOCKER_USERNAME --password-stdin
+            sudo docker pull $IMAGE_REFERENCE
+            sudo docker run -d -p 5144:80 --name chefster-container $IMAGE_REFERENCE
             exit
           EOF
 
