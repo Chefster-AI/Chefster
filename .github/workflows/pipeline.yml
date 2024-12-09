@@ -98,7 +98,7 @@ jobs:
           ssh -v -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOST_NAME} << 'EOF'
             echo ${{ secrets.CHEFSTER_PAT}} | docker login ghcr.io -u ${{secrets.CHEFSTER_DOCKER_USERNAME}} --password-stdin
             sudo docker pull ghcr.io/${{ secrets.CHEFSTER_DOCKER_USERNAME }}/chefster:${{ steps.get_version.outputs.version }}
-            sudo docker run -d -p 5144:80 --name chefster-container ghcr.io/${{ secrets.CHEFSTER_DOCKER_USERNAME }}/Chefster:${{ steps.get_version.outputs.version }}
+            sudo docker run -d -p 5144:80 --name chefster-container ghcr.io/${{ secrets.CHEFSTER_DOCKER_USERNAME }}/chefster:${{ steps.get_version.outputs.version }}
             exit
           EOF
 
