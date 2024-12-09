@@ -97,19 +97,19 @@ jobs:
           HOST_NAME: ${{ secrets.EC2_HOST_NAME }}
           USER_NAME: ${{ secrets.EC2_USER_NAME }}
           CHEFSTER_PAT: ${{ secrets.CHEFSTER_PAT }}
-          CHEFSTER_DOCKER_USERNAME: ${{ secrets.CHEFSTER_DOCKER_USERNAME }}
+          CHEFSTER_ORG: "chefster-ai"
           VERSION: ${{ needs.build-and-push-image.outputs.version }}
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
-          IMAGE_REFERENCE="ghcr.io/${CHEFSTER_DOCKER_USERNAME}/chefster:${VERSION}"
+          IMAGE_REFERENCE="ghcr.io/${CHEFSTER_ORG}/chefster:${VERSION}"
           echo "Version: ${VERSION}"
-          echo "Username: ${#CHEFSTER_DOCKER_USERNAME}"
+          echo "Organization: ${CHEFSTER_ORG}"
           echo "Using image reference: ${IMAGE_REFERENCE}"
 
           # SSH into EC2 and run commands
           ssh -v -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOST_NAME} << EOF
             echo "Logging into GHCR..."
-            echo $CHEFSTER_PAT | docker login ghcr.io -u ${CHEFSTER_DOCKER_USERNAME} --password-stdin
+            echo $CHEFSTER_PAT | docker login ghcr.io -u ${CHEFSTER_ORG} --password-stdin
             echo "Pulling Docker image..."
             sudo docker pull ${IMAGE_REFERENCE}
             echo "Running Docker container..."
