@@ -82,6 +82,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+
   deploy_to_ec2:
     needs: [run-unit-tests, build-and-push-image]
     if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
@@ -95,11 +98,13 @@ jobs:
           USER_NAME: ${{ secrets.EC2_USER_NAME }}
           CHEFSTER_PAT: ${{ secrets.CHEFSTER_PAT }}
           CHEFSTER_DOCKER_USERNAME: ${{ secrets.CHEFSTER_DOCKER_USERNAME }}
+          VERSION: ${{ needs.build-and-push-image.outputs.version }}
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
           ssh -v -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOST_NAME} << 'EOF'
-            echo "Version: ${{ steps.get_version.outputs.version }}"
-            IMAGE_REFERENCE="ghcr.io/$CHEFSTER_DOCKER_USERNAME/chefster:${{ steps.get_version.outputs.version }}"
+            echo "Version: $VERSION"
+            echo: "Username: $CHEFSTER_DOCKER_USERNAME"
+            IMAGE_REFERENCE="ghcr.io/$CHEFSTER_DOCKER_USERNAME/chefster:$VERSION"
             echo "Using image reference: $IMAGE_REFERENCE"
             echo $CHEFSTER_PAT | docker login ghcr.io -u $CHEFSTER_DOCKER_USERNAME --password-stdin
             sudo docker pull $IMAGE_REFERENCE
