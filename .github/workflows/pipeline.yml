@@ -113,7 +113,7 @@ jobs:
             echo "Pulling Docker image..."
             sudo docker pull ${IMAGE_REFERENCE}
             echo "Running Docker container..."
-            sudo docker run -d -p 5144:80 --name chefster-container ${IMAGE_REFERENCE}
+            sudo docker run -d -p 8080:80 --name chefster-container ${IMAGE_REFERENCE}
             exit
           EOF
 
