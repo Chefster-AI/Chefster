@@ -50,7 +50,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.CHEFSTER_DOCKER_PUSH_PAT }}
 
       - name: Extract version from tag
         id: get_version
@@ -83,7 +83,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy_to_ec2:
-    needs: run-unit-tests
+    needs: [run-unit-tests, build-and-push-image]
     if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
@@ -97,7 +97,7 @@ jobs:
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
           ssh -v -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOST_NAME} `
             echo ${{ secrets.CHEFSTER_PAT}} | docker login ghcr.io -u ${{secrets.CHEFSTER_DOCKER_USERNAME}} --password-stdin
-            docker pull ghcr.io/${{ secrets.CHEFSTER_DOCKER_USERNAME }}/Chefster:${{ steps.get_version.outputs.version }}
+            sudo docker pull ghcr.io/${{ secrets.CHEFSTER_DOCKER_USERNAME }}/chefster:${{ steps.get_version.outputs.version }}
             docker run -d -p 5144:80 --name chefster-container ghcr.io/${{ secrets.CHEFSTER_DOCKER_USERNAME }}/Chefster:${{ steps.get_version.outputs.version }}
             exit
           `
