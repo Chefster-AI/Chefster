@@ -86,8 +86,10 @@ jobs:
             echo $CHEFSTER_PAT | docker login ghcr.io -u chefster-ai --password-stdin
             echo "Pulling Docker image..."
             sudo docker pull ${IMAGE_NAME}
-            echo "Deleting all Docker containers..."
-            sudo docker rm -f `sudo docker ps -a -q`
+            echo "Stopping the chefster container..."
+            sudo docker stop chefster
+            echo "Pruning all stopped containers..."
+            sudo docker container prune -f
             echo "Running the new image..."
             sudo docker run -d -p 80:8080 --name chefster ${IMAGE_NAME}
             echo "Deleting all Docker images not in use..."
