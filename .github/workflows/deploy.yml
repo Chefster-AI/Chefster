@@ -1,9 +1,11 @@
 name: Deploy
 
+permissions:
+  contents: write
+
 on:
   push:
-    branches:
-      - master
+    branches: master
   workflow_dispatch:
   workflow_run:
     workflows: Test
