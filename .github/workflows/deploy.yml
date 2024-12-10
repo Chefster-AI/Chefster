@@ -1,40 +1,16 @@
-name: CI/CD Pipeline
-
-permissions:
-  contents: write
+name: Deploy
 
 on:
   push:
     branches:
       - master
-    tags:
-      - "v*"
-  pull_request:
   workflow_dispatch:
+  workflow_run:
+    workflows: Test
+    types: completed
 
 jobs:
-  unit-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.x"
-
-      - name: Install dependencies
-        run: dotnet restore
-
-      - name: Build solution
-        run: dotnet build
-
-      - name: Run tests
-        run: dotnet test Tests/Tests.csproj
-
   get-version:
-    needs: unit-tests
     if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
@@ -48,10 +24,9 @@ jobs:
           echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
     outputs:
       version: ${{ steps.get-version.outputs.version }}
-      
+
   build-and-push-image:
     needs: get-version
-    if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -88,10 +63,9 @@ jobs:
           cache-to: type=gha,mode=max
     outputs:
       version: ${{ needs.get-version.outputs.version }}
-
+  
   update-ec2:
     needs: build-and-push-image
-    if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Update the ec2 instance

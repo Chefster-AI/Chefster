@@ -1,0 +1,48 @@
+name: Validate Version
+
+permissions:
+  contents: write
+
+on:
+  pull_request:
+    branches: master
+
+jobs:
+  validate-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Get PR branch version
+        id: pr-version
+        run: |
+          PR_VERSION=$(cat versions.txt)
+          echo "PR_VERSION=$PR_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Checkout master branch
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Get master branch version
+        id: master-version
+        run: |
+          MASTER_VERSION=$(cat versions.txt)
+          echo "MASTER_VERSION=$MASTER_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Compare Versions
+        env:
+          PR_VERSION: ${{ steps.pr-version.outputs.PR_VERSION }}
+          MASTER_VERSION: ${{ steps.master-version.outputs.MASTER_VERSION }}
+        run: |
+          if [[ "$(printf '%s\n' "$MASTER_VERSION" "$PR_VERSION" | sort -V | tail -n1)" != "$PR_VERSION" ]]; then
+            echo "Error: PR version ($PR_VERSION) must be larger than master version ($MASTER_VERSION)"
+            exit 1
+          fi
+          
+          echo "Version check passed. PR version $PR_VERSION is larger than master version $MASTER_VERSION"
