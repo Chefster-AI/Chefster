@@ -40,7 +40,7 @@ jobs:
           PR_VERSION: ${{ steps.pr-version.outputs.PR_VERSION }}
           MASTER_VERSION: ${{ steps.master-version.outputs.MASTER_VERSION }}
         run: |
-          if [[ "$(printf '%s\n' "$MASTER_VERSION" "$PR_VERSION" | sort -V | tail -n1)" != "$PR_VERSION" ]]; then
+          if [[ "$(printf '%s\n' "$MASTER_VERSION" "$PR_VERSION" | sort -V | tail -n1)" == "$MASTER_VERSION" ]]; then
             echo "Error: PR version ($PR_VERSION) must be larger than master version ($MASTER_VERSION)"
             exit 1
           fi
