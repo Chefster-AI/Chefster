@@ -91,7 +91,7 @@ jobs:
             echo "Running the new image..."
             sudo docker run -d -p 80:8080 --name chefster-container ${IMAGE_NAME}
             echo "Deleting all Docker images not in use..."
-            sudo docker image prune -a
+            sudo docker image prune -a -f
             exit
           EOF
       - name: Cleanup
