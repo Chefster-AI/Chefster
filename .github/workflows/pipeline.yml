@@ -1,5 +1,8 @@
 name: CI/CD Pipeline
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
@@ -10,9 +13,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-unit-tests:
+  unit-tests:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,15 +31,28 @@ jobs:
         run: dotnet build
 
       - name: Run tests
-        run: |
-          dotnet test Tests/Tests.csproj
+        run: dotnet test Tests/Tests.csproj
 
-  build-and-push-image:
-    needs: run-unit-tests
-    # If we push to master or manually run this workflow
+  get-version:
+    needs: unit-tests
     if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Get version
+        id: get-version
+        run: |
+          VERSION=$(cat version.txt)
+          echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      
+  build-and-push-image:
+    needs: get-version
+    if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -52,23 +67,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.CHEFSTER_DOCKER_PUSH_PAT }}
 
-      - name: Extract version from tag
-        id: get_version
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "version=dev" >> $GITHUB_OUTPUT
-          fi
-
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=${{ steps.get_version.outputs.version }}
+            type=raw,value=${{ needs.get-version.outputs.version }}
             type=raw,value=latest
 
       - name: Build and push Docker image
@@ -81,42 +86,36 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
     outputs:
-      version: ${{ steps.get_version.outputs.version }}
+      version: ${{ needs.get-version.outputs.version }}
 
-  deploy_to_ec2:
-    needs: [run-unit-tests, build-and-push-image]
+  update-ec2:
+    needs: build-and-push-image
     if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Deploy to EC2
+      - name: Update the ec2 instance
         env:
           PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
           HOST_NAME: ${{ secrets.EC2_HOST_NAME }}
           USER_NAME: ${{ secrets.EC2_USER_NAME }}
           CHEFSTER_PAT: ${{ secrets.CHEFSTER_PAT }}
-          CHEFSTER_ORG: "chefster-ai"
-          VERSION: ${{ needs.build-and-push-image.outputs.version }}
+          IMAGE_NAME: "ghcr.io/chefster-ai/chefster:${{ needs.build-and-push-image.outputs.version }}"
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
-          IMAGE_REFERENCE="ghcr.io/${CHEFSTER_ORG}/chefster:${VERSION}"
-          echo "Version: ${VERSION}"
-          echo "Organization: ${CHEFSTER_ORG}"
-          echo "Using image reference: ${IMAGE_REFERENCE}"
+          echo "Updating to image name: ${IMAGE_NAME}"
 
-          # SSH into EC2 and run commands
           ssh -v -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOST_NAME} << EOF
             echo "Logging into GHCR..."
-            echo $CHEFSTER_PAT | docker login ghcr.io -u ${CHEFSTER_ORG} --password-stdin
+            echo $CHEFSTER_PAT | docker login ghcr.io -u chefster-ai --password-stdin
             echo "Pulling Docker image..."
-            sudo docker pull ${IMAGE_REFERENCE}
-            echo "Force deleting old containers and images..."
+            sudo docker pull ${IMAGE_NAME}
+            echo "Deleting all Docker containers..."
             sudo docker rm -f $(sudo docker ps -a -q)
-            sudo docker rmi $(sudo docker images -q | grep -v ${IMAGE_REFERENCE})
-            echo "Running Docker container..."
-            sudo docker run -d -p 80:8080 --name chefster-container ${IMAGE_REFERENCE}
+            echo "Running the new image..."
+            sudo docker run -d -p 80:8080 --name chefster-container ${IMAGE_NAME}
+            echo "Deleting all Docker images not in use..."
+            sudo docker image prune -a
             exit
           EOF
 
