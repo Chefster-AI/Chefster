@@ -15,7 +15,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-          fetch-depth: 0
 
       - name: Get PR branch version
         id: pr-version
@@ -27,7 +26,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: master
-          fetch-depth: 0
 
       - name: Get master branch version
         id: master-version
