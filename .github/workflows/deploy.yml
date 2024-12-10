@@ -87,11 +87,11 @@ jobs:
             echo "Pulling Docker image..."
             sudo docker pull ${IMAGE_NAME}
             echo "Deleting all Docker containers..."
-            sudo docker rm -f $(sudo docker ps -a -q)
+            sudo docker rm -f `sudo docker ps -a -q`
             echo "Running the new image..."
-            sudo docker run -d -p 80:8080 --name chefster-container ${IMAGE_NAME}
+            sudo docker run -d -p 80:8080 --name chefster ${IMAGE_NAME}
             echo "Deleting all Docker images not in use..."
-            sudo docker image prune -a
+            sudo docker image prune -a -f
             exit
           EOF
       - name: Cleanup
@@ -99,7 +99,7 @@ jobs:
     outputs:
       version: ${{ needs.build-and-push-image.outputs.version }}
     
-  create-tag:
+  create-tag-and-release:
     needs: update-ec2
     runs-on: ubuntu-latest
     steps:
@@ -114,3 +114,13 @@ jobs:
           git config user.email "actions@github.com"
           git tag -a "$VERSION" -m "Release $VERSION"
           git push origin "$VERSION"
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.update-ec2.outputs.version }}
+          release_name: Release ${{ needs.update-ec2.outputs.version }}
+          draft: false
+          prerelease: false

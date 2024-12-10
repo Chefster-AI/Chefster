@@ -39,8 +39,8 @@ jobs:
           MASTER_VERSION: ${{ steps.master-version.outputs.MASTER_VERSION }}
         run: |
           if [[ "$(printf '%s\n' "$MASTER_VERSION" "$PR_VERSION" | sort -V | tail -n1)" == "$MASTER_VERSION" ]]; then
-            echo "Error: PR version ($PR_VERSION) must be larger than master version ($MASTER_VERSION)"
+            echo "Error: PR version v$PR_VERSION must be larger than master version v$MASTER_VERSION"
             exit 1
           fi
           
-          echo "Version check passed. PR version $PR_VERSION is larger than master version $MASTER_VERSION"
+          echo "Version check passed. PR version v$PR_VERSION is larger than master version v$MASTER_VERSION"
