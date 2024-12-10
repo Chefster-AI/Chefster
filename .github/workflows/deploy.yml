@@ -92,6 +92,23 @@ jobs:
             sudo docker image prune -a
             exit
           EOF
-
       - name: Cleanup
         run: rm -f private_key
+    outputs:
+      version: ${{ needs.build-and-push-image.outputs.version }}
+    
+  create-tag:
+    needs: update-ec2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create and push tag
+        env:
+          VERSION: ${{ needs.update-ec2.outputs.version }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
