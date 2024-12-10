@@ -36,6 +36,10 @@ public class StripeController(LoggingService loggingService, IConfiguration conf
                 _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
                     ? _configuration["STRIPE_SIGNATURE_SECRET_DEV"]!
                     : _configuration["STRIPE_SIGNATURE_SECRET_PROD"]!;
+            var queueUrl =
+                _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+                    ? _configuration["CALLBACK_QUEUE_DEV"]
+                    : _configuration["CALLBACK_QUEUE"];
 
             var stripeEvent = EventUtility.ConstructEvent(
                 request,
@@ -45,13 +49,8 @@ public class StripeController(LoggingService loggingService, IConfiguration conf
 
             if (allowed.Contains(stripeEvent.Type))
             {
-                Console.WriteLine($"Request Body going into queue: {request}");
                 await _amazonSQSClient.SendMessageAsync(
-                    new SendMessageRequest
-                    {
-                        QueueUrl = _configuration["CALLBACK_QUEUE"],
-                        MessageBody = request
-                    }
+                    new SendMessageRequest { QueueUrl = queueUrl, MessageBody = request }
                 );
                 _logger.Log($"[Queued] {stripeEvent.Type}", LogLevels.Info);
             }
