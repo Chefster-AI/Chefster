@@ -5,7 +5,6 @@ using Amazon.SQS.Model;
 using Chefster.Common;
 using Chefster.Models;
 using Chefster.Services;
-using MongoDB.Bson;
 using Newtonsoft.Json.Linq;
 using Stripe;
 
@@ -26,7 +25,10 @@ public class StripeMessageConsumer(
     {
         var config = new AmazonSQSConfig { RegionEndpoint = RegionEndpoint.USEast1 };
         var _amazonSQSClient = new AmazonSQSClient(config);
-        var queueUrl = _configuration["CALLBACK_QUEUE"]!;
+        var queueUrl =
+            _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+                ? _configuration["CALLBACK_QUEUE_DEV"]
+                : _configuration["CALLBACK_QUEUE"]!;
         using var scope = _serviceScopeFactory.CreateScope();
         var _addressService = scope.ServiceProvider.GetRequiredService<AddressService>();
         var _familyService = scope.ServiceProvider.GetRequiredService<FamilyService>();
@@ -55,11 +57,12 @@ public class StripeMessageConsumer(
             }
             catch (AmazonUnmarshallingException e)
             {
-                Console.WriteLine($"Exception with ReceiveMessageAsync: {e}");
+                _logger.Log($"Exception with ReceiveMessageAsync: {e}", LogLevels.Error);
             }
 
-            _logger.Log("Received " + response.Messages.Count + " messages.", LogLevels.Info);
-            
+            var messageCount = response is not null ? response.Messages.Count : 0;
+            Console.WriteLine($"Received {messageCount} messages.");
+
             // Handle each message
             foreach (var message in response is not null ? response.Messages : [])
             {
@@ -272,6 +275,7 @@ public class StripeMessageConsumer(
             if (previousAttributes.Status == "trialing" && subscription.Status == "active")
             {
                 var email = await _subscriptionService.GetEmailBySubscriptionId(subscription.Id);
+                _logger.Log($"Adding user to letter queue: {email}", LogLevels.Info);
                 if (email.Data != null)
                 {
                     var family = _familyService.GetByEmail(email.Data).Data;
@@ -294,7 +298,11 @@ public class StripeMessageConsumer(
     private async Task DeleteMessage(string receiptHandle)
     {
         _logger.Log($"Deleting message with handle: {receiptHandle}", LogLevels.Info);
-        await _amazonSQSClient.DeleteMessageAsync(_configuration["CALLBACK_QUEUE"], receiptHandle);
+        var queueUrl =
+            _configuration["ASPNETCORE_ENVIRONMENT"] == "Development"
+                ? _configuration["CALLBACK_QUEUE_DEV"]
+                : _configuration["CALLBACK_QUEUE"];
+        await _amazonSQSClient.DeleteMessageAsync(queueUrl, receiptHandle);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
