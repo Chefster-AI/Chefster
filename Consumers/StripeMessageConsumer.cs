@@ -61,7 +61,7 @@ public class StripeMessageConsumer(
             }
 
             var messageCount = response is not null ? response.Messages.Count : 0;
-            _logger.Log("Received " + messageCount + " messages.", LogLevels.Info);
+            Console.WriteLine($"Received {messageCount} messages.");
 
             // Handle each message
             foreach (var message in response is not null ? response.Messages : [])
