@@ -153,7 +153,7 @@ builder.Services.AddHangfire(
                 new MongoStorageOptions
                 {
                     MigrationOptions = migrationOptions,
-                    CheckConnection = false
+                    CheckConnection = true
                 }
             );
     }
@@ -163,8 +163,9 @@ if (builder.Environment.IsDevelopment())
     // handy when developing frontend stuff. Can cause wonkiness when server side rendering pages
     // var mvc = builder.Services.AddRazorPages();
     // mvc.AddRazorRuntimeCompilation();
+    var queueName = builder.Configuration["QUEUE_NAME"] ?? "default";
     builder.Services.AddHangfireServer(options =>
-        options.Queues = [builder.Configuration["QUEUE_NAME"]]
+        options.Queues = [queueName]
     );
 }
 else if (builder.Environment.IsProduction())
